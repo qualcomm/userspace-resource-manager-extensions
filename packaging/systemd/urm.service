@@ -1,0 +1,21 @@
+# Copyright (c) Qualcomm Technologies, Inc.
+# All Rights Reserved.
+# Confidential and Proprietary - Qualcomm Technologies, Inc.
+#
+
+[Unit]
+Description=Userspace Resource Manager
+SourcePath=/usr/bin/urm
+After=multi-user.target perf-hal.service
+Requires=perf-hal.service
+
+[Service]
+User=root
+Group=root
+Restart=always
+RemainAfterExit=yes
+ExecStart=/usr/bin/urm
+TimeoutStopSec=1
+
+[Install]
+WantedBy=multi-user.target
