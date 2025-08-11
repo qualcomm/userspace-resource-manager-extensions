@@ -1,13 +1,13 @@
 
 cmake_minimum_required(VERSION 3.10)
-project(urm_daemon)
+project(classifier_daemon)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_executable(urm_daemon urm.cpp)
+add_executable(classifier classifier.cpp)
 
 # Link against the dynamic loading library
-target_link_libraries(urm_daemon dl)
+target_link_libraries(classifier dl)
 
 # Install rule to place the binary in /usr/bin/
-install(TARGETS urm_daemon DESTINATION /usr/bin)
+install(TARGETS classifier RUNTIME DESTINATION usr/bin)

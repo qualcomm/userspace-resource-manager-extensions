@@ -14,10 +14,9 @@
 #include <dlfcn.h>
 #include <unordered_map>
 
-/*Workaround because of linux-libc-headers package does not have patch
+/*TODO: Workaround because of linux-libc-headers package does not have patch
   connector: Fix invalid conversion in cn_proc.h
 */
-
 #include "include/connector.h"
 #include "include/cn_proc.h"
 
@@ -476,15 +475,12 @@ int main(int argc, const char *argv[])
     int nl_sock;
     int rc = EXIT_SUCCESS;
 
-    /* TODO: Replace siginterrupt with sigaction */
     initialize();
-// Replacing signal with sigaction
-struct sigaction sa;
-sa.sa_handler = on_sigint;
-sigemptyset(&sa.sa_mask);
-sa.sa_flags = 0;
-sigaction(SIGINT, &sa, NULL);
-    //siginterrupt(SIGINT, true);
+    struct sigaction sa;
+    sa.sa_handler = on_sigint;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    sigaction(SIGINT, &sa, NULL);
 
     nl_sock = nl_connect();
     if (nl_sock == -1)
