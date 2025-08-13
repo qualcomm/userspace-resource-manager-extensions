@@ -10,4 +10,4 @@ add_executable(classifier classifier.cpp)
 target_link_libraries(classifier dl)
 
 # Install rule to place the binary in /usr/bin/
-install(TARGETS classifier RUNTIME DESTINATION usr/bin)
+install(TARGETS classifier RUNTIME DESTINATION bin)

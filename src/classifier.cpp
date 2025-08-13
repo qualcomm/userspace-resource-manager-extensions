@@ -211,13 +211,8 @@ long int process_file(const char *file, const char* key)
     int len = 0;
     size_t key_sz = strlen(key);
     FILE *fp = fopen(file, "r");
-if (!fp) {
-    fprintf(stderr, "Failed to open file\n");
-}
     if (fp) {
         while ((len = getline(&buf, &sz, fp)) > 0) {
-// Free buffer after getline usage
-if (buf) free(buf);
             if (strncmp(buf, key, key_sz) == 0) {
                 char *p = buf;
                 p += key_sz;
@@ -290,32 +285,18 @@ int add_to_cgroup(USECASE type, int pid)
     char cmd[128];
     if (type == DECODE) {
         snprintf(cmd, 128, "echo %d > %s\n", pid, dec_cgroup);
-        // Replacing system call with safer file I/O
-        FILE *cg_fp = fopen(cmd, "w");
-        if (cg_fp) {
-            fprintf(cg_fp, "%d", pid);
-            fclose(cg_fp);
-        } else {
-            fprintf(stderr, "Failed to open cgroup file for writing\n");
-        }
-        /*if (r != 0) {
+        int r = system(cmd);
+        if (r != 0) {
             printf("Failed to add process[%d] to dec cgroup, res = %d\n", pid, r);
             printf("cmd: %s\n", cmd);
-        }*/
+        }
     } else if (type >= ENCODE_720 && type <= ENCODE_MANY) {
         snprintf(cmd, 128, "echo %d > %s\n", pid, enc_cgroup);
-        // Replacing system call with safer file I/O
-        FILE *cg_fp = fopen(cmd, "w");
-        if (cg_fp) {
-            fprintf(cg_fp, "%d", pid);
-            fclose(cg_fp);
-        } else {
-            fprintf(stderr, "Failed to open cgroup file for writing\n");
-        }
-        /*if (r != 0) {
+        int r = system(cmd);
+        if (r != 0) {
             printf("Failed to add process[%d] to enc cgroup, res = %d\n", pid, r);
             printf("cmd: %s\n", cmd);
-        }*/
+        }
     }
     return 0;
 }
@@ -349,16 +330,11 @@ static void classify_process(int process_pid, int process_tgid,
     char cmdline[1024];
     snprintf(cmdline, 1024, "/proc/%d/cmdline", process_pid);
     FILE *fp = fopen(cmdline, "r");
-if (!fp) {
-    fprintf(stderr, "Failed to open file\n");
-}
     if (fp) {
         char *buf = NULL;
         size_t sz = 0;
         int len = 0;
         while ((len = getline(&buf, &sz, fp)) > 0) {
-// Free buffer after getline usage
-if (buf) free(buf);
             sanitize_nulls(buf, len);
             enum USECASE type = find_usecase(buf, sz);
             if (type != UNDETERMINED) {
@@ -402,11 +378,11 @@ static int handle_proc_ev(int nl_sock)
             return -1;
         }
         switch (nlcn_msg.proc_ev.what) {
-            case PROC_EVENT_NONE:
+            case proc_event::PROC_EVENT_NONE:
                 // printf("set mcast listen ok\n");
                 break;
-            case PROC_EVENT_FORK:
-                #if 0
+            case proc_event::PROC_EVENT_FORK:
+                #if 1
                 printf("fork: parent tid=%d pid=%d -> child tid=%d pid=%d\n",
                        nlcn_msg.proc_ev.event_data.fork.parent_pid,
                        nlcn_msg.proc_ev.event_data.fork.parent_tgid,
@@ -414,8 +390,8 @@ static int handle_proc_ev(int nl_sock)
                        nlcn_msg.proc_ev.event_data.fork.child_tgid);
                 #endif
                 break;
-            case PROC_EVENT_EXEC:
-                #if 0
+            case proc_event::PROC_EVENT_EXEC:
+                #if 1
                 printf("exec: tid=%d pid=%d\n",
                        nlcn_msg.proc_ev.event_data.exec.process_pid,
                        nlcn_msg.proc_ev.event_data.exec.process_tgid);
@@ -427,8 +403,8 @@ static int handle_proc_ev(int nl_sock)
                 apply_action(nlcn_msg.proc_ev.event_data.exec.process_pid,
                              nlcn_msg.proc_ev.event_data.exec.process_tgid);
                 break;
-            case PROC_EVENT_UID:
-                #if 0
+            case proc_event::PROC_EVENT_UID:
+                #if 1
                 printf("uid change: tid=%d pid=%d from %d to %d\n",
                        nlcn_msg.proc_ev.event_data.id.process_pid,
                        nlcn_msg.proc_ev.event_data.id.process_tgid,
@@ -436,8 +412,8 @@ static int handle_proc_ev(int nl_sock)
                        nlcn_msg.proc_ev.event_data.id.e.euid);
                 #endif
                 break;
-            case PROC_EVENT_GID:
-                #if 0
+            case proc_event::PROC_EVENT_GID:
+                #if 1
                 printf("gid change: tid=%d pid=%d from %d to %d\n",
                        nlcn_msg.proc_ev.event_data.id.process_pid,
                        nlcn_msg.proc_ev.event_data.id.process_tgid,
@@ -445,8 +421,8 @@ static int handle_proc_ev(int nl_sock)
                        nlcn_msg.proc_ev.event_data.id.e.egid);
                 #endif
                 break;
-            case PROC_EVENT_EXIT:
-                #if 0
+            case proc_event::PROC_EVENT_EXIT:
+                #if 1
                 printf("exit: tid=%d pid=%d exit_code=%d\n",
                        nlcn_msg.proc_ev.event_data.exit.process_pid,
                        nlcn_msg.proc_ev.event_data.exit.process_tgid,
@@ -457,7 +433,7 @@ static int handle_proc_ev(int nl_sock)
                                pid_perf_handle);
                 break;
             default:
-                //printf("unhandled proc event\n");
+                printf("unhandled proc event\n");
                 break;
         }
     }
@@ -475,12 +451,10 @@ int main(int argc, const char *argv[])
     int nl_sock;
     int rc = EXIT_SUCCESS;
 
+    /* TODO: Replace siginterrupt with sigaction */
     initialize();
-    struct sigaction sa;
-    sa.sa_handler = on_sigint;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = 0;
-    sigaction(SIGINT, &sa, NULL);
+    //signal(SIGINT, &on_sigint);
+    //siginterrupt(SIGINT, true);
 
     nl_sock = nl_connect();
     if (nl_sock == -1)

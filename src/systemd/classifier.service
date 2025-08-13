@@ -4,7 +4,7 @@
 #
 
 [Unit]
-Description=Userspace Resource Manager
+Description=Usecase Classifier
 SourcePath=/usr/bin/classifier
 After=multi-user.target
 
