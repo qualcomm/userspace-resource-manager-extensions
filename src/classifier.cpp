@@ -19,6 +19,49 @@
 #include <unordered_map>
 #include <ResourceTuner/ResourceTunerAPIs.h>
 
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <dirent.h>
+#include <cstring>
+#include <cstdlib>
+#include <vector>
+#include <algorithm>
+
+#define SIGNAL_CAM_PREVIEW 0x000d0002
+
+bool is_digits(const std::string& str) {
+    return std::all_of(str.begin(), str.end(), ::isdigit);
+}
+
+pid_t getProcessPID(const std::string& process_name) {
+    DIR* proc_dir = opendir("/proc");
+    if (!proc_dir) {
+        std::cerr << "Failed to open /proc directory." << std::endl;
+        return -1;
+    }
+
+    struct dirent* entry;
+    while ((entry = readdir(proc_dir)) != nullptr) {
+        if (entry->d_type == DT_DIR && is_digits(entry->d_name)) {
+            std::string pid = entry->d_name;
+            std::string cmdline_path = "/proc/" + pid + "/cmdline";
+            std::ifstream cmdline_file(cmdline_path);
+            std::string cmdline;
+            if (cmdline_file) {
+                std::getline(cmdline_file, cmdline, '\0');
+                if (cmdline.find(process_name) != std::string::npos) {
+                    closedir(proc_dir);
+                    return std::stoi(pid);
+                }
+            }
+        }
+    }
+
+    closedir(proc_dir);
+    return -1; // Not found
+}
+
 
 static void initialize(void) {
     //TODO: Do the setup required for resource-tuner.
@@ -186,6 +229,17 @@ enum USECASE find_usecase(char *buf, size_t sz)
         decode += 1;
         printf("decode = %d\n", decode);
     }
+    /*Preview case*/
+    if (encode == 0 && decode == 0) {
+        const char *d_str = "qtiqmmfsrc";
+        char *d = buf;
+        size_t d_str_sz = strlen(d_str);
+        while ((d = strstr(d, d_str)) != NULL) {
+            d += d_str_sz;
+            encode += 1;
+            printf("Preview: encode = %d\n", encode);
+        }
+    }
     enum USECASE u = UNDETERMINED;
     if (decode > 0)
         u = DECODE;
@@ -246,16 +300,22 @@ static void classify_process(int process_pid, int process_tgid,
             if (type != UNDETERMINED) {
                 // printf("type = %d\n", (int)type);
                 /* Type is encode or decode */
+                pid_t cam_pid = getProcessPID("cam-server");
+                if (cam_pid > 0 ) {
+                    printf("cam-server PID: %ld", cam_pid);
+                } else {
+                    printf("Could not find cam-server PID: %ld", cam_pid);
+                }
                 uint32_t* list = (uint32_t*) calloc(2, sizeof(uint32_t));
                 list[0] = process_pid;
-                list[1] = 50;
+                list[1] = cam_pid;
 
-                int64_t handle = tuneSignal(0x00080000, -1, 0, "", "", 2, list);
+                int64_t handle = tuneSignal(SIGNAL_CAM_PREVIEW, 0, 0, "", "", 2, list);
                 if (handle > 0) {
-                    printf(" tuneSignal handle:%d", handle);
+                    printf(" tuneSignal handle:%d gstPID:%d camPID:%d", handle, process_pid, cam_pid);
                     pid_perf_handle[process_pid] = handle;
                 } else {
-                    printf(" tuneSignal handle:%d", handle);
+                    printf(" tuneSignal handle:%d gstPID:%d camPID:%d", handle, process_pid, cam_pid);
                 }
             }
         }
