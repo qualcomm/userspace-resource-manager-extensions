@@ -1,5 +1,3 @@
-#include <iostream>
-#include <fstream>
 #include <sstream>
 #include <vector>
 #include <string>
@@ -23,10 +21,7 @@ const std::vector<std::string> entries = {"attr",
                                          "exe",
                                          "logs",
                                          "fds",
-                                         "map_files",
-                                         "schedstat",
-                                         "smaps_rollup",
-                                         "stat"
+                                         "map_files"
                                          };
 
 std::unordered_map<std::string, std::unordered_set<std::string>> loadIgnoreMap(const std::string& filename, const std::vector<std::string>& labels = entries);

@@ -1,5 +1,7 @@
 #include "parser.h"
 #include <dirent.h>
+#include <fstream>
+#include <syslog.h>
 
 static std::string removeDatesAndTimesFromToken(const std::string& input) {
     std::string out = input;
@@ -158,7 +160,7 @@ std::unordered_map<std::string, std::unordered_set<std::string>> loadIgnoreMap(c
     std::unordered_map<std::string, std::unordered_set<std::string>> ignoreMap;
 
     if (!file.is_open()) {
-        std::cerr << "Error opening file: " << filename << std::endl;
+        syslog(LOG_ERR, "Error opening file: %s", filename.c_str());
         return ignoreMap;
     }
 
@@ -174,11 +176,7 @@ std::unordered_map<std::string, std::unordered_set<std::string>> loadIgnoreMap(c
                 while (std::getline(valStream, val, ',')) {
                     // Trim whitespace from val
                     val.erase(0, val.find_first_not_of(" \t\n\r"));
-                    size_t endpos = val.find_last_not_of(" \t\n\r");
-                    if (endpos != std::string::npos)
-                        val.erase(endpos + 1);
-                    else
-                        val.clear();
+                    val.erase(val.find_last_not_of(" \t\n\r") + 1);
                     if (!val.empty()) {
                         ignoreMap[key].emplace(val);
                     }
@@ -470,7 +468,7 @@ std::vector<std::string> parse_proc_fd(pid_t pid, const std::string& delimiters)
             link_target[len] = '\0';
             std::string target_str(link_target);
             // Split the target string using provided delimiters
-            std::cout << "Line"  << target_str << std::endl;
+            syslog(LOG_DEBUG, "Parsing fd: %s", target_str.c_str());
             std::vector<std::string> tokens = splitString(target_str, delimiters);
 
             for (const auto& tok : tokens) {
@@ -497,7 +495,7 @@ std::vector<std::string> parse_proc_environ(pid_t pid, const std::string& delimi
 
     std::ifstream in(path, std::ios::binary);
     if (!in) {
-        std::cerr << "Failed to open: " << path << std::endl;
+        syslog(LOG_ERR, "Failed to open: %s", path.c_str());
         return out;
     }
 
@@ -568,7 +566,7 @@ std::vector<std::string> readJournalForPid(pid_t pid, uint32_t numLines) {
 
     FILE* pipe = popen(cmd.c_str(), "r");
     if (!pipe) {
-        perror("popen failed");
+        syslog(LOG_ERR, "popen failed: %m");
         return lines; // empty
     }
 
@@ -579,7 +577,7 @@ std::vector<std::string> readJournalForPid(pid_t pid, uint32_t numLines) {
 
     int rc = pclose(pipe);
     if (rc == -1) {
-        perror("pclose failed");
+        syslog(LOG_ERR, "pclose failed: %m");
     }
 
     return lines;

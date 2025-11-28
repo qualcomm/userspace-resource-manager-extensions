@@ -7,6 +7,3 @@ exe: usr, bin, lib
 logs: successfully, finished, is, are, a, on, of, it, this, these
 fds: dev, null, pts, socket, deleted, anon_inode, home, share
 map_files: usr, bin, lib, sbin, var, cache, deleted
-schedstat:
-smaps_rollup:
-stat:

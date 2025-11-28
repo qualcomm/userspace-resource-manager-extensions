@@ -1,7 +1,12 @@
 #include <unistd.h>
+#include <syslog.h>
 #include "parser.h"
+#include <fstream>
 #include <sys/stat.h>
 #include "proc_stats.h"  // For system stats
+
+#define PRUNED_DIR "/var/cache/pruned"
+#define UNFILTERED_DIR "/var/cache/unfiltered"
 
 void removeDoubleQuotes(std::vector<std::string>& vec) {
     for (auto& str : vec) {
@@ -86,19 +91,19 @@ bool isValidPidViaProc(pid_t pid) {
 
 int collect_and_store_data(pid_t pid, const char* config_file) {
     if(!isValidPidViaProc(pid)) {
-        std::cout << "PID " << pid << " does not exist in /proc.\n";
+        syslog(LOG_ERR, "PID %d does not exist in /proc.", pid);
         return 1;
     }
     std::string configFile = config_file;
 
     auto ignoreMap = loadIgnoreMap(configFile);
-    std::cout << "Ignore strings:\n";
+    syslog(LOG_DEBUG, "Ignore strings:");
     for (const auto& pair : ignoreMap) {
-        std::cout << pair.first << ": ";
+        std::string values;
         for (const auto& val : pair.second) {
-            std::cout << val << " ";
+            values += val + " ";
         }
-        std::cout << std::endl;
+        syslog(LOG_DEBUG, "%s: %s", pair.first.c_str(), values.c_str());
     }
 
     /*stats collection starts here */
@@ -155,17 +160,17 @@ int collect_and_store_data(pid_t pid, const char* config_file) {
     std::string delimiters = ".:";
     std::vector<std::string> context = parse_proc_attr_current(pid, delimiters);
     if(!context.empty()) {
-        std::cout << "attr_current:" << std::endl;
+        syslog(LOG_DEBUG, "attr_current:");
         for(const auto& c: context) {
-            std::cout << c << std::endl;
+            syslog(LOG_DEBUG, "%s", c.c_str());
         }
     }
     std::vector<std::string> lowercontext = toLowercaseVector(context);
     auto filtered_context = filterStrings(lowercontext, ignoreMap["attr"]);
     if(!filtered_context.empty()) {
-        std::cout << "filtered attr_current:" << std::endl;
+        syslog(LOG_DEBUG, "filtered attr_current:");
         for(const auto& c: filtered_context) {
-            std::cout << c << std::endl;
+            syslog(LOG_DEBUG, "%s", c.c_str());
         }
     }
 
@@ -176,25 +181,25 @@ int collect_and_store_data(pid_t pid, const char* config_file) {
     delimiters = ":\"/";
     std::vector<std::string> cgroup = parse_proc_cgroup(pid, delimiters);
     if(!cgroup.empty()) {
-        std::cout << "cgroup:" << std::endl;
+        syslog(LOG_DEBUG, "cgroup:");
         for(const auto& c: cgroup) {
-            std::cout << c << std::endl;
+            syslog(LOG_DEBUG, "%s", c.c_str());
         }
     }
     std::vector<std::string> lowercgroup = toLowercaseVector(cgroup);
     auto filtered_cg = filterStrings(lowercgroup, ignoreMap["cgroup"]);
     if(!filtered_cg.empty()) {
-        std::cout << "filtered cg:" << std::endl;
+        syslog(LOG_DEBUG, "filtered cg:");
         for(const auto& c: filtered_cg) {
-            std::cout << c << std::endl;
+            syslog(LOG_DEBUG, "%s", c.c_str());
         }
     }
 
     normalize_numbers_inplace(filtered_cg);
     if(!filtered_cg.empty()) {
-        std::cout << "filtered cg:" << std::endl;
+        syslog(LOG_DEBUG, "filtered cg:");
         for(const auto& c: filtered_cg) {
-            std::cout << c << std::endl;
+            syslog(LOG_DEBUG, "%s", c.c_str());
         }
     }
     
@@ -207,25 +212,25 @@ int collect_and_store_data(pid_t pid, const char* config_file) {
     delimiters = ".=/!";
     std::vector<std::string> cmdline = parse_proc_cmdline(pid, delimiters);
     if(!cmdline.empty()) {
-        std::cout << "cmdline:" << std::endl;
+        syslog(LOG_DEBUG, "cmdline:");
         for(const auto& c: cmdline) {
-            std::cout << c << std::endl;
+            syslog(LOG_DEBUG, "%s", c.c_str());
         }
     }
     std::vector<std::string> lowercmdline = toLowercaseVector(cmdline);
     //TODO: filter single digit numbers.
     auto filtered_cmd = filterStrings(lowercmdline, ignoreMap["cmdline"]);
     if(!filtered_cmd.empty()) {
-        std::cout << "filtered cmdline:" << std::endl;
+        syslog(LOG_DEBUG, "filtered cmdline:");
         for(const auto& c: filtered_cmd) {
-            std::cout << c << std::endl;
+            syslog(LOG_DEBUG, "%s", c.c_str());
         }
     }
     removeDoubleDash(filtered_cmd);
     if(!filtered_cmd.empty()) {
-        std::cout << "filtered cmdline:" << std::endl;
+        syslog(LOG_DEBUG, "filtered cmdline:");
         for(const auto& c: filtered_cmd) {
-            std::cout << c << std::endl;
+            syslog(LOG_DEBUG, "%s", c.c_str());
         }
     }
 
@@ -233,17 +238,17 @@ int collect_and_store_data(pid_t pid, const char* config_file) {
     delimiters = ".";
     std::vector<std::string> comm = parse_proc_comm(pid, delimiters);
     if(!comm.empty()) {
-        std::cout << "comm:" << std::endl;
+        syslog(LOG_DEBUG, "comm:");
         for(const auto& c: comm) {
-            std::cout << c << std::endl;
+            syslog(LOG_DEBUG, "%s", c.c_str());
         }
     }
     std::vector<std::string> lowercomm = toLowercaseVector(comm);
     auto filtered_comm = filterStrings(lowercomm, ignoreMap["comm"]);
     if(!filtered_comm.empty()) {
-        std::cout << "filtered comm:" << std::endl;
+        syslog(LOG_DEBUG, "filtered comm:");
         for(const auto& c: filtered_comm) {
-            std::cout << c << std::endl;
+            syslog(LOG_DEBUG, "%s", c.c_str());
         }
     }
     normalize_numbers_inplace(filtered_comm);
@@ -252,17 +257,17 @@ int collect_and_store_data(pid_t pid, const char* config_file) {
     delimiters = "/()_:.";
     std::vector<std::string> maps = parse_proc_map_files(pid, delimiters);
     if(!maps.empty()) {
-        std::cout << "map_files:" << std::endl;
+        syslog(LOG_DEBUG, "map_files:");
         for(const auto& c: maps) {
-		    std::cout << c << std::endl;
+		    syslog(LOG_DEBUG, "%s", c.c_str());
         }
     }
     std::vector<std::string> lowermaps = toLowercaseVector(maps);
     auto filtered_maps = filterStrings(lowermaps, ignoreMap["map_files"]);
     if(!filtered_maps.empty()) {
-        std::cout << "filtered map_files:" << std::endl;
+        syslog(LOG_DEBUG, "filtered map_files:");
         for(const auto& c: filtered_maps) {
-			std::cout << c << std::endl;
+			syslog(LOG_DEBUG, "%s", c.c_str());
         }
     }
     normalize_numbers_inplace(filtered_maps);
@@ -271,17 +276,17 @@ int collect_and_store_data(pid_t pid, const char* config_file) {
     delimiters = ":[]/()=";
     std::vector<std::string> fds = parse_proc_fd(pid, delimiters);
     if(!fds.empty()) {
-        std::cout << "fds:" << std::endl;
+        syslog(LOG_DEBUG, "fds:");
         for(const auto& c: fds) {
-		    std::cout << c << std::endl;
+		    syslog(LOG_DEBUG, "%s", c.c_str());
         }
     }
     std::vector<std::string> lowerfds = toLowercaseVector(fds);
     auto filtered_fds = filterStrings(lowerfds, ignoreMap["fds"]);
     if(!filtered_fds.empty()) {
-        std::cout << "filtered fds:" << std::endl;
+        syslog(LOG_DEBUG, "filtered fds:");
         for(const auto& c: filtered_fds) {
-            std::cout << c << std::endl;
+            syslog(LOG_DEBUG, "%s", c.c_str());
         }
     }
 
@@ -289,41 +294,41 @@ int collect_and_store_data(pid_t pid, const char* config_file) {
     delimiters = "=@;!-._/:, ";
     std::vector<std::string> environ = parse_proc_environ(pid, delimiters);
     if (!environ.empty()) {
-        std::cout << "environ:" << std::endl;
+        syslog(LOG_DEBUG, "environ:");
         for (const auto& c : environ) {
-            std::cout << c << std::endl;
+            syslog(LOG_DEBUG, "%s", c.c_str());
         }
     }
     std::vector<std::string> lowerenviron = toLowercaseVector(environ);
     auto filtered_environ = filterStrings(lowerenviron, ignoreMap["environ"]);
     if (!filtered_environ.empty()) {
-        std::cout << "filtered environ:" << std::endl;
+        syslog(LOG_DEBUG, "filtered environ:");
         for (const auto& c : filtered_environ) {
-            std::cout << c << std::endl;
+            syslog(LOG_DEBUG, "%s", c.c_str());
         }
     }
     normalize_numbers_inplace(filtered_environ);
     if(!filtered_environ.empty()) {
-        std::cout << "filtered environ:" << std::endl;
+        syslog(LOG_DEBUG, "filtered environ:");
         for(const auto& c: filtered_environ) {
-            std::cout << c << std::endl;
+            syslog(LOG_DEBUG, "%s", c.c_str());
         }
     }
 
     delimiters = "/.";
     std::vector<std::string> exe = parse_proc_exe(pid, delimiters);
     if(!exe.empty()) {
-        std::cout << "exe" << std::endl;
+        syslog(LOG_DEBUG, "exe");
         for(const auto& c: exe) {
-            std::cout << c << std::endl;
+            syslog(LOG_DEBUG, "%s", c.c_str());
         } 
     }
     std::vector<std::string> lowerexe = toLowercaseVector(exe);
     auto filtered_exe = filterStrings(lowerexe, ignoreMap["exe"]);
     if(!filtered_exe.empty()) {
-        std::cout << "filtered exe:" << std::endl;
+        syslog(LOG_DEBUG, "filtered exe:");
         for(const auto& c: filtered_exe) {
-            std::cout << c << std::endl;
+            syslog(LOG_DEBUG, "%s", c.c_str());
         }
     }
     normalize_numbers_inplace(filtered_exe);
@@ -332,24 +337,24 @@ int collect_and_store_data(pid_t pid, const char* config_file) {
     /* Read log using journalctl */
     auto journalctl_logs = readJournalForPid(pid, LOG_LINES);
     if (journalctl_logs.empty()) {
-       std::cout << "No logs found for PID " << pid << "\n";
+       syslog(LOG_INFO, "No logs found for PID %d", pid);
     }
 
     // Ignore first 3 columns in journalctl logs
     auto extracted_Logs = extractProcessNameAndMessage(journalctl_logs);
-    std::cout << "Filtered log entries for PID " << pid << ":\n";
+    syslog(LOG_DEBUG, "Filtered log entries for PID %d:", pid);
 
     std::vector<std::string> logs;
 
     for (const auto& entry : extracted_Logs) {
-         std::cout << entry << "\n";
+         syslog(LOG_DEBUG, "%s", entry.c_str());
 
          // Tokenize the filtered log entry
           auto tokens = parse_proc_log(entry, delimiters);
 
-          std::cout << "logs" << std::endl;
+          syslog(LOG_DEBUG, "logs");
           for (const auto& c : tokens) {
-               std::cout << c << std::endl;
+               syslog(LOG_DEBUG, "%s", c.c_str());
                logs.push_back(c); // Accumulate tokens into logs
            }
     }
@@ -359,21 +364,21 @@ int collect_and_store_data(pid_t pid, const char* config_file) {
     // Now logs contains tokens from all entries
     auto filtered_logs = filterStrings(lowerlogs, ignoreMap["logs"]);
     if (!filtered_logs.empty()) {
-        std::cout << "filtered logs:" << std::endl;
+        syslog(LOG_DEBUG, "filtered logs:");
         for (const auto& c : filtered_logs) {
-            std::cout << c << std::endl;
+            syslog(LOG_DEBUG, "%s", c.c_str());
          }
    }    
 
    removeDoubleQuotes(filtered_logs);
 
-    std::string prunedFolder = "pruned";
-    std::string unfilteredFolder = "unfiltered";
+    std::string prunedFolder = PRUNED_DIR;
+    std::string unfilteredFolder = UNFILTERED_DIR;
 
     // Create pruned folder if it doesn't exist
     if (access(prunedFolder.c_str(), F_OK) != 0) {
        mkdir(prunedFolder.c_str(), 0755);
-       std::cout << "New folder created: " << prunedFolder << std::endl;
+       syslog(LOG_INFO, "New folder created: %s", prunedFolder.c_str());
     }
 
     // Create unfiltered folder if it doesn't exist
@@ -386,12 +391,14 @@ int collect_and_store_data(pid_t pid, const char* config_file) {
     }
 
     std::string fileName = processName + "_" + std::to_string(pid) + "_proc_info.csv";
-    std::cout << "FileName: " << fileName << std::endl;
+    syslog(LOG_INFO, "FileName: %s", fileName.c_str());
 
     // -------------------- UNFILTERED FILE --------------------
     std::string unfilteredFile = unfilteredFolder + "/" + fileName + "_unfiltered.csv";
     std::ofstream unfilteredCSV(unfilteredFile);
-    if (unfilteredCSV.is_open()) {
+    if (!unfilteredCSV.is_open()) {
+        syslog(LOG_ERR, "Failed to open unfiltered file: %s", unfilteredFile.c_str());
+    } else {
         unfilteredCSV << "PID,attr,cgroup,cmdline,comm,maps,fds,environ,exe,logs,cpu_time,threads,rss,vms,mem_vmpeak,mem_vmlck,mem_hwm,mem_vm_rss,mem_vmsize,mem_vmdata,mem_vmstk,mem_vm_exe,mem_vmlib,mem_vmpte,mem_vmpmd,mem_vmswap,mem_thread,read_bytes,write_bytes,tcp_tx,tcp_rx,udp_tx,udp_rx,gpu_busy,gpu_mem_allocated,display_on,active_displays,runtime_ns,rq_wait_ns,timeslices\n";
         unfilteredCSV << pid;
 
@@ -648,7 +655,9 @@ int collect_and_store_data(pid_t pid, const char* config_file) {
     // -------------------- FILTERED FILE --------------------
     std::string filteredFile = prunedFolder + "/" + fileName + "_filtered.csv";
     std::ofstream filteredCSV(filteredFile);
-    if (filteredCSV.is_open()) {
+    if (!filteredCSV.is_open()) {
+        syslog(LOG_ERR, "Failed to open filtered file: %s", filteredFile.c_str());
+    } else {
         filteredCSV << "PID,attr,cgroup,cmdline,comm,maps,fds,environ,exe,logs,cpu_time,threads,rss,vms,mem_vmpeak,mem_vmlck,mem_hwm,mem_vm_rss,mem_vmsize,mem_vmdata,mem_vmstk,mem_vm_exe,mem_vmlib,mem_vmpte,mem_vmpmd,mem_vmswap,mem_thread,read_bytes,write_bytes,tcp_tx,tcp_rx,udp_tx,udp_rx,gpu_busy,gpu_mem_allocated,display_on,active_displays,runtime_ns,rq_wait_ns,timeslices\n";
         filteredCSV << pid;
 

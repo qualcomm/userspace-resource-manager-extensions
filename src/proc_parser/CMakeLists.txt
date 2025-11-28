@@ -37,3 +37,6 @@ target_include_directories(parser
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
+
+install(TARGETS parser DESTINATION lib)
+install(FILES IgnoreTokens.txt DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/classifier)

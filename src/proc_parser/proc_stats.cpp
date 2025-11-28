@@ -1,4 +1,11 @@
 #include "proc_stats.h"
+#include <syslog.h>
+#include <fstream> // Added for std::ifstream
+#include <string> // Ensure string is included for std::string
+#include <fcntl.h> // For open
+#include <sys/ioctl.h> // For ioctl
+#include <cstring> // For strerror
+#include <errno.h> // For errno
 
 std::string readFile(const std::string &path) {
     std::ifstream file(path);
@@ -33,11 +40,11 @@ void FetchProcStats(int pid, ProcStats &stats) {
                     break;
                 case 14:
                     stats.utime = std::stol(token);
-		    std::cout << "mamtautime:" << stats.utime << std::endl;
+		            syslog(LOG_DEBUG, "utime:%f", stats.utime);
                     break;
                 case 15:
                     stats.stime = std::stol(token);
-		    std::cout << "mamtastime:" << stats.stime << std::endl;
+		            syslog(LOG_DEBUG, "stime:%f", stats.stime);
                     break;
                 case 18:
                     stats.priority = std::stoi(token);
@@ -99,56 +106,56 @@ void FetchMemStats(int pid, MemStats &memstats) {
         }
         else if (line.find("VmPeak:") == 0) {
             memstats.vm_peak = extractValue(line);
-            std::cout << "VmPeak:" << memstats.vm_peak << std::endl;
+            syslog(LOG_DEBUG, "VmPeak:%ld", memstats.vm_peak);
         }
         else if (line.find("VmLck:") == 0) {
             memstats.vm_lck = extractValue(line); // in kb
-            std::cout << "VmLck:" << memstats.vm_lck << std::endl;
+            syslog(LOG_DEBUG, "VmLck:%ld", memstats.vm_lck);
         }
         else if (line.find("VmHWM:") == 0) {
             memstats.vm_hwm = extractValue(line); // in kb
-            std::cout << "VmHWM:" << memstats.vm_hwm << std::endl;
+            syslog(LOG_DEBUG, "VmHWM:%ld", memstats.vm_hwm);
         }  
         else if (line.find("VmRSS:") == 0) {
             memstats.vm_rss = extractValue(line); // in kb
-            std::cout << "VmRSS:" << memstats.vm_rss << std::endl;
+            syslog(LOG_DEBUG, "VmRSS:%ld", memstats.vm_rss);
         }
         else if (line.find("VmSize:") == 0) {
             memstats.vm_size = extractValue(line); 
-            std::cout << "VmSize:" << memstats.vm_size << std::endl;
+            syslog(LOG_DEBUG, "VmSize:%ld", memstats.vm_size);
             
         }
         else if (line.find("VmData:") == 0) {
             memstats.vm_data = extractValue(line);
-            std::cout << "VmData:" << memstats.vm_data << std::endl;
+            syslog(LOG_DEBUG, "VmData:%ld", memstats.vm_data);
         }
         else if (line.find("VmStk:") == 0) {
             memstats.vm_stk = extractValue(line);
-            std::cout << "VmStk:" << memstats.vm_stk << std::endl;
+            syslog(LOG_DEBUG, "VmStk:%ld", memstats.vm_stk);
         }
         else if (line.find("VmExe:") == 0) {
             memstats.vm_exe = extractValue(line);
-            std::cout << "VmExe:" << memstats.vm_exe << std::endl;
+            syslog(LOG_DEBUG, "VmExe:%ld", memstats.vm_exe);
         }
         else if (line.find("VmLib:") == 0) {
             memstats.vm_lib = extractValue(line);
-            std::cout << "VmLib:" << memstats.vm_lib << std::endl;
+            syslog(LOG_DEBUG, "VmLib:%ld", memstats.vm_lib);
         }
         else if (line.find("VmPTE:") == 0) {
             memstats.vm_pte = extractValue(line);
-            std::cout << "VmPTE:" << memstats.vm_pte << std::endl;
+            syslog(LOG_DEBUG, "VmPTE:%ld", memstats.vm_pte);
         }
         else if (line.find("VmPMD:") == 0) {
             memstats.vm_pmd = extractValue(line);
-            std::cout << "VmPMD:" << memstats.vm_pmd << std::endl;
+            syslog(LOG_DEBUG, "VmPMD:%ld", memstats.vm_pmd);
         }
         else if (line.find("VmSwap:") == 0) {
             memstats.vm_swap = extractValue(line);
-            std::cout << "VmSwap:" << memstats.vm_swap << std::endl;
+            syslog(LOG_DEBUG, "VmSwap:%ld", memstats.vm_swap);
         }
         else if (line.find("Threads:") == 0) {
             memstats.threads = extractValue(line);
-            std::cout << "Threads:" << memstats.threads << std::endl;
+            syslog(LOG_DEBUG, "Threads:%ld", memstats.threads);
         }
     }
 }
@@ -160,7 +167,7 @@ void countFDTypes(int pid, int &fileCount, int &socketCount, int &pipeCount, int
     std::string fdPath = "/proc/" + std::to_string(pid) + "/fd";
     DIR *dir = opendir(fdPath.c_str());
     if (!dir) {
-        std::cerr << "Failed to open " << fdPath << "\n";
+        syslog(LOG_ERR, "Failed to open %s: %m", fdPath.c_str());
         return;
     }
 
@@ -370,7 +377,7 @@ std::string FetchGpuStats(GpuStats &gpustats) {
     const char *devicePath = "/dev/kgsl-3d0";
     int fd = open(devicePath, O_RDWR);
     if (fd < 0) {
-        std::cerr << "Failed to open " << devicePath << ": " << strerror(errno) << "\n";
+        syslog(LOG_ERR, "Failed to open %s: %m", devicePath);
         return "N/A";
     }
 
@@ -379,7 +386,7 @@ std::string FetchGpuStats(GpuStats &gpustats) {
 
     // IOCTL to query memory stats
     if (ioctl(fd, KGSL_IOC_QUERY_MEMSTAT, &memStats) < 0) {
-        std::cerr << "KGSL IOCTL failed: " << strerror(errno) << "\n";
+        syslog(LOG_ERR, "KGSL IOCTL failed: %m");
         close(fd);
         return "N/A";
     }
@@ -392,7 +399,7 @@ std::string FetchGpuStats(GpuStats &gpustats) {
     memset(&busy, 0, sizeof(busy));
 
     if (ioctl(fd, KGSL_IOC_GPU_BUSY, &busy) < 0) {
-        std::cerr << "KGSL IOCTL failed: " << strerror(errno) << "\n";
+        syslog(LOG_ERR, "KGSL IOCTL failed: %m");
         close(fd);
         return "N/A";
     }

@@ -18,8 +18,8 @@
 #include <dlfcn.h>
 #include <unordered_map>
 //#include <ResourceTuner/ResourceTunerAPIs.h>
+#include <syslog.h> // Include syslog for logging
 
-#include <iostream>
 #include <fstream>
 #include <string>
 #include <dirent.h>
@@ -52,7 +52,7 @@ static int nl_connect()
 
     nl_sock = socket(PF_NETLINK, SOCK_DGRAM, NETLINK_CONNECTOR);
     if (nl_sock == -1) {
-        perror("socket");
+        syslog(LOG_ERR, "socket: %m");
         return -1;
     }
 
@@ -62,7 +62,7 @@ static int nl_connect()
 
     rc = bind(nl_sock, (struct sockaddr *)&sa_nl, sizeof(sa_nl));
     if (rc == -1) {
-        perror("bind");
+        syslog(LOG_ERR, "bind: %m");
         close(nl_sock);
         return -1;
     }
@@ -97,7 +97,7 @@ static int set_proc_ev_listen(int nl_sock, bool enable)
 
     rc = send(nl_sock, &nlcn_msg, sizeof(nlcn_msg), 0);
     if (rc == -1) {
-        perror("netlink send");
+        syslog(LOG_ERR, "netlink send: %m");
         return -1;
     }
 
@@ -123,8 +123,8 @@ static void remove_actions(int process_pid, int process_tgid,
 static void classify_process(int process_pid, int process_tgid,
                              std::unordered_map <int, int> &pid_perf_handle)
 {
-    printf("Collecting data for PID:%d\n", process_pid);
-    collect_and_store_data(process_pid, "src/proc_parser/IgnoreTokens.txt");
+    syslog(LOG_INFO, "Collecting data for PID:%d", process_pid);
+    collect_and_store_data(process_pid, "/etc/classifier/IgnoreTokens.txt");
 }
 
 /*
@@ -150,22 +150,22 @@ static int handle_proc_ev(int nl_sock)
             return 0;
         } else if (rc == -1) {
             if (errno == EINTR) continue;
-            //perror("netlink recv");
+            syslog(LOG_ERR, "netlink recv: %m");
             return -1;
         }
         switch (nlcn_msg.proc_ev.what) {
             case proc_event::PROC_EVENT_NONE:
-                // printf("set mcast listen ok\n");
+                // syslog(LOG_INFO, "set mcast listen ok");
                 break;
             case proc_event::PROC_EVENT_FORK:
-                printf("fork: parent tid=%d pid=%d -> child tid=%d pid=%d\n",
+                syslog(LOG_INFO, "fork: parent tid=%d pid=%d -> child tid=%d pid=%d",
                        nlcn_msg.proc_ev.event_data.fork.parent_pid,
                        nlcn_msg.proc_ev.event_data.fork.parent_tgid,
                        nlcn_msg.proc_ev.event_data.fork.child_pid,
                        nlcn_msg.proc_ev.event_data.fork.child_tgid);
                 break;
             case proc_event::PROC_EVENT_EXEC:
-                printf("exec: tid=%d pid=%d\n",
+                syslog(LOG_INFO, "exec: tid=%d pid=%d",
                        nlcn_msg.proc_ev.event_data.exec.process_pid,
                        nlcn_msg.proc_ev.event_data.exec.process_tgid);
 
@@ -175,21 +175,21 @@ static int handle_proc_ev(int nl_sock)
                 //Move the Process into respective cg using tuneResource()
                 break;
             case proc_event::PROC_EVENT_UID:
-                printf("uid change: tid=%d pid=%d from %d to %d\n",
+                syslog(LOG_INFO, "uid change: tid=%d pid=%d from %d to %d",
                        nlcn_msg.proc_ev.event_data.id.process_pid,
                        nlcn_msg.proc_ev.event_data.id.process_tgid,
                        nlcn_msg.proc_ev.event_data.id.r.ruid,
                        nlcn_msg.proc_ev.event_data.id.e.euid);
                 break;
             case proc_event::PROC_EVENT_GID:
-                printf("gid change: tid=%d pid=%d from %d to %d\n",
+                syslog(LOG_INFO, "gid change: tid=%d pid=%d from %d to %d",
                        nlcn_msg.proc_ev.event_data.id.process_pid,
                        nlcn_msg.proc_ev.event_data.id.process_tgid,
                        nlcn_msg.proc_ev.event_data.id.r.rgid,
                        nlcn_msg.proc_ev.event_data.id.e.egid);
                 break;
             case proc_event::PROC_EVENT_EXIT:
-                printf("exit: tid=%d pid=%d exit_code=%d\n",
+                syslog(LOG_INFO, "exit: tid=%d pid=%d exit_code=%d",
                        nlcn_msg.proc_ev.event_data.exit.process_pid,
                        nlcn_msg.proc_ev.event_data.exit.process_tgid,
                        nlcn_msg.proc_ev.event_data.exit.exit_code);
@@ -198,7 +198,7 @@ static int handle_proc_ev(int nl_sock)
                                pid_perf_handle);
                 break;
             default:
-                printf("unhandled proc event\n");
+                syslog(LOG_WARNING, "unhandled proc event");
                 break;
         }
     }
@@ -216,6 +216,7 @@ int main(int argc, const char *argv[])
     int nl_sock;
     int rc = EXIT_SUCCESS;
 
+    openlog("classifier", LOG_PID | LOG_CONS | LOG_NDELAY, LOG_DAEMON); // Initialize syslog
     initialize();
     //signal(SIGINT, &on_sigint);
     //siginterrupt(SIGINT, true);
@@ -240,5 +241,6 @@ int main(int argc, const char *argv[])
 
 out:
     close(nl_sock);
+    closelog(); // Close syslog
     exit(rc);
 }
