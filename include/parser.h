@@ -9,7 +9,6 @@
 #include <cstdint>
 #include <cctype>
 
-
 #define LOG_LINES 20
 
 //lables for Ignore strings.

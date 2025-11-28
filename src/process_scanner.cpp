@@ -1,9 +1,9 @@
 #include <unistd.h>
 #include <syslog.h>
-#include "parser.h"
+#include <parser.h>
+#include <proc_stats.h>  // For system stats
 #include <fstream>
 #include <sys/stat.h>
-#include "proc_stats.h"  // For system stats
 
 #define PRUNED_DIR "/var/cache/pruned"
 #define UNFILTERED_DIR "/var/cache/unfiltered"
@@ -90,6 +90,7 @@ bool isValidPidViaProc(pid_t pid) {
 }
 
 int collect_and_store_data(pid_t pid, const char* config_file) {
+    setlogmask(LOG_UPTO(LOG_INFO)); // Disable DEBUG prints
     if(!isValidPidViaProc(pid)) {
         syslog(LOG_ERR, "PID %d does not exist in /proc.", pid);
         return 1;

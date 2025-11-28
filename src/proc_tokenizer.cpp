@@ -1,7 +1,7 @@
-#include "parser.h"
+#include <parser.h>
 #include <dirent.h>
 #include <fstream>
-#include <syslog.h>
+#include <syslog.h> // Include for syslog
 
 static std::string removeDatesAndTimesFromToken(const std::string& input) {
     std::string out = input;
@@ -32,7 +32,6 @@ static std::string removeDatesAndTimesFromToken(const std::string& input) {
     return out;
 }
 
-
 bool isAllSpecialChars(const std::string& token) {
     if (token.empty()) return false; // let empty be handled elsewhere
     for (size_t i = 0; i < token.size(); ++i) {
@@ -61,7 +60,6 @@ static bool isSingleCharToken(const std::string& s) {
     return s.size() == 1;
 }
 
-
 bool hasDigit(const std::string& str) {
     std::regex digitRegex("[0-9]");
     return std::regex_search(str, digitRegex);
@@ -71,15 +69,12 @@ bool isDigitsOnly(const std::string& str) {
     return !str.empty() && std::all_of(str.begin(), str.end(), ::isdigit);
 }
 
-
 // Trim leading and trailing whitespace
 std::string trim(const std::string& s) {
     size_t start = s.find_first_not_of(" \t\r\n");
     size_t end = s.find_last_not_of(" \t\r\n");
     return (start == std::string::npos) ? "" : s.substr(start, end - start + 1);
 }
-
-
 
 std::string normalizeLibraryName(const std::string& s) {
     std::string result = trim(s);
@@ -101,7 +96,7 @@ std::string normalizeLibraryName(const std::string& s) {
         result.pop_back();
     }
 
-    // ✅ Do NOT strip "lib" prefix now
+    // Do NOT strip "lib" prefix now
     result = trim(result);
 
     // Drop meaningless tokens
@@ -109,7 +104,6 @@ std::string normalizeLibraryName(const std::string& s) {
 
     return result;
 }
-
 
 static std::string escapeForCharClass(const std::string& d) {
     std::string out;
@@ -128,8 +122,6 @@ static std::string escapeForCharClass(const std::string& d) {
     }
     return out;
 }
-
-
 
 /* Function to split a string using multiple delimiters
    e.g., "[,;| ]" for delimiters , ; | and space
@@ -188,7 +180,6 @@ std::unordered_map<std::string, std::unordered_set<std::string>> loadIgnoreMap(c
     return ignoreMap;
 }
 
-
 //filter process name and log
 std::vector<std::string> extractProcessNameAndMessage(const std::vector<std::string>& journalLines) {
     std::vector<std::string> filtered;
@@ -206,8 +197,6 @@ std::vector<std::string> extractProcessNameAndMessage(const std::vector<std::str
     return filtered;
 }
 
-
-
 // Filter out strings present in the ignore set
 std::vector<std::string> filterStrings(const std::vector<std::string>& input, const std::unordered_set<std::string>& ignoreSet) {
     std::vector<std::string> result;
@@ -218,12 +207,12 @@ std::vector<std::string> filterStrings(const std::vector<std::string>& input, co
     return result;
 }
 
-
 std::vector<std::string> parse_proc_attr_current(const uint32_t pid, const std::string& delimiters) {
     std::vector<std::string> context_parts;
     std::string path = "/proc/" + std::to_string(pid) + "/attr/current";
     std::ifstream infile(path);
     if (!infile.is_open()) {
+        syslog(LOG_ERR, "Failed to open %s", path.c_str());
         return context_parts;
     }
 
@@ -246,6 +235,7 @@ std::vector<std::string> parse_proc_cgroup(pid_t pid, const std::string& delimit
     std::string path = "/proc/" + std::to_string(pid) + "/cgroup";
     std::ifstream infile(path);
     if (!infile.is_open()) {
+        syslog(LOG_ERR, "Failed to open %s", path.c_str());
         return tokens;
     }
 
@@ -258,12 +248,12 @@ std::vector<std::string> parse_proc_cgroup(pid_t pid, const std::string& delimit
     return tokens;
 }
 
-
 std::vector<std::string> parse_proc_cmdline(pid_t pid, const std::string& delimiters) {
     std::vector<std::string> tokens;
     std::string path = "/proc/" + std::to_string(pid) + "/cmdline";
     std::ifstream infile(path, std::ios::binary);
     if (!infile.is_open()) {
+        syslog(LOG_ERR, "Failed to open %s", path.c_str());
         return tokens;
     }
 
@@ -295,46 +285,12 @@ std::vector<std::string> parse_proc_cmdline(pid_t pid, const std::string& delimi
     return tokens;
 }
 
-
-/*
-std::vector<std::string> parse_proc_cmdline(pid_t pid, const std::string& delimiters) {
-    std::vector<std::string> tokens;
-    std::string path = "/proc/" + std::to_string(pid) + "/cmdline";
-    std::ifstream infile(path, std::ios::binary);
-    if (!infile.is_open()) {
-        return tokens;
-    }
-
-    std::string content((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
-    infile.close();
-
-    // First split by null character
-    size_t start = 0;
-    for (size_t i = 0; i < content.size(); ++i) {
-        if (content[i] == '\0') {
-            if (i > start) {
-                std::string arg = content.substr(start, i - start);
-                // Then split each argument using your splitString function
-                // Directly filter and insert tokens without digits
-                for (const auto& part : splitString(arg, delimiters)) {
-                    if (!hasDigit(part)) {
-                        tokens.push_back(part);
-                    }
-                }
-            }
-            start = i + 1;
-        }
-    }
-
-    return tokens;
-}
-*/
-
 std::vector<std::string> parse_proc_comm(pid_t pid, const std::string& delimiters) {
     std::vector<std::string> tokens;
     std::string path = "/proc/" + std::to_string(pid) + "/comm";
     std::ifstream infile(path);
     if (!infile.is_open()) {
+        syslog(LOG_ERR, "Failed to open %s", path.c_str());
         return tokens;
     }
 
@@ -354,56 +310,12 @@ std::vector<std::string> parse_proc_comm(pid_t pid, const std::string& delimiter
     return tokens;
 }
 
-
-/*
 std::vector<std::string> parse_proc_map_files(pid_t pid, const std::string& delimiters) {
     std::vector<std::string> results;
     std::string dir_path = "/proc/" + std::to_string(pid) + "/map_files";
     DIR* dir = opendir(dir_path.c_str());
     if (!dir) {
-        // Handle error: directory not found or cannot be opened
-        return results;
-    }
-
-    struct dirent* entry;
-    char link_target[PATH_MAX];
-    while ((entry = readdir(dir)) != nullptr) {
-        // Skip . and ..
-        if (entry->d_name[0] == '.') continue;
-
-        std::string link_path = dir_path + "/" + entry->d_name;
-        ssize_t len = readlink(link_path.c_str(), link_target, sizeof(link_target) - 1);
-        if (len != -1) {
-            link_target[len] = '\0';
-            std::string target_str(link_target);
-            std::vector<std::string> tokens = splitString(target_str, delimiters);
-
-            for (const auto& tok : tokens) {
-                std::string simplified = tok;
-                size_t pos = simplified.find(".so");
-                if (pos != std::string::npos) {
-                    pos += 3; // Move past ".so"
-                    if (pos < simplified.size() && simplified[pos] == '.') {
-                        simplified = simplified.substr(0, pos); // Keep only up to ".so"
-                    }
-                }
-
-                if (!simplified.empty() && std::find(results.begin(), results.end(), simplified) == results.end()) {
-                    results.push_back(simplified);
-                }
-            }
-        }
-    }
-    closedir(dir);
-    return results;
-}
-*/
-
-std::vector<std::string> parse_proc_map_files(pid_t pid, const std::string& delimiters) {
-    std::vector<std::string> results;
-    std::string dir_path = "/proc/" + std::to_string(pid) + "/map_files";
-    DIR* dir = opendir(dir_path.c_str());
-    if (!dir) {
+        syslog(LOG_ERR, "Failed to open %s", dir_path.c_str());
         return results;
     }
 
@@ -420,13 +332,10 @@ std::vector<std::string> parse_proc_map_files(pid_t pid, const std::string& deli
 
             for (const auto& tok : splitString(target_str, delimiters)) {
                  
-                // >>> Minimal change: normalize token to remove ".so" and version
                 std::string simplified = normalizeLibraryName(tok);
-              
  
                 // Skip empty or single-character tokens
                 if (simplified.empty() || simplified.size() <= 1) continue;
-
                  
                 // Skip if token is fully numeric (using isDigitsOnly)
                 if (isDigitsOnly(simplified)) continue;
@@ -445,14 +354,13 @@ std::vector<std::string> parse_proc_map_files(pid_t pid, const std::string& deli
     return results;
 }
 
-
  // New function to parse /proc/<pid>/fd entries and extract relevant tokens
 std::vector<std::string> parse_proc_fd(pid_t pid, const std::string& delimiters) {
     std::vector<std::string> results;
     std::string dir_path = "/proc/" + std::to_string(pid) + "/fd";
     DIR* dir = opendir(dir_path.c_str());
     if (!dir) {
-        // Unable to open fd directory
+        syslog(LOG_ERR, "Unable to open fd directory %s", dir_path.c_str());
         return results;
     }
 
@@ -526,7 +434,6 @@ std::vector<std::string> parse_proc_environ(pid_t pid, const std::string& delimi
     return out;
 }
 
-
 std::vector<std::string> parse_proc_exe(pid_t pid, const std::string& delimiters) {
     std::vector<std::string> out;
     std::string path = "/proc/" + std::to_string(pid) + "/exe";
@@ -541,6 +448,8 @@ std::vector<std::string> parse_proc_exe(pid_t pid, const std::string& delimiters
                 out.push_back(part);
             }
         }
+    } else {
+        syslog(LOG_ERR, "Failed to readlink %s for PID %d", path.c_str(), pid);
     }
 
     return out;
@@ -556,6 +465,9 @@ std::vector<std::string> readJournalForPid(pid_t pid, uint32_t numLines) {
     if (commFile.is_open()) {
         std::getline(commFile, comm);
         commFile.close();
+    } else {
+        syslog(LOG_ERR, "Failed to open /proc/%d/comm", pid);
+        return lines;
     }
 
     std::string cmd = "journalctl --no-pager -n " + std::to_string(numLines) +
@@ -582,32 +494,6 @@ std::vector<std::string> readJournalForPid(pid_t pid, uint32_t numLines) {
 
     return lines;
 }
-
-/*
-std::vector<std::string> parse_proc_log(const std::string& input, const std::string& delimiters) {
-    std::vector<std::string> tokens;
-    std::string token;
-    std::unordered_set<char> delimSet(delimiters.begin(), delimiters.end());
-
-    for (char ch : input) {
-        if (delimSet.count(ch)) {
-            if (!token.empty() && !hasDigit(token)) {
-                tokens.push_back(token);
-            }
-            token.clear();
-        } else {
-            token += ch;
-        }
-    }
-
-    if (!token.empty() && !hasDigit(token)) {
-        tokens.push_back(token);
-    }
-
-    return tokens;
-}
-*/
-
 
 std::vector<std::string> parse_proc_log(const std::string& input, const std::string& delimiters) {
     std::vector<std::string> tokens;

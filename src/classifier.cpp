@@ -6,8 +6,8 @@
 #include <linux/netlink.h>
 //#include <linux/connector.h>
 //#include <linux/cn_proc.h>
-#include "include/connector.h"
-#include "include/cn_proc.h"
+#include "connector.h"
+#include "cn_proc.h"
 #include <signal.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -27,7 +27,7 @@
 #include <cstdlib>
 #include <vector>
 #include <algorithm>
-#include "proc_parser/parser.h"
+#include "parser.h"
 
 #define SIGNAL_CAM_PREVIEW 0x000d0002
 
