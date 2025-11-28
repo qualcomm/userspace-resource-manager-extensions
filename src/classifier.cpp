@@ -17,7 +17,7 @@
 #include <stdio.h>
 #include <dlfcn.h>
 #include <unordered_map>
-#include <ResourceTuner/ResourceTunerAPIs.h>
+//#include <ResourceTuner/ResourceTunerAPIs.h>
 
 #include <iostream>
 #include <fstream>
@@ -27,6 +27,7 @@
 #include <cstdlib>
 #include <vector>
 #include <algorithm>
+#include "proc_parser/parser.h"
 
 #define SIGNAL_CAM_PREVIEW 0x000d0002
 
@@ -342,82 +343,8 @@ bool checkProcessCommSubstring(int pid, const std::string& target) {
 static void classify_process(int process_pid, int process_tgid,
                              std::unordered_map <int, int> &pid_perf_handle)
 {
-    /* Current process classification for encode/decoder/recorder
-     * 1. As there are limited number of encoder/decoder, hardly
-     *    few, they can be cached based on their names and can be
-     *    classified according to these rules
-     * 2. For any recorder use case, the number of threads increases
-     *    in cam-server thread and also memory allocation increases too
-     *    Further, if memory allocation can be used to track the
-     *    decoding density like what is the current decoding resolution
-     *    decoding bit depth etc.
-     * 3. Once the process creation is done and usecase is determined,
-     *    that process can be added to a particular cgroup which
-     *    effective tuning parameters.
-     * 4. What to use for putting the processes to a particular cgroup,
-     *    libcg, or we may create our own libqg which will put the
-     *    process into already created cgroup task file.
-     */
-    /* Even though kerne supports unlimited cmdline length, we will do
-     * limited parsing for our use case.
-     */
-    char cmdline[1024];
-    snprintf(cmdline, 1024, "/proc/%d/cmdline", process_pid);
-    FILE *fp = fopen(cmdline, "r");
-    std::string target = "gst-camera-per";
-    if (fp) {
-        char *buf = NULL;
-        size_t sz = 0;
-        int len = 0;
-        while ((len = getline(&buf, &sz, fp)) > 0) {
-            sanitize_nulls(buf, len);
-            //printf("PID:%d cmdline:%s\n", process_pid, buf);
-            printf("PID:%d \n", process_pid);
-            enum USECASE type = find_usecase(buf, sz);
-            if (type == UNDETERMINED) {
-                if (checkProcessCommSubstring(process_pid, target)) {
-                    std::cout << "gst-camera-per-port : encode" << std::endl;
-                    type = ENCODE_MANY;
-                } else {
-                    std::cout << "No match." << std::endl;
-                    type = UNDETERMINED;
-                }
-            }
-
-            if (type != UNDETERMINED) {
-                // printf("type = %d\n", (int)type);
-                /* Type is encode or decode */
-                pid_t cam_pid = getProcessPID("cam-server");
-                if (cam_pid > 0 ) {
-                    printf("cam-server PID: %ld", cam_pid);
-                } else {
-                    printf("Could not find cam-server PID: %ld", cam_pid);
-                }
-
-                pid_t kswap_pid = getProcessPID_COMM("kswapd0");
-                if (kswap_pid > 0 ) {
-                    printf("Kswap PID: %ld", kswap_pid);
-                } else {
-                    printf("Could not find kswap PID: %ld", kswap_pid);
-                }
-
-                uint32_t* list = (uint32_t*) calloc(3, sizeof(uint32_t));
-                list[0] = process_pid;
-                list[1] = cam_pid;
-                list[2] = kswap_pid;
-
-                int64_t handle = tuneSignal(SIGNAL_CAM_PREVIEW, 0, 0, "", "", 3, list);
-                if (handle > 0) {
-                    printf(" tuneSignal handle:%d gstPID:%d camPID:%d kswapPID:%d \n", handle, process_pid, cam_pid, kswap_pid);
-                    pid_perf_handle[process_pid] = handle;
-                } else {
-                    printf(" tuneSignal handle:%d gstPID:%d camPID:%d kswapPID:%d \n", handle, process_pid, cam_pid, kswap_pid);
-                }
-            }
-        }
-    } else {
-        printf("Failed to open file:%d\n", process_pid);
-    }
+    printf("Collecting data for PID:%d\n", process_pid);
+    collect_and_store_data(process_pid, "src/proc_parser/IgnoreTokens.txt");
 }
 
 /*
