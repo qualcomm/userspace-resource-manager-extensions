@@ -65,10 +65,6 @@ bool hasDigit(const std::string& str) {
     return std::regex_search(str, digitRegex);
 }
 
-bool isHexOnly(const std::string& str) {
-    return !str.empty() && std::all_of(str.begin(), str.end(), ::isxdigit);
-}
-
 bool isDigitsOnly(const std::string& str) {
     return !str.empty() && std::all_of(str.begin(), str.end(), ::isdigit);
 }
