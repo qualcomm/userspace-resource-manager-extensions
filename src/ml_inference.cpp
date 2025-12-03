@@ -87,24 +87,35 @@ float string_to_float(const std::string& s) {
 }
 
 MLInference::MLInference(const std::string& ft_model_path, const std::string& lgbm_model_path, const std::string& meta_path) {
-    std::cout << "Loading fastText model from: " << ft_model_path << std::endl;
-    ft_model_.loadModel(ft_model_path); // Assuming fastText C++ API has loadModel method
-
-    std::cout << "Loading LightGBM model from: " << lgbm_model_path << std::endl;
-    int num_iterations;
-    lgbm_booster_ = std::unique_ptr<LightGBM::Boosting>(LightGBM::Boosting::CreateBoosting("gbdt", lgbm_model_path.c_str()));
-    lgbm_booster_->LoadModelFromString(lgbm_model_path.c_str(), lgbm_model_path.length());
-
-
     std::cout << "Parsing meta.json from: " << meta_path << std::endl;
     auto meta_data = json_parser::parse_meta(meta_path);
     classes_ = meta_data["classes"];
     text_cols_ = meta_data["text_cols"];
     numeric_cols_ = meta_data["numeric_cols"];
-    // embedding_dim_ is not directly in meta.json yet, but can be inferred from fastText model or added to meta.json
-    // For now, let's hardcode based on notebook if needed, or get from ft_model_
+
+    std::cout << "Loading fastText model from: " << ft_model_path << std::endl;
+    ft_model_.loadModel(ft_model_path); // Assuming fastText C++ API has loadModel method
     embedding_dim_ = ft_model_.getDimension();
     std::cout << "fastText embedding dimension: " << embedding_dim_ << std::endl;
+
+    std::cout << "Loading LightGBM model from: " << lgbm_model_path << std::endl;
+
+    // Read LightGBM model file content into a string
+    std::ifstream lgbm_file(lgbm_model_path);
+    if (!lgbm_file.is_open()) {
+        throw std::runtime_error("Could not open LightGBM model file: " + lgbm_model_path);
+    }
+    std::stringstream lgbm_buffer;
+    lgbm_buffer << lgbm_file.rdbuf();
+    std::string lgbm_model_content = lgbm_buffer.str();
+
+    // Construct parameter string including num_class
+    std::string lgbm_params = "num_class=" + std::to_string(classes_.size());
+
+    // Use the CreateBoosting overload that takes booster_type, parameters, and model_str
+    lgbm_booster_ = std::unique_ptr<LightGBM::Boosting>(
+        LightGBM::Boosting::CreateBoosting("gbdt", lgbm_params.c_str(), lgbm_model_content.c_str())
+    );
 }
 
 MLInference::~MLInference() {
