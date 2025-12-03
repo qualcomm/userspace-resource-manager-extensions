@@ -29,14 +29,16 @@
 #include <algorithm>
 #include "parser.h"
 #include "ml_inference.h" // Include our new ML inference header
-#include "proc_metrics.h" // Include proc_metrics.h for fetching detailed process statistics
+#include "proc_stats.h"
+//#include "proc_metrics.h" // Include proc_metrics.h for fetching detailed process statistics
 
 #define SIGNAL_CAM_PREVIEW 0x000d0002
+#define CLASSIFIER_CONF_DIR "/etc/classifier/"
 
 // Define paths to ML artifacts
-const std::string FT_MODEL_PATH = "files/contextual-classifier/artifacts/fasttext_model.bin";
-const std::string LGBM_MODEL_PATH = "files/contextual-classifier/artifacts/lgbm_model.txt";
-const std::string META_PATH = "files/contextual-classifier/artifacts/meta.json";
+const std::string FT_MODEL_PATH = CLASSIFIER_CONF_DIR "fasttext_model.bin";
+const std::string LGBM_MODEL_PATH = CLASSIFIER_CONF_DIR "lgbm_model.txt";
+const std::string META_PATH = CLASSIFIER_CONF_DIR "meta.json";
 
 // Helper to check if a string contains only digits
 bool is_digits(const std::string& str) {

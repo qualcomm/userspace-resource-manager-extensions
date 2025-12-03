@@ -1,5 +1,76 @@
 #include "ml_inference.h"
 #include <iostream>
+#include <sstream>
+#include <fstream> // Add this include for std::ifstream
+#include <algorithm> // Add this include for std::transform
+#include <stdexcept> // Add this include for std::runtime_error
+
+// Simple JSON parser for meta.json (can be replaced by a proper library like nlohmann/json)
+namespace json_parser {
+    std::map<std::string, std::vector<std::string>> parse_meta(const std::string& filepath) {
+        std::map<std::string, std::vector<std::string>> meta_data;
+        std::ifstream ifs(filepath);
+        if (!ifs.is_open()) {
+            throw std::runtime_error("Could not open meta.json file: " + filepath);
+        }
+        std::string line;
+        std::string content;
+        while (std::getline(ifs, line)) {
+            content += line;
+        }
+
+        // Basic parsing for specific keys. This is very fragile and should be replaced by a proper JSON library.
+        // For example, to parse "classes": ["Game", "Browser", "Other"]
+        size_t pos = content.find("\"classes\":");
+        if (pos != std::string::npos) {
+            size_t start = content.find("[", pos);
+            size_t end = content.find("]", start);
+            std::string classes_str = content.substr(start + 1, end - start - 1);
+            std::stringstream ss(classes_str);
+            std::string segment;
+            while(std::getline(ss, segment, ',')) {
+                segment.erase(0, segment.find_first_not_of(" \t\n\r\""));
+                segment.erase(segment.find_last_not_of(" \t\n\r\"") + 1);
+                if (!segment.empty()) {
+                    meta_data["classes"].push_back(segment);
+                }
+            }
+        }
+
+        pos = content.find("\"text_cols\":");
+        if (pos != std::string::npos) {
+            size_t start = content.find("[", pos);
+            size_t end = content.find("]", start);
+            std::string cols_str = content.substr(start + 1, end - start - 1);
+            std::stringstream ss(cols_str);
+            std::string segment;
+            while(std::getline(ss, segment, ',')) {
+                segment.erase(0, segment.find_first_not_of(" \t\n\r\""));
+                segment.erase(segment.find_last_not_of(" \t\n\r\"") + 1);
+                if (!segment.empty()) {
+                    meta_data["text_cols"].push_back(segment);
+                }
+            }
+        }
+
+        pos = content.find("\"numeric_cols\":");
+        if (pos != std::string::npos) {
+            size_t start = content.find("[", pos);
+            size_t end = content.find("]", start);
+            std::string cols_str = content.substr(start + 1, end - start - 1);
+            std::stringstream ss(cols_str);
+            std::string segment;
+            while(std::getline(ss, segment, ',')) {
+                segment.erase(0, segment.find_first_not_of(" \t\n\r\""));
+                segment.erase(segment.find_last_not_of(" \t\n\r\"") + 1);
+                if (!segment.empty()) {
+                    meta_data["numeric_cols"].push_back(segment);
+                }
+            }
+        }
+        return meta_data;
+    }
+}
 
 // Placeholder for actual fastText and LightGBM implementation
 // This is a minimal implementation to satisfy the compilation for now.
@@ -22,7 +93,7 @@ MLInference::MLInference(const std::string& ft_model_path, const std::string& lg
     std::cout << "Loading LightGBM model from: " << lgbm_model_path << std::endl;
     int num_iterations;
     lgbm_booster_ = std::unique_ptr<LightGBM::Boosting>(LightGBM::Boosting::CreateBoosting("gbdt", lgbm_model_path.c_str()));
-    lgbm_booster_->LoadModelFromString(lgbm_model_path.c_str(), &num_iterations);
+    lgbm_booster_->LoadModelFromString(lgbm_model_path.c_str(), lgbm_model_path.length());
 
 
     std::cout << "Parsing meta.json from: " << meta_path << std::endl;
@@ -79,10 +150,11 @@ std::vector<double> MLInference::get_feature_vector(const std::map<std::string, 
     }
     
     if (!concatenated_text.empty()) {
-        std::vector<float> ft_embedding(embedding_dim_);
-        ft_model_.getSentenceVector(concatenated_text, ft_embedding);
-        for (float val : ft_embedding) {
-            feature_vector.push_back(static_cast<double>(val));
+        fasttext::Vector ft_embedding_vector(embedding_dim_);
+        std::istringstream iss(concatenated_text);
+        ft_model_.getSentenceVector(iss, ft_embedding_vector);
+        for (int i = 0; i < embedding_dim_; ++i) {
+            feature_vector.push_back(static_cast<double>(ft_embedding_vector[i]));
         }
     } else {
         // If no text, fill with zeros for embedding
@@ -99,7 +171,7 @@ std::string MLInference::predict(const std::map<std::string, std::string>& raw_d
     
     // LightGBM prediction
     std::vector<double> result(classes_.size());
-    lgbm_booster_->Predict(features.data(), &result[0], classes_.size());
+    lgbm_booster_->Predict(features.data(), &result[0], nullptr);
 
     // Get the predicted class index
     int predicted_class_idx = 0;

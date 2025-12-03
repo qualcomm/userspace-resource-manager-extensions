@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.15)
 # Main project for the classifier daemon
 project(classifier_daemon LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
@@ -60,8 +60,8 @@ add_library(ml_inference_lib STATIC
 
 target_link_libraries(ml_inference_lib
     PRIVATE
-        ${LightGBM_LIBRARIES}
-        ${fastText_LIBRARIES}
+        _lightgbm # Corrected library name
+        fasttext
 )
 
 target_include_directories(ml_inference_lib
@@ -70,11 +70,14 @@ target_include_directories(ml_inference_lib
 )
 
 # Link classifier with parser, dl, and ml_inference_lib
-target_link_libraries(classifier dl parser ml_inference_lib)
+target_link_libraries(classifier dl parser ml_inference_lib _lightgbm fasttext) # Corrected library name
 
 # Installation rules
 install(TARGETS parser DESTINATION lib)
 install(TARGETS classifier RUNTIME DESTINATION bin)
 install(TARGETS ml_inference_lib DESTINATION lib)
 install(FILES Configs/IgnoreTokens.txt DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/classifier)
+install(FILES ${CMAKE_SOURCE_DIR}/artifacts/fasttext_model.bin DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/classifier)
+install(FILES ${CMAKE_SOURCE_DIR}/artifacts/lgbm_model.txt DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/classifier)
+install(FILES ${CMAKE_SOURCE_DIR}/artifacts/meta.json DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/classifier)
 install(FILES ${CMAKE_SOURCE_DIR}/Services/classifier.service DESTINATION ${CMAKE_INSTALL_LIBDIR}/systemd/system/)

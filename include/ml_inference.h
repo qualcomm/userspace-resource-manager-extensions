@@ -17,74 +17,12 @@
 #include "LightGBM/objective_function.h"
 #include "LightGBM/config.h"
 #include "LightGBM/dataset.h"
-#include "LightGBM/metadata.h"
+//#include "LightGBM/metadata.h"
+#include "LightGBM/meta.h"
 
 
-// Simple JSON parser for meta.json (can be replaced by a proper library like nlohmann/json)
 namespace json_parser {
-    std::map<std::string, std::vector<std::string>> parse_meta(const std::string& filepath) {
-        std::map<std::string, std::vector<std::string>> meta_data;
-        std::ifstream ifs(filepath);
-        if (!ifs.is_open()) {
-            throw std::runtime_error("Could not open meta.json file: " + filepath);
-        }
-        std::string line;
-        std::string content;
-        while (std::getline(ifs, line)) {
-            content += line;
-        }
-
-        // Basic parsing for specific keys. This is very fragile and should be replaced by a proper JSON library.
-        // For example, to parse "classes": ["Game", "Browser", "Other"]
-        size_t pos = content.find("\"classes\":");
-        if (pos != std::string::npos) {
-            size_t start = content.find("[", pos);
-            size_t end = content.find("]", start);
-            std::string classes_str = content.substr(start + 1, end - start - 1);
-            std::stringstream ss(classes_str);
-            std::string segment;
-            while(std::getline(ss, segment, ',')) {
-                segment.erase(0, segment.find_first_not_of(" \t\n\r\""));
-                segment.erase(segment.find_last_not_of(" \t\n\r\"") + 1);
-                if (!segment.empty()) {
-                    meta_data["classes"].push_back(segment);
-                }
-            }
-        }
-
-        pos = content.find("\"text_cols\":");
-        if (pos != std::string::npos) {
-            size_t start = content.find("[", pos);
-            size_t end = content.find("]", start);
-            std::string cols_str = content.substr(start + 1, end - start - 1);
-            std::stringstream ss(cols_str);
-            std::string segment;
-            while(std::getline(ss, segment, ',')) {
-                segment.erase(0, segment.find_first_not_of(" \t\n\r\""));
-                segment.erase(segment.find_last_not_of(" \t\n\r\"") + 1);
-                if (!segment.empty()) {
-                    meta_data["text_cols"].push_back(segment);
-                }
-            }
-        }
-
-        pos = content.find("\"numeric_cols\":");
-        if (pos != std::string::npos) {
-            size_t start = content.find("[", pos);
-            size_t end = content.find("]", start);
-            std::string cols_str = content.substr(start + 1, end - start - 1);
-            std::stringstream ss(cols_str);
-            std::string segment;
-            while(std::getline(ss, segment, ',')) {
-                segment.erase(0, segment.find_first_not_of(" \t\n\r\""));
-                segment.erase(segment.find_last_not_of(" \t\n\r\"") + 1);
-                if (!segment.empty()) {
-                    meta_data["numeric_cols"].push_back(segment);
-                }
-            }
-        }
-        return meta_data;
-    }
+    std::map<std::string, std::vector<std::string>> parse_meta(const std::string& filepath);
 }
 
 
