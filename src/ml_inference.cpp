@@ -99,22 +99,9 @@ MLInference::MLInference(const std::string& ft_model_path, const std::string& lg
     std::cout << "fastText embedding dimension: " << embedding_dim_ << std::endl;
 
     std::cout << "Loading LightGBM model from: " << lgbm_model_path << std::endl;
-
-    // Read LightGBM model file content into a string
-    std::ifstream lgbm_file(lgbm_model_path);
-    if (!lgbm_file.is_open()) {
-        throw std::runtime_error("Could not open LightGBM model file: " + lgbm_model_path);
-    }
-    std::stringstream lgbm_buffer;
-    lgbm_buffer << lgbm_file.rdbuf();
-    std::string lgbm_model_content = lgbm_buffer.str();
-
-    // Construct parameter string including num_class
-    std::string lgbm_params = "num_class=" + std::to_string(classes_.size());
-
-    // Use the CreateBoosting overload that takes booster_type, parameters, and model_str
+    // Use the CreateBoosting overload that takes booster_type and filename
     lgbm_booster_ = std::unique_ptr<LightGBM::Boosting>(
-        LightGBM::Boosting::CreateBoosting("gbdt", lgbm_params.c_str(), lgbm_model_content.c_str())
+        LightGBM::Boosting::CreateBoosting("gbdt", lgbm_model_path.c_str())
     );
 }
 
