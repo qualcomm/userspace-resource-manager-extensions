@@ -20,6 +20,8 @@
 //#include "LightGBM/metadata.h"
 #include "LightGBM/meta.h"
 
+#include <mutex>
+
 
 namespace json_parser {
     std::map<std::string, std::vector<std::string>> parse_meta(const std::string& filepath);
@@ -36,6 +38,7 @@ public:
 private:
     fasttext::FastText ft_model_;
     std::unique_ptr<LightGBM::Boosting> lgbm_booster_;
+    std::mutex predict_mutex_;
 
     std::vector<std::string> classes_;
     std::vector<std::string> text_cols_;

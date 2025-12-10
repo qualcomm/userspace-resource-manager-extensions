@@ -4,6 +4,11 @@
 #include <fstream> // Add this include for std::ifstream
 #include <algorithm> // Add this include for std::transform
 #include <stdexcept> // Add this include for std::runtime_error
+#include <syslog.h> // Include syslog for logging
+#include <vector>
+#include <string>
+#include <map>
+#include <iomanip> // For std::fixed and std::setprecision
 
 // Simple JSON parser for meta.json (can be replaced by a proper library like nlohmann/json)
 namespace json_parser {
@@ -29,8 +34,11 @@ namespace json_parser {
             std::stringstream ss(classes_str);
             std::string segment;
             while(std::getline(ss, segment, ',')) {
-                segment.erase(0, segment.find_first_not_of(" \t\n\r\""));
-                segment.erase(segment.find_last_not_of(" \t\n\r\"") + 1);
+                segment.erase(std::remove(segment.begin(), segment.end(), ' '), segment.end());
+                segment.erase(std::remove(segment.begin(), segment.end(), '\t'), segment.end());
+                segment.erase(std::remove(segment.begin(), segment.end(), '\n'), segment.end());
+                segment.erase(std::remove(segment.begin(), segment.end(), '\r'), segment.end());
+                segment.erase(std::remove(segment.begin(), segment.end(), '"'), segment.end());
                 if (!segment.empty()) {
                     meta_data["classes"].push_back(segment);
                 }
@@ -45,8 +53,11 @@ namespace json_parser {
             std::stringstream ss(cols_str);
             std::string segment;
             while(std::getline(ss, segment, ',')) {
-                segment.erase(0, segment.find_first_not_of(" \t\n\r\""));
-                segment.erase(segment.find_last_not_of(" \t\n\r\"") + 1);
+                segment.erase(std::remove(segment.begin(), segment.end(), ' '), segment.end());
+                segment.erase(std::remove(segment.begin(), segment.end(), '\t'), segment.end());
+                segment.erase(std::remove(segment.begin(), segment.end(), '\n'), segment.end());
+                segment.erase(std::remove(segment.begin(), segment.end(), '\r'), segment.end());
+                segment.erase(std::remove(segment.begin(), segment.end(), '"'), segment.end());
                 if (!segment.empty()) {
                     meta_data["text_cols"].push_back(segment);
                 }
@@ -61,8 +72,11 @@ namespace json_parser {
             std::stringstream ss(cols_str);
             std::string segment;
             while(std::getline(ss, segment, ',')) {
-                segment.erase(0, segment.find_first_not_of(" \t\n\r\""));
-                segment.erase(segment.find_last_not_of(" \t\n\r\"") + 1);
+                segment.erase(std::remove(segment.begin(), segment.end(), ' '), segment.end());
+                segment.erase(std::remove(segment.begin(), segment.end(), '\t'), segment.end());
+                segment.erase(std::remove(segment.begin(), segment.end(), '\n'), segment.end());
+                segment.erase(std::remove(segment.begin(), segment.end(), '\r'), segment.end());
+                segment.erase(std::remove(segment.begin(), segment.end(), '"'), segment.end());
                 if (!segment.empty()) {
                     meta_data["numeric_cols"].push_back(segment);
                 }
@@ -86,23 +100,49 @@ float string_to_float(const std::string& s) {
     }
 }
 
+// Helper to log a vector of doubles for debugging
+void log_double_vector(const std::vector<double>& vec, const char* name) {
+    std::stringstream ss;
+    ss << name << " (first 10 elements): [";
+    for (size_t i = 0; i < std::min(vec.size(), (size_t)10); ++i) {
+        ss << std::fixed << std::setprecision(4) << vec[i] << (i < std::min(vec.size(), (size_t)10) - 1 ? ", " : "");
+    }
+    ss << "]";
+    syslog(LOG_INFO, "%s", ss.str().c_str());
+}
+
 MLInference::MLInference(const std::string& ft_model_path, const std::string& lgbm_model_path, const std::string& meta_path) {
-    std::cout << "Parsing meta.json from: " << meta_path << std::endl;
-    auto meta_data = json_parser::parse_meta(meta_path);
-    classes_ = meta_data["classes"];
-    text_cols_ = meta_data["text_cols"];
-    numeric_cols_ = meta_data["numeric_cols"];
+    syslog(LOG_INFO, "[INFERENCE_INIT 1] Parsing meta.json from: %s", meta_path.c_str());
+    try {
+        auto meta_data = json_parser::parse_meta(meta_path);
+        classes_ = meta_data["classes"];
+        text_cols_ = meta_data["text_cols"];
+        numeric_cols_ = meta_data["numeric_cols"];
+        syslog(LOG_INFO, "[INFERENCE_INIT 2] Meta.json parsed successfully. Found %zu classes.", classes_.size());
+    } catch (const std::runtime_error& e) {
+        syslog(LOG_CRIT, "[INFERENCE_INIT ERROR] Failed to parse meta.json: %s", e.what());
+        throw;
+    }
 
-    std::cout << "Loading fastText model from: " << ft_model_path << std::endl;
-    ft_model_.loadModel(ft_model_path); // Assuming fastText C++ API has loadModel method
-    embedding_dim_ = ft_model_.getDimension();
-    std::cout << "fastText embedding dimension: " << embedding_dim_ << std::endl;
+    syslog(LOG_INFO, "[INFERENCE_INIT 3] Loading fastText model from: %s", ft_model_path.c_str());
+    try {
+        ft_model_.loadModel(ft_model_path);
+        embedding_dim_ = ft_model_.getDimension();
+        syslog(LOG_INFO, "[INFERENCE_INIT 4] fastText model loaded. Embedding dimension: %d", embedding_dim_);
+    } catch (const std::exception& e) {
+        syslog(LOG_CRIT, "[INFERENCE_INIT ERROR] Failed to load fastText model: %s", e.what());
+        throw;
+    }
 
-    std::cout << "Loading LightGBM model from: " << lgbm_model_path << std::endl;
-    // Use the CreateBoosting overload that takes booster_type and filename
+    syslog(LOG_INFO, "[INFERENCE_INIT 5] Loading LightGBM model from: %s", lgbm_model_path.c_str());
     lgbm_booster_ = std::unique_ptr<LightGBM::Boosting>(
         LightGBM::Boosting::CreateBoosting("gbdt", lgbm_model_path.c_str())
     );
+    if (!lgbm_booster_) {
+        syslog(LOG_CRIT, "[INFERENCE_INIT ERROR] Failed to load LightGBM model.");
+        throw std::runtime_error("Failed to load LightGBM model.");
+    }
+    syslog(LOG_INFO, "[INFERENCE_INIT 6] LightGBM model loaded successfully.");
 }
 
 MLInference::~MLInference() {
@@ -120,17 +160,19 @@ std::string MLInference::normalize_text(const std::string& text) {
 }
 
 std::vector<double> MLInference::get_feature_vector(const std::map<std::string, std::string>& raw_data) {
-    std::vector<double> feature_vector;
+    syslog(LOG_INFO, "[INFERENCE_FEAT 1] Starting feature vector creation.");
+    std::vector<double> feature_vector(numeric_cols_.size() + embedding_dim_, 0.0);
 
     // 1. Numeric features
-    for (const auto& col : numeric_cols_) {
+    for (size_t i = 0; i < numeric_cols_.size(); ++i) {
+        const auto& col = numeric_cols_[i];
         auto it = raw_data.find(col);
         if (it != raw_data.end()) {
-            feature_vector.push_back(string_to_float(it->second));
-        } else {
-            feature_vector.push_back(0.0); // Fill missing numeric with 0.0 as per notebook
+            feature_vector[i] = string_to_float(it->second);
         }
+        // The vector is already initialized to 0.0, so no else is needed.
     }
+    syslog(LOG_INFO, "[INFERENCE_FEAT 2] Numeric features processed. Count: %zu", feature_vector.size());
 
     // 2. fastText embeddings
     std::string concatenated_text;
@@ -147,29 +189,34 @@ std::vector<double> MLInference::get_feature_vector(const std::map<std::string, 
         concatenated_text.pop_back();
     }
     
+    
     if (!concatenated_text.empty()) {
+        syslog(LOG_INFO, "[INFERENCE_FEAT 3] Generating fastText embedding.");
         fasttext::Vector ft_embedding_vector(embedding_dim_);
         std::istringstream iss(concatenated_text);
         ft_model_.getSentenceVector(iss, ft_embedding_vector);
         for (int i = 0; i < embedding_dim_; ++i) {
-            feature_vector.push_back(static_cast<double>(ft_embedding_vector[i]));
+            feature_vector[numeric_cols_.size() + i] = ft_embedding_vector[i];
         }
     } else {
-        // If no text, fill with zeros for embedding
-        for (int i = 0; i < embedding_dim_; ++i) {
-            feature_vector.push_back(0.0);
-        }
+        syslog(LOG_WARNING, "[INFERENCE_FEAT 3] No text features found; embedding is already zeros.");
     }
+    syslog(LOG_INFO, "[INFERENCE_FEAT 4] Feature vector created. Total size: %zu", feature_vector.size());
+    log_double_vector(feature_vector, "Final Feature Vector");
 
     return feature_vector;
 }
 
 std::string MLInference::predict(const std::map<std::string, std::string>& raw_data) {
+    std::lock_guard<std::mutex> lock(predict_mutex_);
+    syslog(LOG_INFO, "[INFERENCE_PREDICT 1] Starting prediction.");
     std::vector<double> features = get_feature_vector(raw_data);
     
     // LightGBM prediction
     std::vector<double> result(classes_.size());
+    syslog(LOG_INFO, "[INFERENCE_PREDICT 2] Calling LightGBM Predict().");
     lgbm_booster_->Predict(features.data(), &result[0], nullptr);
+    log_double_vector(result, "LGBM Prediction Probabilities");
 
     // Get the predicted class index
     int predicted_class_idx = 0;
@@ -181,5 +228,7 @@ std::string MLInference::predict(const std::map<std::string, std::string>& raw_d
         }
     }
 
+    syslog(LOG_INFO, "[INFERENCE_PREDICT 3] Prediction complete. Class: %s, Probability: %.4f", 
+           classes_[predicted_class_idx].c_str(), max_prob);
     return classes_[predicted_class_idx];
 }
