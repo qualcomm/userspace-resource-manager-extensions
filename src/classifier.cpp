@@ -85,6 +85,16 @@ bool is_digits(const std::string& str) {
     return std::all_of(str.begin(), str.end(), ::isdigit);
 }
 
+// Helper to check if process is still alive
+bool is_process_alive(int pid) {
+    std::string proc_path = "/proc/" + std::to_string(pid);
+    if (access(proc_path.c_str(), F_OK) == -1) {
+        syslog(LOG_DEBUG, "Process %d has exited.", pid);
+        return false;
+    }
+    return true;
+}
+
 static void initialize(void) {
     //TODO: Do the setup required for resource-tuner.
 }
@@ -174,9 +184,7 @@ static void classify_process(int process_pid, int process_tgid,
                              MLInference& ml_inference_obj)
 {
     // Check if the process still exists
-    std::string proc_path = "/proc/" + std::to_string(process_pid);
-    if (access(proc_path.c_str(), F_OK) == -1) {
-        syslog(LOG_DEBUG, "Process %d has already exited. Skipping classification.", process_pid);
+    if (!is_process_alive(process_pid)) {
         return;
     }
 
@@ -241,6 +249,8 @@ static void classify_process(int process_pid, int process_tgid,
     }
     syslog(LOG_DEBUG, "Text features collected for PID:%d", process_pid);
 
+    if (!is_process_alive(process_pid)) return;
+
     // Collect Numeric Features
     ProcStats proc_stats;
     FetchProcStats(process_pid, proc_stats);
@@ -296,6 +306,8 @@ static void classify_process(int process_pid, int process_tgid,
     }
     syslog(LOG_DEBUG, "Numeric features collected for PID:%d", process_pid);
 
+    if (!is_process_alive(process_pid)) return;
+
     bool has_sufficient_features = false;
     for (const auto& col : text_cols) {
         if (raw_data.count(col) && !raw_data.at(col).empty()) {
@@ -313,6 +325,8 @@ static void classify_process(int process_pid, int process_tgid,
     }
 
     if (has_sufficient_features) {
+        if (!is_process_alive(process_pid)) return;
+
         syslog(LOG_DEBUG, "Invoking ML inference for PID:%d", process_pid);
         std::string predicted_label = ml_inference_obj.predict(raw_data);
         syslog(LOG_INFO, "PID:%d Classified as: %s", process_pid, predicted_label.c_str());
@@ -384,11 +398,25 @@ static int handle_proc_ev(int nl_sock, MLInference& ml_inference_obj)
                 syslog(LOG_DEBUG, "Received PROC_EVENT_EXEC for tid=%d pid=%d",
                        nlcn_msg.proc_ev.event_data.exec.process_pid,
                        nlcn_msg.proc_ev.event_data.exec.process_tgid);
+
+                // Early filtering of ignored processes
                 {
-                    std::lock_guard<std::mutex> lock(queue_mutex);
-                    classification_queue.push(nlcn_msg.proc_ev.event_data.exec.process_pid);
+                    int pid = nlcn_msg.proc_ev.event_data.exec.process_pid;
+                    std::vector<std::string> comm_vec = parse_proc_comm(pid, "");
+                    if (comm_vec.empty()) {
+                        syslog(LOG_DEBUG, "Process %d exited before initial check. Skipping.", pid);
+                    } else {
+                        std::string proc_name = comm_vec[0];
+                        proc_name.erase(proc_name.find_last_not_of(" \n\r\t") + 1);
+                        if (ignored_processes.count(proc_name)) {
+                            syslog(LOG_DEBUG, "Ignoring process: %s (PID: %d)", proc_name.c_str(), pid);
+                        } else {
+                            std::lock_guard<std::mutex> lock(queue_mutex);
+                            classification_queue.push(pid);
+                            queue_cond.notify_one();
+                        }
+                    }
                 }
-                queue_cond.notify_one();
                 break;
             case proc_event::PROC_EVENT_UID:
                 syslog(LOG_DEBUG, "uid change: tid=%d pid=%d from %d to %d",
