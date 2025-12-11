@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <dlfcn.h>
 #include <unordered_map>
+#include <unordered_set>
 //#include <ResourceTuner/ResourceTunerAPIs.h>
 #include <syslog.h> // Include syslog for logging
 #include <iostream>
@@ -38,7 +39,6 @@
 #include "proc_stats.h"
 //#include "proc_metrics.h" // Include proc_metrics.h for fetching detailed process statistics
 
-#define SIGNAL_CAM_PREVIEW 0x000d0002
 #define CLASSIFIER_CONF_DIR "/etc/classifier/"
 
 // Thread pool and job queue
@@ -52,6 +52,27 @@ const int NUM_THREADS = 4;
 const std::string FT_MODEL_PATH = CLASSIFIER_CONF_DIR "fasttext_model.bin";
 const std::string LGBM_MODEL_PATH = CLASSIFIER_CONF_DIR "lgbm_model.txt";
 const std::string META_PATH = CLASSIFIER_CONF_DIR "meta.json";
+const std::string IGNORE_PROC_PATH = CLASSIFIER_CONF_DIR "ignore_processes.txt";
+
+std::unordered_set<std::string> ignored_processes;
+
+void load_ignored_processes() {
+    std::ifstream file(IGNORE_PROC_PATH);
+    if (!file.is_open()) {
+        syslog(LOG_WARNING, "Could not open ignore process file: %s", IGNORE_PROC_PATH.c_str());
+        return;
+    }
+    std::string line;
+    while (std::getline(file, line)) {
+        // Trim whitespace
+        line.erase(0, line.find_first_not_of(" \t\n\r"));
+        line.erase(line.find_last_not_of(" \t\n\r") + 1);
+        if (!line.empty()) {
+            ignored_processes.insert(line);
+        }
+    }
+    syslog(LOG_INFO, "Loaded %zu ignored processes.", ignored_processes.size());
+}
 
 // Singleton for MLInference
 MLInference& get_ml_inference_instance() {
@@ -155,11 +176,23 @@ static void classify_process(int process_pid, int process_tgid,
     // Check if the process still exists
     std::string proc_path = "/proc/" + std::to_string(process_pid);
     if (access(proc_path.c_str(), F_OK) == -1) {
-        syslog(LOG_INFO, "Process %d has already exited. Skipping classification.", process_pid);
+        syslog(LOG_DEBUG, "Process %d has already exited. Skipping classification.", process_pid);
         return;
     }
 
-    syslog(LOG_INFO, "[CHECKPOINT 6] Starting classification for PID:%d", process_pid);
+    // Check if process should be ignored
+    std::vector<std::string> comm_vec = parse_proc_comm(process_pid, "");
+    if (!comm_vec.empty()) {
+        std::string proc_name = comm_vec[0];
+        // Trim whitespace just in case
+        proc_name.erase(proc_name.find_last_not_of(" \n\r\t") + 1);
+        if (ignored_processes.count(proc_name)) {
+            syslog(LOG_DEBUG, "Skipping inference for ignored process: %s (PID: %d)", proc_name.c_str(), process_pid);
+            return;
+        }
+    }
+
+    syslog(LOG_DEBUG, "Starting classification for PID:%d", process_pid);
 
     std::map<std::string, std::string> raw_data;
     const auto& text_cols = ml_inference_obj.getTextCols();
@@ -201,12 +234,12 @@ static void classify_process(int process_pid, int process_tgid,
         }
 
         if (raw_data[col].empty()) {
-            syslog(LOG_WARNING, "PID:%d | Text Feature: %s | Value: <EMPTY> (Failed to collect or was empty)", process_pid, col.c_str());
+            syslog(LOG_DEBUG, "PID:%d | Text Feature: %s | Value: <EMPTY> (Failed to collect or was empty)", process_pid, col.c_str());
         } else {
             syslog(LOG_DEBUG, "PID:%d | Text Feature: %s | Value: %s", process_pid, col.c_str(), raw_data[col].c_str());
         }
     }
-    syslog(LOG_INFO, "[CHECKPOINT 7] Text features collected for PID:%d", process_pid);
+    syslog(LOG_DEBUG, "Text features collected for PID:%d", process_pid);
 
     // Collect Numeric Features
     ProcStats proc_stats;
@@ -261,7 +294,7 @@ static void classify_process(int process_pid, int process_tgid,
             raw_data[col] = "0.0";
         }
     }
-    syslog(LOG_INFO, "[CHECKPOINT 8] Numeric features collected for PID:%d", process_pid);
+    syslog(LOG_DEBUG, "Numeric features collected for PID:%d", process_pid);
 
     bool has_sufficient_features = false;
     for (const auto& col : text_cols) {
@@ -280,12 +313,12 @@ static void classify_process(int process_pid, int process_tgid,
     }
 
     if (has_sufficient_features) {
-        syslog(LOG_INFO, "[CHECKPOINT 9] Invoking ML inference for PID:%d", process_pid);
+        syslog(LOG_DEBUG, "Invoking ML inference for PID:%d", process_pid);
         std::string predicted_label = ml_inference_obj.predict(raw_data);
-        syslog(LOG_INFO, "[CHECKPOINT 10] PID:%d Classified as: %s", process_pid, predicted_label.c_str());
+        syslog(LOG_INFO, "PID:%d Classified as: %s", process_pid, predicted_label.c_str());
         // TODO: Apply resource tuning based on predicted_label
     } else {
-        syslog(LOG_WARNING, "Skipping ML inference for PID:%d due to insufficient features.", process_pid);
+        syslog(LOG_DEBUG, "Skipping ML inference for PID:%d due to insufficient features.", process_pid);
     }
 }
 
@@ -338,17 +371,17 @@ static int handle_proc_ev(int nl_sock, MLInference& ml_inference_obj)
         }
         switch (nlcn_msg.proc_ev.what) {
             case proc_event::PROC_EVENT_NONE:
-                // syslog(LOG_INFO, "set mcast listen ok");
+                // syslog(LOG_DEBUG, "set mcast listen ok");
                 break;
             case proc_event::PROC_EVENT_FORK:
-                syslog(LOG_INFO, "fork: parent tid=%d pid=%d -> child tid=%d pid=%d",
+                syslog(LOG_DEBUG, "fork: parent tid=%d pid=%d -> child tid=%d pid=%d",
                        nlcn_msg.proc_ev.event_data.fork.parent_pid,
                        nlcn_msg.proc_ev.event_data.fork.parent_tgid,
                        nlcn_msg.proc_ev.event_data.fork.child_pid,
                        nlcn_msg.proc_ev.event_data.fork.child_tgid);
                 break;
             case proc_event::PROC_EVENT_EXEC:
-                syslog(LOG_INFO, "[CHECKPOINT 5] Received PROC_EVENT_EXEC for tid=%d pid=%d",
+                syslog(LOG_DEBUG, "Received PROC_EVENT_EXEC for tid=%d pid=%d",
                        nlcn_msg.proc_ev.event_data.exec.process_pid,
                        nlcn_msg.proc_ev.event_data.exec.process_tgid);
                 {
@@ -358,21 +391,21 @@ static int handle_proc_ev(int nl_sock, MLInference& ml_inference_obj)
                 queue_cond.notify_one();
                 break;
             case proc_event::PROC_EVENT_UID:
-                syslog(LOG_INFO, "uid change: tid=%d pid=%d from %d to %d",
+                syslog(LOG_DEBUG, "uid change: tid=%d pid=%d from %d to %d",
                        nlcn_msg.proc_ev.event_data.id.process_pid,
                        nlcn_msg.proc_ev.event_data.id.process_tgid,
                        nlcn_msg.proc_ev.event_data.id.r.ruid,
                        nlcn_msg.proc_ev.event_data.id.e.euid);
                 break;
             case proc_event::PROC_EVENT_GID:
-                syslog(LOG_INFO, "gid change: tid=%d pid=%d from %d to %d",
+                syslog(LOG_DEBUG, "gid change: tid=%d pid=%d from %d to %d",
                        nlcn_msg.proc_ev.event_data.id.process_pid,
                        nlcn_msg.proc_ev.event_data.id.process_tgid,
                        nlcn_msg.proc_ev.event_data.id.r.rgid,
                        nlcn_msg.proc_ev.event_data.id.e.egid);
                 break;
             case proc_event::PROC_EVENT_EXIT:
-                syslog(LOG_INFO, "exit: tid=%d pid=%d exit_code=%d",
+                syslog(LOG_DEBUG, "exit: tid=%d pid=%d exit_code=%d",
                        nlcn_msg.proc_ev.event_data.exit.process_pid,
                        nlcn_msg.proc_ev.event_data.exit.process_tgid,
                        nlcn_msg.proc_ev.event_data.exit.exit_code);
@@ -400,8 +433,9 @@ int main(int argc, const char *argv[])
     int rc = EXIT_SUCCESS;
 
     openlog("classifier", LOG_PID | LOG_CONS | LOG_NDELAY, LOG_DAEMON); // Initialize syslog
-    syslog(LOG_INFO, "[CHECKPOINT 1] Classifier service started.");
+    syslog(LOG_INFO, "Classifier service started.");
     initialize();
+    load_ignored_processes();
     
     for (int i = 0; i < NUM_THREADS; ++i) {
         thread_pool.emplace_back(worker_thread);
@@ -412,14 +446,14 @@ int main(int argc, const char *argv[])
 
     // Get the MLInference singleton instance
     MLInference& ml_inference_obj = get_ml_inference_instance();
-    syslog(LOG_INFO, "[CHECKPOINT 2] MLInference object initialized.");
+    syslog(LOG_INFO, "MLInference object initialized.");
 
     nl_sock = nl_connect();
     if (nl_sock == -1) {
         syslog(LOG_CRIT, "Failed to connect to netlink socket. Exiting.");
         exit(EXIT_FAILURE);
     }
-    syslog(LOG_INFO, "[CHECKPOINT 3] Netlink socket connected successfully.");
+    syslog(LOG_INFO, "Netlink socket connected successfully.");
 
     rc = set_proc_ev_listen(nl_sock, true);
     if (rc == -1) {
@@ -427,7 +461,7 @@ int main(int argc, const char *argv[])
         rc = EXIT_FAILURE;
         goto out;
     }
-    syslog(LOG_INFO, "[CHECKPOINT 4] Now listening for process events.");
+    syslog(LOG_INFO, "Now listening for process events.");
 
     rc = handle_proc_ev(nl_sock, ml_inference_obj);
     if (rc == -1) {

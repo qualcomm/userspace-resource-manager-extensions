@@ -108,46 +108,46 @@ void log_double_vector(const std::vector<double>& vec, const char* name) {
         ss << std::fixed << std::setprecision(4) << vec[i] << (i < std::min(vec.size(), (size_t)10) - 1 ? ", " : "");
     }
     ss << "]";
-    syslog(LOG_INFO, "%s", ss.str().c_str());
+    syslog(LOG_DEBUG, "%s", ss.str().c_str());
 }
 
 MLInference::MLInference(const std::string& ft_model_path, const std::string& lgbm_model_path, const std::string& meta_path) : lgbm_booster_(nullptr) {
-    syslog(LOG_INFO, "[INFERENCE_INIT 1] Parsing meta.json from: %s", meta_path.c_str());
+    syslog(LOG_DEBUG, "Parsing meta.json from: %s", meta_path.c_str());
     try {
         auto meta_data = json_parser::parse_meta(meta_path);
         classes_ = meta_data["classes"];
         text_cols_ = meta_data["text_cols"];
         numeric_cols_ = meta_data["numeric_cols"];
-        syslog(LOG_INFO, "[INFERENCE_INIT 2] Meta.json parsed successfully. Found %zu classes.", classes_.size());
+        syslog(LOG_DEBUG, "Meta.json parsed successfully. Found %zu classes.", classes_.size());
     } catch (const std::runtime_error& e) {
-        syslog(LOG_CRIT, "[INFERENCE_INIT ERROR] Failed to parse meta.json: %s", e.what());
+        syslog(LOG_CRIT, "Failed to parse meta.json: %s", e.what());
         throw;
     }
 
-    syslog(LOG_INFO, "[INFERENCE_INIT 3] Loading fastText model from: %s", ft_model_path.c_str());
+    syslog(LOG_DEBUG, "Loading fastText model from: %s", ft_model_path.c_str());
     try {
         ft_model_.loadModel(ft_model_path);
         embedding_dim_ = ft_model_.getDimension();
-        syslog(LOG_INFO, "[INFERENCE_INIT 4] fastText model loaded. Embedding dimension: %d", embedding_dim_);
+        syslog(LOG_DEBUG, "fastText model loaded. Embedding dimension: %d", embedding_dim_);
     } catch (const std::exception& e) {
-        syslog(LOG_CRIT, "[INFERENCE_INIT ERROR] Failed to load fastText model: %s", e.what());
+        syslog(LOG_CRIT, "Failed to load fastText model: %s", e.what());
         throw;
     }
 
-    syslog(LOG_INFO, "[INFERENCE_INIT 5] Loading LightGBM model from: %s", lgbm_model_path.c_str());
+    syslog(LOG_DEBUG, "Loading LightGBM model from: %s", lgbm_model_path.c_str());
     int num_iterations;
     if (LGBM_BoosterCreateFromModelfile(lgbm_model_path.c_str(), &num_iterations, &lgbm_booster_) != 0) {
-        syslog(LOG_CRIT, "[INFERENCE_INIT ERROR] Failed to load LightGBM model from file: %s", lgbm_model_path.c_str());
+        syslog(LOG_CRIT, "Failed to load LightGBM model from file: %s", lgbm_model_path.c_str());
         throw std::runtime_error("Failed to load LightGBM model.");
     }
 
     int num_features = 0;
     if (LGBM_BoosterGetNumFeature(lgbm_booster_, &num_features) != 0) {
-        syslog(LOG_CRIT, "[INFERENCE_INIT ERROR] Failed to get number of features from LightGBM model.");
+        syslog(LOG_CRIT, "Failed to get number of features from LightGBM model.");
         throw std::runtime_error("Failed to get number of features from LightGBM model.");
     }
     lgbm_expected_features_ = num_features;
-    syslog(LOG_INFO, "[INFERENCE_INIT 6] LightGBM model loaded. Expected features: %d", lgbm_expected_features_);
+    syslog(LOG_INFO, "MLInference initialized. LightGBM features: %d, fastText dim: %d", lgbm_expected_features_, embedding_dim_);
 }
 
 MLInference::~MLInference() {
@@ -167,7 +167,7 @@ std::string MLInference::normalize_text(const std::string& text) {
 }
 
 std::vector<double> MLInference::get_feature_vector(const std::map<std::string, std::string>& raw_data) {
-    syslog(LOG_INFO, "[INFERENCE_FEAT 1] Starting feature vector creation.");
+    syslog(LOG_DEBUG, "Starting feature vector creation.");
     std::vector<double> feature_vector(numeric_cols_.size() + embedding_dim_, 0.0);
 
     // 1. Numeric features
@@ -179,7 +179,7 @@ std::vector<double> MLInference::get_feature_vector(const std::map<std::string, 
         }
         // The vector is already initialized to 0.0, so no else is needed.
     }
-    syslog(LOG_INFO, "[INFERENCE_FEAT 2] Numeric features processed. Count: %zu", feature_vector.size());
+    syslog(LOG_DEBUG, "Numeric features processed. Count: %zu", feature_vector.size());
 
     // 2. fastText embeddings
     std::string concatenated_text;
@@ -198,7 +198,7 @@ std::vector<double> MLInference::get_feature_vector(const std::map<std::string, 
     
     
     if (!concatenated_text.empty()) {
-        syslog(LOG_INFO, "[INFERENCE_FEAT 3] Generating fastText embedding.");
+        syslog(LOG_DEBUG, "Generating fastText embedding.");
         // Add a newline to the end of the text, as fastText's getSentenceVector (with istream) expects it.
         concatenated_text += "\n";
         fasttext::Vector ft_embedding_vector(embedding_dim_);
@@ -208,9 +208,9 @@ std::vector<double> MLInference::get_feature_vector(const std::map<std::string, 
             feature_vector[numeric_cols_.size() + i] = ft_embedding_vector[i];
         }
     } else {
-        syslog(LOG_WARNING, "[INFERENCE_FEAT 3] No text features found; embedding is already zeros.");
+        syslog(LOG_WARNING, "No text features found; embedding is already zeros.");
     }
-    syslog(LOG_INFO, "[INFERENCE_FEAT 4] Feature vector created. Total size: %zu", feature_vector.size());
+    syslog(LOG_DEBUG, "Feature vector created. Total size: %zu", feature_vector.size());
     log_double_vector(feature_vector, "Final Feature Vector");
 
     return feature_vector;
@@ -218,12 +218,12 @@ std::vector<double> MLInference::get_feature_vector(const std::map<std::string, 
 
 std::string MLInference::predict(const std::map<std::string, std::string>& raw_data) {
     std::lock_guard<std::mutex> lock(predict_mutex_);
-    syslog(LOG_INFO, "[INFERENCE_PREDICT 1] Starting prediction.");
+    syslog(LOG_DEBUG, "Starting prediction.");
     std::vector<double> features = get_feature_vector(raw_data);
 
     // Defensive check for feature count mismatch
     if (features.size() != static_cast<size_t>(lgbm_expected_features_)) {
-        syslog(LOG_CRIT, "[INFERENCE_PREDICT ERROR] Feature mismatch! LGBM expects %d features, but got %zu.",
+        syslog(LOG_CRIT, "Feature mismatch! LGBM expects %d features, but got %zu.",
                lgbm_expected_features_, features.size());
         throw std::runtime_error("Feature vector size does not match LightGBM model expectation.");
     }
@@ -231,7 +231,7 @@ std::string MLInference::predict(const std::map<std::string, std::string>& raw_d
     // LightGBM prediction
     std::vector<double> result(classes_.size());
     int64_t out_len = 0;
-    syslog(LOG_INFO, "[INFERENCE_PREDICT 2] Calling LightGBM C_API Predict().");
+    syslog(LOG_DEBUG, "Calling LightGBM C_API Predict().");
 
     if (LGBM_BoosterPredictForMat(lgbm_booster_,
                                   features.data(),
@@ -245,7 +245,7 @@ std::string MLInference::predict(const std::map<std::string, std::string>& raw_d
                                   "", // parameters
                                   &out_len,
                                   result.data()) != 0) {
-        syslog(LOG_CRIT, "[INFERENCE_PREDICT ERROR] LightGBM prediction failed.");
+        syslog(LOG_CRIT, "LightGBM prediction failed.");
         throw std::runtime_error("LightGBM prediction failed.");
     }
 
@@ -261,7 +261,7 @@ std::string MLInference::predict(const std::map<std::string, std::string>& raw_d
         }
     }
 
-    syslog(LOG_INFO, "[INFERENCE_PREDICT 3] Prediction complete. Class: %s, Probability: %.4f", 
+    syslog(LOG_INFO, "Prediction complete. Class: %s, Probability: %.4f", 
            classes_[predicted_class_idx].c_str(), max_prob);
     return classes_[predicted_class_idx];
 }

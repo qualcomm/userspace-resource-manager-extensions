@@ -90,7 +90,6 @@ bool isValidPidViaProc(pid_t pid) {
 }
 
 int collect_and_store_data(pid_t pid, const char* config_file) {
-    setlogmask(LOG_UPTO(LOG_INFO)); // Disable DEBUG prints
     if(!isValidPidViaProc(pid)) {
         syslog(LOG_ERR, "PID %d does not exist in /proc.", pid);
         return 1;
@@ -338,7 +337,7 @@ int collect_and_store_data(pid_t pid, const char* config_file) {
     /* Read log using journalctl */
     auto journalctl_logs = readJournalForPid(pid, LOG_LINES);
     if (journalctl_logs.empty()) {
-       syslog(LOG_INFO, "No logs found for PID %d", pid);
+       syslog(LOG_DEBUG, "No logs found for PID %d", pid);
     }
 
     // Ignore first 3 columns in journalctl logs
@@ -392,7 +391,7 @@ int collect_and_store_data(pid_t pid, const char* config_file) {
     }
 
     std::string fileName = processName + "_" + std::to_string(pid) + "_proc_info.csv";
-    syslog(LOG_INFO, "FileName: %s", fileName.c_str());
+    syslog(LOG_DEBUG, "FileName: %s", fileName.c_str());
 
     // -------------------- UNFILTERED FILE --------------------
     std::string unfilteredFile = unfilteredFolder + "/" + fileName + "_unfiltered.csv";
