@@ -240,10 +240,6 @@ static void classify_process(int process_pid, int process_tgid,
             continue;
         }
 
-        if (data_vec.empty()) {
-            syslog(LOG_WARNING, "PID:%d | Failed to collect text feature: %s", process_pid, col.c_str());
-        }
-
         std::stringstream ss;
         for(const auto& s : data_vec) {
             ss << s << " ";
@@ -252,7 +248,12 @@ static void classify_process(int process_pid, int process_tgid,
         if (!raw_data[col].empty()) {
             raw_data[col].pop_back();
         }
-        syslog(LOG_DEBUG, "PID:%d | Text Feature: %s | Value: %s", process_pid, col.c_str(), raw_data[col].c_str());
+
+        if (raw_data[col].empty()) {
+            syslog(LOG_WARNING, "PID:%d | Text Feature: %s | Value: <EMPTY> (Failed to collect or was empty)", process_pid, col.c_str());
+        } else {
+            syslog(LOG_DEBUG, "PID:%d | Text Feature: %s | Value: %s", process_pid, col.c_str(), raw_data[col].c_str());
+        }
     }
     syslog(LOG_INFO, "[CHECKPOINT 7] Text features collected for PID:%d", process_pid);
 

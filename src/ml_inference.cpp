@@ -111,7 +111,7 @@ void log_double_vector(const std::vector<double>& vec, const char* name) {
     syslog(LOG_INFO, "%s", ss.str().c_str());
 }
 
-MLInference::MLInference(const std::string& ft_model_path, const std::string& lgbm_model_path, const std::string& meta_path) {
+MLInference::MLInference(const std::string& ft_model_path, const std::string& lgbm_model_path, const std::string& meta_path) : lgbm_booster_(nullptr) {
     syslog(LOG_INFO, "[INFERENCE_INIT 1] Parsing meta.json from: %s", meta_path.c_str());
     try {
         auto meta_data = json_parser::parse_meta(meta_path);
@@ -135,18 +135,25 @@ MLInference::MLInference(const std::string& ft_model_path, const std::string& lg
     }
 
     syslog(LOG_INFO, "[INFERENCE_INIT 5] Loading LightGBM model from: %s", lgbm_model_path.c_str());
-    lgbm_booster_ = std::unique_ptr<LightGBM::Boosting>(
-        LightGBM::Boosting::CreateBoosting("gbdt", lgbm_model_path.c_str())
-    );
-    if (!lgbm_booster_) {
-        syslog(LOG_CRIT, "[INFERENCE_INIT ERROR] Failed to load LightGBM model.");
+    int num_iterations;
+    if (LGBM_BoosterCreateFromModelfile(lgbm_model_path.c_str(), &num_iterations, &lgbm_booster_) != 0) {
+        syslog(LOG_CRIT, "[INFERENCE_INIT ERROR] Failed to load LightGBM model from file: %s", lgbm_model_path.c_str());
         throw std::runtime_error("Failed to load LightGBM model.");
     }
-    syslog(LOG_INFO, "[INFERENCE_INIT 6] LightGBM model loaded successfully.");
+
+    int num_features = 0;
+    if (LGBM_BoosterGetNumFeature(lgbm_booster_, &num_features) != 0) {
+        syslog(LOG_CRIT, "[INFERENCE_INIT ERROR] Failed to get number of features from LightGBM model.");
+        throw std::runtime_error("Failed to get number of features from LightGBM model.");
+    }
+    lgbm_expected_features_ = num_features;
+    syslog(LOG_INFO, "[INFERENCE_INIT 6] LightGBM model loaded. Expected features: %d", lgbm_expected_features_);
 }
 
 MLInference::~MLInference() {
-    // Destructor for MLInference
+    if (lgbm_booster_) {
+        LGBM_BoosterFree(lgbm_booster_);
+    }
 }
 
 std::string MLInference::normalize_text(const std::string& text) {
@@ -192,6 +199,8 @@ std::vector<double> MLInference::get_feature_vector(const std::map<std::string, 
     
     if (!concatenated_text.empty()) {
         syslog(LOG_INFO, "[INFERENCE_FEAT 3] Generating fastText embedding.");
+        // Add a newline to the end of the text, as fastText's getSentenceVector (with istream) expects it.
+        concatenated_text += "\n";
         fasttext::Vector ft_embedding_vector(embedding_dim_);
         std::istringstream iss(concatenated_text);
         ft_model_.getSentenceVector(iss, ft_embedding_vector);
@@ -211,11 +220,35 @@ std::string MLInference::predict(const std::map<std::string, std::string>& raw_d
     std::lock_guard<std::mutex> lock(predict_mutex_);
     syslog(LOG_INFO, "[INFERENCE_PREDICT 1] Starting prediction.");
     std::vector<double> features = get_feature_vector(raw_data);
+
+    // Defensive check for feature count mismatch
+    if (features.size() != static_cast<size_t>(lgbm_expected_features_)) {
+        syslog(LOG_CRIT, "[INFERENCE_PREDICT ERROR] Feature mismatch! LGBM expects %d features, but got %zu.",
+               lgbm_expected_features_, features.size());
+        throw std::runtime_error("Feature vector size does not match LightGBM model expectation.");
+    }
     
     // LightGBM prediction
     std::vector<double> result(classes_.size());
-    syslog(LOG_INFO, "[INFERENCE_PREDICT 2] Calling LightGBM Predict().");
-    lgbm_booster_->Predict(features.data(), &result[0], nullptr);
+    int64_t out_len = 0;
+    syslog(LOG_INFO, "[INFERENCE_PREDICT 2] Calling LightGBM C_API Predict().");
+
+    if (LGBM_BoosterPredictForMat(lgbm_booster_,
+                                  features.data(),
+                                  C_API_DTYPE_FLOAT64,
+                                  1, // Number of rows
+                                  features.size(),
+                                  1, // Is row-major
+                                  C_API_PREDICT_NORMAL,
+                                  -1, // start iteration
+                                  -1, // num iteration
+                                  "", // parameters
+                                  &out_len,
+                                  result.data()) != 0) {
+        syslog(LOG_CRIT, "[INFERENCE_PREDICT ERROR] LightGBM prediction failed.");
+        throw std::runtime_error("LightGBM prediction failed.");
+    }
+
     log_double_vector(result, "LGBM Prediction Probabilities");
 
     // Get the predicted class index
