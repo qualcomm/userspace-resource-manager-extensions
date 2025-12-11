@@ -144,35 +144,6 @@ static void remove_actions(int process_pid, int process_tgid,
     }
 }
 
-
-pid_t getProcessPID(const std::string& process_name) {
-    DIR* proc_dir = opendir("/proc");
-    if (!proc_dir) {
-        std::cerr << "Failed to open /proc directory." << std::endl;
-        return -1;
-    }
-
-    struct dirent* entry;
-    while ((entry = readdir(proc_dir)) != nullptr) {
-        if (entry->d_type == DT_DIR && is_digits(entry->d_name)) {
-            std::string pid = entry->d_name;
-            std::string cmdline_path = "/proc/" + pid + "/cmdline";
-            std::ifstream cmdline_file(cmdline_path);
-            std::string cmdline;
-            if (cmdline_file) {
-                std::getline(cmdline_file, cmdline, '\0');
-                if (cmdline.find(process_name) != std::string::npos) {
-                    closedir(proc_dir);
-                    return std::stoi(pid);
-                }
-            }
-        }
-    }
-
-    closedir(proc_dir);
-    return -1; // Not found
-}
-
 /* Process classfication based on selinux context of process
  * TODO: How to create or use cgroups based on process creation.
  * TODO: Apply utilization limit on process groups.
@@ -181,26 +152,6 @@ static void classify_process(int process_pid, int process_tgid,
                              std::unordered_map <int, int> &pid_perf_handle,
                              MLInference& ml_inference_obj)
 {
-
-    static int i = 0;
-
-    if (i == 0) {
-        /*
-         TODO: Testing
-        */
-         pid_t cam_pid = getProcessPID("cam-server");
-         if (cam_pid > 0 ) {
-             printf(" JP cam-server PID: %ld", cam_pid);
-         } else {
-             printf(" JP Could not find cam-server PID: %ld", cam_pid);
-             cam_pid = 1;
-         }
-         process_pid = cam_pid;
-         i++;
-    } else {
-        return;
-    }
-    
     // Check if the process still exists
     std::string proc_path = "/proc/" + std::to_string(process_pid);
     if (access(proc_path.c_str(), F_OK) == -1) {
