@@ -36,8 +36,6 @@
 #include <condition_variable>
 #include "parser.h"
 #include "ml_inference.h" // Include our new ML inference header
-#include "proc_stats.h"
-//#include "proc_metrics.h" // Include proc_metrics.h for fetching detailed process statistics
 
 #define CLASSIFIER_CONF_DIR "/etc/classifier/"
 
@@ -49,9 +47,7 @@ std::vector<std::thread> thread_pool;
 const int NUM_THREADS = 4;
 
 // Define paths to ML artifacts
-const std::string FT_MODEL_PATH = CLASSIFIER_CONF_DIR "fasttext_model.bin";
-const std::string LGBM_MODEL_PATH = CLASSIFIER_CONF_DIR "lgbm_model.txt";
-const std::string META_PATH = CLASSIFIER_CONF_DIR "meta.json";
+const std::string FT_MODEL_PATH = CLASSIFIER_CONF_DIR "fasttext_model_supervised.bin";
 const std::string IGNORE_PROC_PATH = CLASSIFIER_CONF_DIR "ignore_processes.txt";
 
 std::unordered_set<std::string> ignored_processes;
@@ -76,7 +72,7 @@ void load_ignored_processes() {
 
 // Singleton for MLInference
 MLInference& get_ml_inference_instance() {
-    static MLInference ml_inference_obj(FT_MODEL_PATH, LGBM_MODEL_PATH, META_PATH);
+    static MLInference ml_inference_obj(FT_MODEL_PATH);
     return ml_inference_obj;
 }
 
@@ -204,7 +200,6 @@ static void classify_process(int process_pid, int process_tgid,
 
     std::map<std::string, std::string> raw_data;
     const auto& text_cols = ml_inference_obj.getTextCols();
-    const auto& numeric_cols = ml_inference_obj.getNumericCols();
 
     // Collect Text Features
     for (const auto& col : text_cols) {
@@ -251,63 +246,6 @@ static void classify_process(int process_pid, int process_tgid,
 
     if (!is_process_alive(process_pid)) return;
 
-    // Collect Numeric Features
-    ProcStats proc_stats;
-    FetchProcStats(process_pid, proc_stats);
-    syslog(LOG_DEBUG, "PID:%d | ProcStats | Threads: %d, CPU Time: %f", process_pid, proc_stats.num_threads, proc_stats.cpu_time);
-    MemStats mem_stats;
-    FetchMemStats(process_pid, mem_stats);
-    IOStats io_stats;
-    FetchIOStats(process_pid, io_stats);
-    NwStats nw_stats;
-    FetchNwStats(process_pid, nw_stats);
-    GpuStats gpu_stats;
-    FetchGpuStats(gpu_stats);
-    DispStats disp_stats;
-    FetchDisplayStats(disp_stats);
-    SchedStats sched_stats;
-    read_schedstat(process_pid, sched_stats);
-
-    for (const auto& col : numeric_cols) {
-        if (col == "cpu_time") raw_data[col] = std::to_string(proc_stats.cpu_time);
-        else if (col == "threads") raw_data[col] = std::to_string(proc_stats.num_threads);
-        else if (col == "rss") raw_data[col] = std::to_string(proc_stats.memory_rss);
-        else if (col == "vms") raw_data[col] = std::to_string(proc_stats.memory_vms);
-        else if (col == "mem_vmpeak") raw_data[col] = std::to_string(mem_stats.vm_peak);
-        else if (col == "mem_vmlck") raw_data[col] = std::to_string(mem_stats.vm_lck);
-        else if (col == "mem_hwm") raw_data[col] = std::to_string(mem_stats.vm_hwm);
-        else if (col == "mem_vm_rss") raw_data[col] = std::to_string(mem_stats.vm_rss);
-        else if (col == "mem_vmsize") raw_data[col] = std::to_string(mem_stats.vm_size);
-        else if (col == "mem_vmdata") raw_data[col] = std::to_string(mem_stats.vm_data);
-        else if (col == "mem_vmstk") raw_data[col] = std::to_string(mem_stats.vm_stk);
-        else if (col == "mem_vm_exe") raw_data[col] = std::to_string(mem_stats.vm_exe);
-        else if (col == "mem_vmlib") raw_data[col] = std::to_string(mem_stats.vm_lib);
-        else if (col == "mem_vmpte") raw_data[col] = std::to_string(mem_stats.vm_pte);
-        else if (col == "mem_vmpmd") raw_data[col] = std::to_string(mem_stats.vm_pmd);
-        else if (col == "mem_vmswap") raw_data[col] = std::to_string(mem_stats.vm_swap);
-        else if (col == "mem_thread") raw_data[col] = std::to_string(mem_stats.threads);
-        else if (col == "read_bytes") raw_data[col] = std::to_string(io_stats.read_bytes);
-        else if (col == "write_bytes") raw_data[col] = std::to_string(io_stats.write_bytes);
-        else if (col == "tcp_tx") raw_data[col] = std::to_string(nw_stats.tcp_tx);
-        else if (col == "tcp_rx") raw_data[col] = std::to_string(nw_stats.tcp_rx);
-        else if (col == "udp_tx") raw_data[col] = std::to_string(nw_stats.udp_tx);
-        else if (col == "udp_rx") raw_data[col] = std::to_string(nw_stats.udp_rx);
-        else if (col == "gpu_busy") raw_data[col] = std::to_string(gpu_stats.busy_percent);
-        else if (col == "gpu_mem_allocated") raw_data[col] = std::to_string(gpu_stats.mem_allocated);
-        else if (col == "display_on") raw_data[col] = std::to_string(disp_stats.display_on);
-        else if (col == "active_displays") raw_data[col] = std::to_string(disp_stats.num_active_disp);
-        else if (col == "runtime_ns") raw_data[col] = std::to_string(sched_stats.runtime_ns);
-        else if (col == "rq_wait_ns") raw_data[col] = std::to_string(sched_stats.rq_wait_ns);
-        else if (col == "timeslices") raw_data[col] = std::to_string(sched_stats.timeslices);
-        else {
-            syslog(LOG_WARNING, "Unknown numeric column '%s' for PID:%d. Defaulting to 0.", col.c_str(), process_pid);
-            raw_data[col] = "0.0";
-        }
-    }
-    syslog(LOG_DEBUG, "Numeric features collected for PID:%d", process_pid);
-
-    if (!is_process_alive(process_pid)) return;
-
     bool has_sufficient_features = false;
     for (const auto& col : text_cols) {
         if (raw_data.count(col) && !raw_data.at(col).empty()) {
@@ -315,21 +253,13 @@ static void classify_process(int process_pid, int process_tgid,
             break;
         }
     }
-    if (!has_sufficient_features) {
-        for (const auto& col : numeric_cols) {
-            if (raw_data.count(col) && raw_data.at(col) != "0.0" && raw_data.at(col) != "0") {
-                has_sufficient_features = true;
-                break;
-            }
-        }
-    }
 
     if (has_sufficient_features) {
         if (!is_process_alive(process_pid)) return;
 
         syslog(LOG_DEBUG, "Invoking ML inference for PID:%d", process_pid);
-        std::string predicted_label = ml_inference_obj.predict(raw_data);
-        syslog(LOG_INFO, "PID:%d Classified as: %s", process_pid, predicted_label.c_str());
+        std::string predicted_label = ml_inference_obj.predict(process_pid, raw_data);
+        // syslog(LOG_INFO, "PID:%d Classified as: %s", process_pid, predicted_label.c_str()); // Already logged in MLInference
         // TODO: Apply resource tuning based on predicted_label
     } else {
         syslog(LOG_DEBUG, "Skipping ML inference for PID:%d due to insufficient features.", process_pid);

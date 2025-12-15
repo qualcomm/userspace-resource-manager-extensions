@@ -9,120 +9,10 @@
 #include <string>
 #include <map>
 #include <iomanip> // For std::fixed and std::setprecision
+#include <cmath> // For std::exp
 
-// Simple JSON parser for meta.json (can be replaced by a proper library like nlohmann/json)
-namespace json_parser {
-    std::map<std::string, std::vector<std::string>> parse_meta(const std::string& filepath) {
-        std::map<std::string, std::vector<std::string>> meta_data;
-        std::ifstream ifs(filepath);
-        if (!ifs.is_open()) {
-            throw std::runtime_error("Could not open meta.json file: " + filepath);
-        }
-        std::string line;
-        std::string content;
-        while (std::getline(ifs, line)) {
-            content += line;
-        }
-
-        // Basic parsing for specific keys. This is very fragile and should be replaced by a proper JSON library.
-        // For example, to parse "classes": ["Game", "Browser", "Other"]
-        size_t pos = content.find("\"classes\":");
-        if (pos != std::string::npos) {
-            size_t start = content.find("[", pos);
-            size_t end = content.find("]", start);
-            std::string classes_str = content.substr(start + 1, end - start - 1);
-            std::stringstream ss(classes_str);
-            std::string segment;
-            while(std::getline(ss, segment, ',')) {
-                segment.erase(std::remove(segment.begin(), segment.end(), ' '), segment.end());
-                segment.erase(std::remove(segment.begin(), segment.end(), '\t'), segment.end());
-                segment.erase(std::remove(segment.begin(), segment.end(), '\n'), segment.end());
-                segment.erase(std::remove(segment.begin(), segment.end(), '\r'), segment.end());
-                segment.erase(std::remove(segment.begin(), segment.end(), '"'), segment.end());
-                if (!segment.empty()) {
-                    meta_data["classes"].push_back(segment);
-                }
-            }
-        }
-
-        pos = content.find("\"text_cols\":");
-        if (pos != std::string::npos) {
-            size_t start = content.find("[", pos);
-            size_t end = content.find("]", start);
-            std::string cols_str = content.substr(start + 1, end - start - 1);
-            std::stringstream ss(cols_str);
-            std::string segment;
-            while(std::getline(ss, segment, ',')) {
-                segment.erase(std::remove(segment.begin(), segment.end(), ' '), segment.end());
-                segment.erase(std::remove(segment.begin(), segment.end(), '\t'), segment.end());
-                segment.erase(std::remove(segment.begin(), segment.end(), '\n'), segment.end());
-                segment.erase(std::remove(segment.begin(), segment.end(), '\r'), segment.end());
-                segment.erase(std::remove(segment.begin(), segment.end(), '"'), segment.end());
-                if (!segment.empty()) {
-                    meta_data["text_cols"].push_back(segment);
-                }
-            }
-        }
-
-        pos = content.find("\"numeric_cols\":");
-        if (pos != std::string::npos) {
-            size_t start = content.find("[", pos);
-            size_t end = content.find("]", start);
-            std::string cols_str = content.substr(start + 1, end - start - 1);
-            std::stringstream ss(cols_str);
-            std::string segment;
-            while(std::getline(ss, segment, ',')) {
-                segment.erase(std::remove(segment.begin(), segment.end(), ' '), segment.end());
-                segment.erase(std::remove(segment.begin(), segment.end(), '\t'), segment.end());
-                segment.erase(std::remove(segment.begin(), segment.end(), '\n'), segment.end());
-                segment.erase(std::remove(segment.begin(), segment.end(), '\r'), segment.end());
-                segment.erase(std::remove(segment.begin(), segment.end(), '"'), segment.end());
-                if (!segment.empty()) {
-                    meta_data["numeric_cols"].push_back(segment);
-                }
-            }
-        }
-        return meta_data;
-    }
-}
-
-// Placeholder for actual fastText and LightGBM implementation
-// This is a minimal implementation to satisfy the compilation for now.
-
-// Helper to convert std::string to float, handling potential errors
-float string_to_float(const std::string& s) {
-    try {
-        return std::stof(s);
-    } catch (const std::invalid_argument& e) {
-        return 0.0f; // Default to 0.0 or NaN, depending on desired behavior
-    } catch (const std::out_of_range& e) {
-        return 0.0f; // Default to 0.0 or NaN
-    }
-}
-
-// Helper to log a vector of doubles for debugging
-void log_double_vector(const std::vector<double>& vec, const char* name) {
-    std::stringstream ss;
-    ss << name << " (first 10 elements): [";
-    for (size_t i = 0; i < std::min(vec.size(), (size_t)10); ++i) {
-        ss << std::fixed << std::setprecision(4) << vec[i] << (i < std::min(vec.size(), (size_t)10) - 1 ? ", " : "");
-    }
-    ss << "]";
-    syslog(LOG_DEBUG, "%s", ss.str().c_str());
-}
-
-MLInference::MLInference(const std::string& ft_model_path, const std::string& lgbm_model_path, const std::string& meta_path) : lgbm_booster_(nullptr) {
-    syslog(LOG_DEBUG, "Parsing meta.json from: %s", meta_path.c_str());
-    try {
-        auto meta_data = json_parser::parse_meta(meta_path);
-        classes_ = meta_data["classes"];
-        text_cols_ = meta_data["text_cols"];
-        numeric_cols_ = meta_data["numeric_cols"];
-        syslog(LOG_DEBUG, "Meta.json parsed successfully. Found %zu classes.", classes_.size());
-    } catch (const std::runtime_error& e) {
-        syslog(LOG_CRIT, "Failed to parse meta.json: %s", e.what());
-        throw;
-    }
+MLInference::MLInference(const std::string& ft_model_path) {
+    text_cols_ = {"attr", "cgroup", "cmdline", "comm", "maps", "fds", "environ", "exe", "logs"};
 
     syslog(LOG_DEBUG, "Loading fastText model from: %s", ft_model_path.c_str());
     try {
@@ -134,26 +24,10 @@ MLInference::MLInference(const std::string& ft_model_path, const std::string& lg
         throw;
     }
 
-    syslog(LOG_DEBUG, "Loading LightGBM model from: %s", lgbm_model_path.c_str());
-    int num_iterations;
-    if (LGBM_BoosterCreateFromModelfile(lgbm_model_path.c_str(), &num_iterations, &lgbm_booster_) != 0) {
-        syslog(LOG_CRIT, "Failed to load LightGBM model from file: %s", lgbm_model_path.c_str());
-        throw std::runtime_error("Failed to load LightGBM model.");
-    }
-
-    int num_features = 0;
-    if (LGBM_BoosterGetNumFeature(lgbm_booster_, &num_features) != 0) {
-        syslog(LOG_CRIT, "Failed to get number of features from LightGBM model.");
-        throw std::runtime_error("Failed to get number of features from LightGBM model.");
-    }
-    lgbm_expected_features_ = num_features;
-    syslog(LOG_INFO, "MLInference initialized. LightGBM features: %d, fastText dim: %d", lgbm_expected_features_, embedding_dim_);
+    syslog(LOG_INFO, "MLInference initialized. fastText dim: %d", embedding_dim_);
 }
 
 MLInference::~MLInference() {
-    if (lgbm_booster_) {
-        LGBM_BoosterFree(lgbm_booster_);
-    }
 }
 
 std::string MLInference::normalize_text(const std::string& text) {
@@ -166,22 +40,10 @@ std::string MLInference::normalize_text(const std::string& text) {
     return s;
 }
 
-std::vector<double> MLInference::get_feature_vector(const std::map<std::string, std::string>& raw_data) {
-    syslog(LOG_DEBUG, "Starting feature vector creation.");
-    std::vector<double> feature_vector(numeric_cols_.size() + embedding_dim_, 0.0);
-
-    // 1. Numeric features
-    for (size_t i = 0; i < numeric_cols_.size(); ++i) {
-        const auto& col = numeric_cols_[i];
-        auto it = raw_data.find(col);
-        if (it != raw_data.end()) {
-            feature_vector[i] = string_to_float(it->second);
-        }
-        // The vector is already initialized to 0.0, so no else is needed.
-    }
-    syslog(LOG_DEBUG, "Numeric features processed. Count: %zu", feature_vector.size());
-
-    // 2. fastText embeddings
+std::string MLInference::predict(int pid, const std::map<std::string, std::string>& raw_data) {
+    std::lock_guard<std::mutex> lock(predict_mutex_);
+    syslog(LOG_DEBUG, "Starting prediction.");
+    
     std::string concatenated_text;
     for (const auto& col : text_cols_) {
         auto it = raw_data.find(col);
@@ -196,72 +58,54 @@ std::vector<double> MLInference::get_feature_vector(const std::map<std::string, 
         concatenated_text.pop_back();
     }
     
-    
-    if (!concatenated_text.empty()) {
-        syslog(LOG_DEBUG, "Generating fastText embedding.");
-        // Add a newline to the end of the text, as fastText's getSentenceVector (with istream) expects it.
-        concatenated_text += "\n";
-        fasttext::Vector ft_embedding_vector(embedding_dim_);
-        std::istringstream iss(concatenated_text);
-        ft_model_.getSentenceVector(iss, ft_embedding_vector);
-        for (int i = 0; i < embedding_dim_; ++i) {
-            feature_vector[numeric_cols_.size() + i] = ft_embedding_vector[i];
-        }
-    } else {
-        syslog(LOG_WARNING, "No text features found; embedding is already zeros.");
+    if (concatenated_text.empty()) {
+        syslog(LOG_WARNING, "No text features found.");
+        return "Unknown";
     }
-    syslog(LOG_DEBUG, "Feature vector created. Total size: %zu", feature_vector.size());
-    log_double_vector(feature_vector, "Final Feature Vector");
 
-    return feature_vector;
-}
+    syslog(LOG_DEBUG, "Calling fastText predict().");
+    
+    // Add a newline to the end of the text as is typical for fastText stream processing
+    concatenated_text += "\n";
+    std::istringstream iss(concatenated_text);
+    
+    std::vector<std::pair<fasttext::real, int>> predictions;
+    
+    // Tokenize the text using the dictionary
+    std::vector<int> words, labels;
+    ft_model_.getDictionary()->getLine(iss, words, labels);
 
-std::string MLInference::predict(const std::map<std::string, std::string>& raw_data) {
-    std::lock_guard<std::mutex> lock(predict_mutex_);
-    syslog(LOG_DEBUG, "Starting prediction.");
-    std::vector<double> features = get_feature_vector(raw_data);
-
-    // Defensive check for feature count mismatch
-    if (features.size() != static_cast<size_t>(lgbm_expected_features_)) {
-        syslog(LOG_CRIT, "Feature mismatch! LGBM expects %d features, but got %zu.",
-               lgbm_expected_features_, features.size());
-        throw std::runtime_error("Feature vector size does not match LightGBM model expectation.");
+    // k=1 to get the top prediction
+    ft_model_.predict(1, words, predictions, 0.0);
+    
+    if (predictions.empty()) {
+         syslog(LOG_WARNING, "fastText returned no predictions.");
+         return "Unknown";
     }
     
-    // LightGBM prediction
-    std::vector<double> result(classes_.size());
-    int64_t out_len = 0;
-    syslog(LOG_DEBUG, "Calling LightGBM C_API Predict().");
-
-    if (LGBM_BoosterPredictForMat(lgbm_booster_,
-                                  features.data(),
-                                  C_API_DTYPE_FLOAT64,
-                                  1, // Number of rows
-                                  features.size(),
-                                  1, // Is row-major
-                                  C_API_PREDICT_NORMAL,
-                                  -1, // start iteration
-                                  -1, // num iteration
-                                  "", // parameters
-                                  &out_len,
-                                  result.data()) != 0) {
-        syslog(LOG_CRIT, "LightGBM prediction failed.");
-        throw std::runtime_error("LightGBM prediction failed.");
+    // fastText returns pairs of (probability, label_id)
+    // Note: If probability is negative, it's likely a log-probability. Convert it.
+    fasttext::real probability = predictions[0].first;
+    if (probability < 0) {
+        probability = std::exp(probability);
+    }
+    int label_id = predictions[0].second;
+    
+    // Get the label string from the dictionary
+    std::string predicted_label = ft_model_.getDictionary()->getLabel(label_id);
+    
+    // Strip __label__ prefix if present
+    std::string prefix = "__label__";
+    if (predicted_label.rfind(prefix, 0) == 0) { // starts with prefix
+        predicted_label = predicted_label.substr(prefix.length());
     }
 
-    log_double_vector(result, "LGBM Prediction Probabilities");
-
-    // Get the predicted class index
-    int predicted_class_idx = 0;
-    double max_prob = -1.0;
-    for (size_t i = 0; i < classes_.size(); ++i) {
-        if (result[i] > max_prob) {
-            max_prob = result[i];
-            predicted_class_idx = i;
-        }
+    std::string comm = "unknown";
+    if (raw_data.count("comm")) {
+        comm = raw_data.at("comm");
     }
 
-    syslog(LOG_INFO, "Prediction complete. Class: %s, Probability: %.4f", 
-           classes_[predicted_class_idx].c_str(), max_prob);
-    return classes_[predicted_class_idx];
+    syslog(LOG_INFO, "Prediction complete. PID: %d, Comm: %s, Class: %s, Probability: %.4f", 
+           pid, comm.c_str(), predicted_label.c_str(), probability);
+    return predicted_label;
 }
