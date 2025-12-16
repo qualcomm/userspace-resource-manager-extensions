@@ -8,14 +8,8 @@
 #include <sstream>
 #include <algorithm>
 #include <stdexcept>
-
-// Forward declarations for fastText and LightGBM if we decide to use their C++ APIs directly
-// Otherwise, we might wrap them or use a C-API if available.
-// For now, let's assume we'll use their C++ headers.
-#include "fasttext.h" // Assuming fastText C++ header path
-
 #include <mutex>
-
+#include <fasttext/fasttext.h>
 
 class MLInference {
 public:
