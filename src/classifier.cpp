@@ -48,7 +48,7 @@ const int NUM_THREADS = 4;
 
 // Define paths to ML artifacts
 const std::string FT_MODEL_PATH = CLASSIFIER_CONF_DIR "fasttext_model_supervised.bin";
-const std::string IGNORE_PROC_PATH = CLASSIFIER_CONF_DIR "ignore_processes.txt";
+const std::string IGNORE_PROC_PATH = CLASSIFIER_CONF_DIR "classifier-blocklist.txt";
 
 std::unordered_set<std::string> ignored_processes;
 
@@ -60,11 +60,17 @@ void load_ignored_processes() {
     }
     std::string line;
     while (std::getline(file, line)) {
-        // Trim whitespace
-        line.erase(0, line.find_first_not_of(" \t\n\r"));
-        line.erase(line.find_last_not_of(" \t\n\r") + 1);
-        if (!line.empty()) {
-            ignored_processes.insert(line);
+        std::stringstream ss(line);
+        std::string segment;
+        while(std::getline(ss, segment, ',')) {
+            // Trim whitespace
+            size_t first = segment.find_first_not_of(" \t\n\r");
+            if (first == std::string::npos) continue;
+            size_t last = segment.find_last_not_of(" \t\n\r");
+            segment = segment.substr(first, (last - first + 1));
+            if (!segment.empty()) {
+                ignored_processes.insert(segment);
+            }
         }
     }
     syslog(LOG_INFO, "Loaded %zu ignored processes.", ignored_processes.size());
