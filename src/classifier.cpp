@@ -4,10 +4,8 @@
 
 #include <sys/socket.h>
 #include <linux/netlink.h>
-//#include <linux/connector.h>
-//#include <linux/cn_proc.h>
-#include "connector.h"
-#include "cn_proc.h"
+#include <linux/connector.h>
+#include <linux/cn_proc.h>
 #include <signal.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -18,8 +16,7 @@
 #include <dlfcn.h>
 #include <unordered_map>
 #include <unordered_set>
-//#include <ResourceTuner/ResourceTunerAPIs.h>
-#include <syslog.h> // Include syslog for logging
+#include <syslog.h>
 #include <iostream>
 #include <sstream>
 
@@ -36,6 +33,16 @@
 #include <condition_variable>
 #include "parser.h"
 #include "ml_inference.h" // Include our new ML inference header
+
+// Define a local version of cn_msg without the flexible array member 'data[]'
+// to allow embedding it in other structures.
+struct cn_msg_hdr {
+    struct cb_id id;
+    __u32 seq;
+    __u32 ack;
+    __u16 len;
+    __u16 flags;
+};
 
 #define CLASSIFIER_CONF_DIR "/etc/classifier/"
 
@@ -140,7 +147,7 @@ static int set_proc_ev_listen(int nl_sock, bool enable)
     struct __attribute__ ((aligned(NLMSG_ALIGNTO))) {
         struct nlmsghdr nl_hdr;
         struct __attribute__ ((__packed__)) {
-            struct cn_msg cn_msg;
+            struct cn_msg_hdr cn_msg;
             enum proc_cn_mcast_op cn_mcast;
         };
     } nlcn_msg;
@@ -303,7 +310,7 @@ static int handle_proc_ev(int nl_sock, MLInference& ml_inference_obj)
     struct __attribute__ ((aligned(NLMSG_ALIGNTO))) {
         struct nlmsghdr nl_hdr;
         struct __attribute__ ((__packed__)) {
-            struct cn_msg cn_msg;
+            struct cn_msg_hdr cn_msg;
             struct proc_event proc_ev;
         };
     } nlcn_msg;
@@ -320,17 +327,17 @@ static int handle_proc_ev(int nl_sock, MLInference& ml_inference_obj)
             return -1;
         }
         switch (nlcn_msg.proc_ev.what) {
-            case proc_event::PROC_EVENT_NONE:
+            case PROC_EVENT_NONE:
                 // syslog(LOG_DEBUG, "set mcast listen ok");
                 break;
-            case proc_event::PROC_EVENT_FORK:
+            case PROC_EVENT_FORK:
                 syslog(LOG_DEBUG, "fork: parent tid=%d pid=%d -> child tid=%d pid=%d",
                        nlcn_msg.proc_ev.event_data.fork.parent_pid,
                        nlcn_msg.proc_ev.event_data.fork.parent_tgid,
                        nlcn_msg.proc_ev.event_data.fork.child_pid,
                        nlcn_msg.proc_ev.event_data.fork.child_tgid);
                 break;
-            case proc_event::PROC_EVENT_EXEC:
+            case PROC_EVENT_EXEC:
                 syslog(LOG_DEBUG, "Received PROC_EVENT_EXEC for tid=%d pid=%d",
                        nlcn_msg.proc_ev.event_data.exec.process_pid,
                        nlcn_msg.proc_ev.event_data.exec.process_tgid);
@@ -354,21 +361,21 @@ static int handle_proc_ev(int nl_sock, MLInference& ml_inference_obj)
                     }
                 }
                 break;
-            case proc_event::PROC_EVENT_UID:
+            case PROC_EVENT_UID:
                 syslog(LOG_DEBUG, "uid change: tid=%d pid=%d from %d to %d",
                        nlcn_msg.proc_ev.event_data.id.process_pid,
                        nlcn_msg.proc_ev.event_data.id.process_tgid,
                        nlcn_msg.proc_ev.event_data.id.r.ruid,
                        nlcn_msg.proc_ev.event_data.id.e.euid);
                 break;
-            case proc_event::PROC_EVENT_GID:
+            case PROC_EVENT_GID:
                 syslog(LOG_DEBUG, "gid change: tid=%d pid=%d from %d to %d",
                        nlcn_msg.proc_ev.event_data.id.process_pid,
                        nlcn_msg.proc_ev.event_data.id.process_tgid,
                        nlcn_msg.proc_ev.event_data.id.r.rgid,
                        nlcn_msg.proc_ev.event_data.id.e.egid);
                 break;
-            case proc_event::PROC_EVENT_EXIT:
+            case PROC_EVENT_EXIT:
                 syslog(LOG_DEBUG, "exit: tid=%d pid=%d exit_code=%d",
                        nlcn_msg.proc_ev.event_data.exit.process_pid,
                        nlcn_msg.proc_ev.event_data.exit.process_tgid,
