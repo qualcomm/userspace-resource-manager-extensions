@@ -1,7 +1,6 @@
 #include <unistd.h>
 #include <syslog.h>
 #include <parser.h>
-#include <proc_stats.h>  // For system stats
 #include <fstream>
 #include <sys/stat.h>
 
@@ -107,45 +106,6 @@ int collect_and_store_data(pid_t pid, const char* config_file) {
     }
 
     /*stats collection starts here */
-    ProcStats procStats;
-    MemStats memStats;
-    IOStats ioStats;
-    SocketStats socketstats;
-    NwStats netStats;
-    GpuStats gpuStats = {0, 0, 0, 0};
-    DispStats dispStats;
-    SchedStats schedStats;
-
-    std::vector<int> processInodes;
-    std::vector<SocketStats> tcpSockets;
-    std::vector<SocketStats> udpSockets;
-    std::vector<SocketStats> matchedSockets;
-
-    FetchProcStats(pid, procStats);
-    FetchMemStats(pid, memStats);
-    FetchIOStats(pid, ioStats);
-    FetchNwStats(pid, netStats);
-    FetchGpuStats(gpuStats);
-    FetchDisplayStats(dispStats);
-    read_schedstat(pid, schedStats);
-
-    std::vector<std::string> systemDisplays;
-    int total = getActiveDisplays(systemDisplays);
-
-    getProcessSocketInodes(pid, processInodes);
-    parseNetFile("/proc/net/tcp", tcpSockets);
-    parseNetFile("/proc/net/udp", udpSockets);
-
-    for (const auto& sock : tcpSockets) {
-        if (std::find(processInodes.begin(), processInodes.end(), sock.inode) != processInodes.end()) {
-            matchedSockets.push_back(sock);
-        }
-    }
-    for (const auto& sock : udpSockets) {
-        if (std::find(processInodes.begin(), processInodes.end(), sock.inode) != processInodes.end()) {
-            matchedSockets.push_back(sock);
-        }
-    }
 
     /* Parse attr_current */
     /*
@@ -399,7 +359,7 @@ int collect_and_store_data(pid_t pid, const char* config_file) {
     if (!unfilteredCSV.is_open()) {
         syslog(LOG_ERR, "Failed to open unfiltered file: %s", unfilteredFile.c_str());
     } else {
-        unfilteredCSV << "PID,attr,cgroup,cmdline,comm,maps,fds,environ,exe,logs,cpu_time,threads,rss,vms,mem_vmpeak,mem_vmlck,mem_hwm,mem_vm_rss,mem_vmsize,mem_vmdata,mem_vmstk,mem_vm_exe,mem_vmlib,mem_vmpte,mem_vmpmd,mem_vmswap,mem_thread,read_bytes,write_bytes,tcp_tx,tcp_rx,udp_tx,udp_rx,gpu_busy,gpu_mem_allocated,display_on,active_displays,runtime_ns,rq_wait_ns,timeslices\n";
+        unfilteredCSV << "PID,attr,cgroup,cmdline,comm,maps,fds,environ,exe,logs\n";
         unfilteredCSV << pid;
 
         // attr
@@ -495,159 +455,6 @@ int collect_and_store_data(pid_t pid, const char* config_file) {
         }
         unfilteredCSV << '"';
 
-        unfilteredCSV << ',';
-        unfilteredCSV << '"';
-        unfilteredCSV << procStats.cpu_time;
-        unfilteredCSV << '"';
-        
-        unfilteredCSV << ',';
-        unfilteredCSV << '"';
-        unfilteredCSV << procStats.num_threads;
-        unfilteredCSV << '"';
-
-        unfilteredCSV << ',';
-        unfilteredCSV << '"';
-        unfilteredCSV << procStats.memory_rss;
-        unfilteredCSV << '"';
-
-        unfilteredCSV << ',';
-        unfilteredCSV << '"';
-        unfilteredCSV << procStats.memory_vms;
-        unfilteredCSV << '"';
-        
-        unfilteredCSV << ',';
-        unfilteredCSV << '"';
-        unfilteredCSV << memStats.vm_peak;
-        unfilteredCSV << '"';
-
-        unfilteredCSV << ',';
-        unfilteredCSV << '"';
-        unfilteredCSV << memStats.vm_lck;
-        unfilteredCSV << '"';
-
-
-        unfilteredCSV << ',';
-        unfilteredCSV << '"';
-        unfilteredCSV << memStats.vm_hwm;
-        unfilteredCSV << '"';
-
-        unfilteredCSV << ',';
-        unfilteredCSV << '"';
-        unfilteredCSV << memStats.vm_rss;
-        unfilteredCSV << '"';
-
-        unfilteredCSV << ',';
-        unfilteredCSV << '"';
-        unfilteredCSV << memStats.vm_size;
-        unfilteredCSV << '"';
-
-        unfilteredCSV << ',';
-        unfilteredCSV << '"';
-        unfilteredCSV << memStats.vm_data;
-        unfilteredCSV << '"';
-
-
-        unfilteredCSV << ',';
-        unfilteredCSV << '"';
-        unfilteredCSV << memStats.vm_stk;
-        unfilteredCSV << '"';
-
-        unfilteredCSV << ',';
-        unfilteredCSV << '"';
-        unfilteredCSV << memStats.vm_exe;
-        unfilteredCSV << '"';
-
-        unfilteredCSV << ',';
-        unfilteredCSV << '"';
-        unfilteredCSV << memStats.vm_lib;
-        unfilteredCSV << '"';
-
-        unfilteredCSV << ',';
-        unfilteredCSV << '"';
-        unfilteredCSV << memStats.vm_pte;
-        unfilteredCSV << '"';
-
-        unfilteredCSV << ',';
-        unfilteredCSV << '"';
-        unfilteredCSV << memStats.vm_pmd;
-        unfilteredCSV << '"';
-
-        unfilteredCSV << ',';
-        unfilteredCSV << '"';
-        unfilteredCSV << memStats.vm_swap;
-        unfilteredCSV << '"';
-
-        unfilteredCSV << ',';
-        unfilteredCSV << '"';
-        unfilteredCSV << memStats.threads;
-        unfilteredCSV << '"';
-
-
-        unfilteredCSV << ',';
-        unfilteredCSV << '"';
-        unfilteredCSV << ioStats.read_bytes;
-        unfilteredCSV << '"';
-
-        unfilteredCSV << ',';
-        unfilteredCSV << '"';
-        unfilteredCSV << ioStats.write_bytes;
-        unfilteredCSV << '"';
-
-        unfilteredCSV << ',';
-        unfilteredCSV << '"';
-        unfilteredCSV << netStats.tcp_tx;
-        unfilteredCSV << '"';
-
-        unfilteredCSV << ',';
-        unfilteredCSV << '"';
-        unfilteredCSV << netStats.tcp_rx;
-        unfilteredCSV << '"';
-
-        unfilteredCSV << ',';
-        unfilteredCSV << '"';
-        unfilteredCSV << netStats.udp_tx;
-        unfilteredCSV << '"';
-
-        unfilteredCSV << ',';
-        unfilteredCSV << '"';
-        unfilteredCSV << netStats.udp_rx;
-        unfilteredCSV << '"';
-       
-        unfilteredCSV << ',';
-        unfilteredCSV << '"';
-        unfilteredCSV << gpuStats.busy_percent;
-        unfilteredCSV << '"';
-
-        unfilteredCSV << ',';
-        unfilteredCSV << '"';
-        unfilteredCSV << gpuStats.mem_allocated;
-        unfilteredCSV << '"';
-
-        unfilteredCSV << ',';
-        unfilteredCSV << '"';
-        unfilteredCSV << dispStats.display_on;
-        unfilteredCSV << '"';
-
-        unfilteredCSV << ',';
-        unfilteredCSV << '"';
-        unfilteredCSV << total;
-        unfilteredCSV << '"';
-
-        unfilteredCSV << ',';
-        unfilteredCSV << '"';
-        unfilteredCSV << schedStats.runtime_ns;
-        unfilteredCSV << '"';
-
-        unfilteredCSV << ',';
-        unfilteredCSV << '"';
-        unfilteredCSV << schedStats.rq_wait_ns;
-        unfilteredCSV << '"';
-
-        unfilteredCSV << ',';
-        unfilteredCSV << '"';
-        unfilteredCSV << schedStats.timeslices;
-        unfilteredCSV << '"';
-
         unfilteredCSV << '\n';
         unfilteredCSV.close();
     }
@@ -658,7 +465,7 @@ int collect_and_store_data(pid_t pid, const char* config_file) {
     if (!filteredCSV.is_open()) {
         syslog(LOG_ERR, "Failed to open filtered file: %s", filteredFile.c_str());
     } else {
-        filteredCSV << "PID,attr,cgroup,cmdline,comm,maps,fds,environ,exe,logs,cpu_time,threads,rss,vms,mem_vmpeak,mem_vmlck,mem_hwm,mem_vm_rss,mem_vmsize,mem_vmdata,mem_vmstk,mem_vm_exe,mem_vmlib,mem_vmpte,mem_vmpmd,mem_vmswap,mem_thread,read_bytes,write_bytes,tcp_tx,tcp_rx,udp_tx,udp_rx,gpu_busy,gpu_mem_allocated,display_on,active_displays,runtime_ns,rq_wait_ns,timeslices\n";
+        filteredCSV << "PID,attr,cgroup,cmdline,comm,maps,fds,environ,exe,logs\n";
         filteredCSV << pid;
 
         // attr
@@ -743,177 +550,6 @@ int collect_and_store_data(pid_t pid, const char* config_file) {
             filteredCSV << filtered_logs[i];
             if (i != filtered_logs.size() - 1) filteredCSV << ",";
         }
-        filteredCSV << '"';
-
-       // Write system stats
-        filteredCSV << ',';
-        filteredCSV << '"';
-        filteredCSV << procStats.cpu_time;
-        filteredCSV << '"';
-        
-        // Write system stats
-        filteredCSV << ',';
-        filteredCSV << '"';
-        filteredCSV << procStats.num_threads;
-        filteredCSV << '"';
-
-        // Write system stats
-        filteredCSV << ',';
-        filteredCSV << '"';
-        filteredCSV << procStats.memory_rss;
-        filteredCSV << '"';
-
-        // Write system stats
-        filteredCSV << ',';
-        filteredCSV << '"';
-        filteredCSV << procStats.memory_vms;
-        filteredCSV << '"';
-
-        filteredCSV << ',';
-        filteredCSV << '"';
-        filteredCSV << memStats.vm_peak;
-        filteredCSV << '"';
-
-        filteredCSV << ',';
-        filteredCSV << '"';
-        filteredCSV << memStats.vm_lck;
-        filteredCSV << '"';
-
-
-        filteredCSV << ',';
-        filteredCSV << '"';
-        filteredCSV << memStats.vm_hwm;
-        filteredCSV << '"';
-
-        filteredCSV << ',';
-        filteredCSV << '"';
-        filteredCSV << memStats.vm_rss;
-        filteredCSV << '"';
-
-        filteredCSV << ',';
-        filteredCSV << '"';
-        filteredCSV << memStats.vm_size;
-        filteredCSV << '"';
-
-        filteredCSV << ',';
-        filteredCSV << '"';
-        filteredCSV << memStats.vm_data;
-        filteredCSV << '"';
-
-
-        filteredCSV << ',';
-        filteredCSV << '"';
-        filteredCSV << memStats.vm_stk;
-        filteredCSV << '"';
-
-        filteredCSV << ',';
-        filteredCSV << '"';
-        filteredCSV << memStats.vm_exe;
-        filteredCSV << '"';
-
-        filteredCSV << ',';
-        filteredCSV << '"';
-        filteredCSV << memStats.vm_lib;
-        filteredCSV << '"';
-
-        filteredCSV << ',';
-        filteredCSV << '"';
-        filteredCSV << memStats.vm_pte;
-        filteredCSV << '"';
-
-        filteredCSV << ',';
-        filteredCSV << '"';
-        filteredCSV << memStats.vm_pmd;
-        filteredCSV << '"';
-
-        filteredCSV << ',';
-        filteredCSV << '"';
-        filteredCSV << memStats.vm_swap;
-        filteredCSV << '"';
-
-        filteredCSV << ',';
-        filteredCSV << '"';
-        filteredCSV << memStats.threads;
-        filteredCSV << '"';
-
-
-
-        // Write system stats
-        filteredCSV << ',';
-        filteredCSV << '"';
-        filteredCSV << ioStats.read_bytes;
-        filteredCSV << '"';
-
-        // Write system stats
-        filteredCSV << ',';
-        filteredCSV << '"';
-        filteredCSV << ioStats.write_bytes;
-        filteredCSV << '"';
-
-       // Write system stats
-        filteredCSV << ',';
-        filteredCSV << '"';
-        filteredCSV << netStats.tcp_tx;
-        filteredCSV << '"';
-
-       // Write system stats
-        filteredCSV << ',';
-        filteredCSV << '"';
-        filteredCSV << netStats.tcp_rx;
-        filteredCSV << '"';
-
-      // Write system stats
-        filteredCSV << ',';
-        filteredCSV << '"';
-        filteredCSV << netStats.udp_tx;
-        filteredCSV << '"';
-
-        // Write system stats
-        filteredCSV << ',';
-        filteredCSV << '"';
-        filteredCSV << netStats.udp_rx;
-        filteredCSV << '"';
-       
-        // Write system stats
-        filteredCSV << ',';
-        filteredCSV << '"';
-        filteredCSV << gpuStats.busy_percent;
-        filteredCSV << '"';
-
-        // Write system stats
-        filteredCSV << ',';
-        filteredCSV << '"';
-        filteredCSV << gpuStats.mem_allocated;
-        filteredCSV << '"';
-
-        // Write system stats
-        filteredCSV << ',';
-        filteredCSV << '"';
-        filteredCSV << dispStats.display_on;
-        filteredCSV << '"';
-
-        // Write system stats
-        filteredCSV << ',';
-        filteredCSV << '"';
-        filteredCSV << dispStats.display_on;
-        filteredCSV << '"';
-
-       // Write system stats
-        filteredCSV << ',';
-        filteredCSV << '"';
-        filteredCSV << schedStats.runtime_ns;
-        filteredCSV << '"';
-
-        // Write system stats
-        filteredCSV << ',';
-        filteredCSV << '"';
-        filteredCSV << schedStats.rq_wait_ns;
-        filteredCSV << '"';
-
-       // Write system stats
-        filteredCSV << ',';
-        filteredCSV << '"';
-        filteredCSV << schedStats.timeslices;
         filteredCSV << '"';
 
         filteredCSV << '\n';
