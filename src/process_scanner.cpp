@@ -88,21 +88,21 @@ bool isValidPidViaProc(pid_t pid) {
     return (stat(procPath.c_str(), &info) == 0 && S_ISDIR(info.st_mode));
 }
 
-int collect_and_store_data(pid_t pid, const char* config_file) {
+// Helper to join vector into string
+std::string join_vector(const std::vector<std::string>& vec) {
+    std::stringstream ss;
+    for(const auto& s : vec) {
+        ss << s << " ";
+    }
+    std::string res = ss.str();
+    if(!res.empty()) res.pop_back();
+    return res;
+}
+
+int collect_and_store_data(pid_t pid, const std::unordered_map<std::string, std::unordered_set<std::string>>& ignoreMap, std::map<std::string, std::string>& output_data, bool dump_csv) {
     if(!isValidPidViaProc(pid)) {
         syslog(LOG_ERR, "PID %d does not exist in /proc.", pid);
         return 1;
-    }
-    std::string configFile = config_file;
-
-    auto ignoreMap = loadIgnoreMap(configFile);
-    syslog(LOG_DEBUG, "Ignore strings:");
-    for (const auto& pair : ignoreMap) {
-        std::string values;
-        for (const auto& val : pair.second) {
-            values += val + " ";
-        }
-        syslog(LOG_DEBUG, "%s: %s", pair.first.c_str(), values.c_str());
     }
 
     /*stats collection starts here */
@@ -126,7 +126,7 @@ int collect_and_store_data(pid_t pid, const char* config_file) {
         }
     }
     std::vector<std::string> lowercontext = toLowercaseVector(context);
-    auto filtered_context = filterStrings(lowercontext, ignoreMap["attr"]);
+    auto filtered_context = filterStrings(lowercontext, ignoreMap.count("attr") ? ignoreMap.at("attr") : std::unordered_set<std::string>());
     if(!filtered_context.empty()) {
         syslog(LOG_DEBUG, "filtered attr_current:");
         for(const auto& c: filtered_context) {
@@ -147,7 +147,7 @@ int collect_and_store_data(pid_t pid, const char* config_file) {
         }
     }
     std::vector<std::string> lowercgroup = toLowercaseVector(cgroup);
-    auto filtered_cg = filterStrings(lowercgroup, ignoreMap["cgroup"]);
+    auto filtered_cg = filterStrings(lowercgroup, ignoreMap.count("cgroup") ? ignoreMap.at("cgroup") : std::unordered_set<std::string>());
     if(!filtered_cg.empty()) {
         syslog(LOG_DEBUG, "filtered cg:");
         for(const auto& c: filtered_cg) {
@@ -179,7 +179,7 @@ int collect_and_store_data(pid_t pid, const char* config_file) {
     }
     std::vector<std::string> lowercmdline = toLowercaseVector(cmdline);
     //TODO: filter single digit numbers.
-    auto filtered_cmd = filterStrings(lowercmdline, ignoreMap["cmdline"]);
+    auto filtered_cmd = filterStrings(lowercmdline, ignoreMap.count("cmdline") ? ignoreMap.at("cmdline") : std::unordered_set<std::string>());
     if(!filtered_cmd.empty()) {
         syslog(LOG_DEBUG, "filtered cmdline:");
         for(const auto& c: filtered_cmd) {
@@ -204,7 +204,7 @@ int collect_and_store_data(pid_t pid, const char* config_file) {
         }
     }
     std::vector<std::string> lowercomm = toLowercaseVector(comm);
-    auto filtered_comm = filterStrings(lowercomm, ignoreMap["comm"]);
+    auto filtered_comm = filterStrings(lowercomm, ignoreMap.count("comm") ? ignoreMap.at("comm") : std::unordered_set<std::string>());
     if(!filtered_comm.empty()) {
         syslog(LOG_DEBUG, "filtered comm:");
         for(const auto& c: filtered_comm) {
@@ -223,7 +223,7 @@ int collect_and_store_data(pid_t pid, const char* config_file) {
         }
     }
     std::vector<std::string> lowermaps = toLowercaseVector(maps);
-    auto filtered_maps = filterStrings(lowermaps, ignoreMap["map_files"]);
+    auto filtered_maps = filterStrings(lowermaps, ignoreMap.count("map_files") ? ignoreMap.at("map_files") : std::unordered_set<std::string>());
     if(!filtered_maps.empty()) {
         syslog(LOG_DEBUG, "filtered map_files:");
         for(const auto& c: filtered_maps) {
@@ -242,7 +242,7 @@ int collect_and_store_data(pid_t pid, const char* config_file) {
         }
     }
     std::vector<std::string> lowerfds = toLowercaseVector(fds);
-    auto filtered_fds = filterStrings(lowerfds, ignoreMap["fds"]);
+    auto filtered_fds = filterStrings(lowerfds, ignoreMap.count("fds") ? ignoreMap.at("fds") : std::unordered_set<std::string>());
     if(!filtered_fds.empty()) {
         syslog(LOG_DEBUG, "filtered fds:");
         for(const auto& c: filtered_fds) {
@@ -260,7 +260,7 @@ int collect_and_store_data(pid_t pid, const char* config_file) {
         }
     }
     std::vector<std::string> lowerenviron = toLowercaseVector(environ);
-    auto filtered_environ = filterStrings(lowerenviron, ignoreMap["environ"]);
+    auto filtered_environ = filterStrings(lowerenviron, ignoreMap.count("environ") ? ignoreMap.at("environ") : std::unordered_set<std::string>());
     if (!filtered_environ.empty()) {
         syslog(LOG_DEBUG, "filtered environ:");
         for (const auto& c : filtered_environ) {
@@ -284,7 +284,7 @@ int collect_and_store_data(pid_t pid, const char* config_file) {
         } 
     }
     std::vector<std::string> lowerexe = toLowercaseVector(exe);
-    auto filtered_exe = filterStrings(lowerexe, ignoreMap["exe"]);
+    auto filtered_exe = filterStrings(lowerexe, ignoreMap.count("exe") ? ignoreMap.at("exe") : std::unordered_set<std::string>());
     if(!filtered_exe.empty()) {
         syslog(LOG_DEBUG, "filtered exe:");
         for(const auto& c: filtered_exe) {
@@ -322,7 +322,7 @@ int collect_and_store_data(pid_t pid, const char* config_file) {
     std::vector<std::string> lowerlogs = toLowercaseVector(logs);
 
     // Now logs contains tokens from all entries
-    auto filtered_logs = filterStrings(lowerlogs, ignoreMap["logs"]);
+    auto filtered_logs = filterStrings(lowerlogs, ignoreMap.count("logs") ? ignoreMap.at("logs") : std::unordered_set<std::string>());
     if (!filtered_logs.empty()) {
         syslog(LOG_DEBUG, "filtered logs:");
         for (const auto& c : filtered_logs) {
@@ -331,6 +331,21 @@ int collect_and_store_data(pid_t pid, const char* config_file) {
    }    
 
    removeDoubleQuotes(filtered_logs);
+
+   // Populate output_data with filtered strings
+   output_data["attr"] = join_vector(filtered_context);
+   output_data["cgroup"] = join_vector(filtered_cg);
+   output_data["cmdline"] = join_vector(filtered_cmd);
+   output_data["comm"] = join_vector(filtered_comm);
+   output_data["maps"] = join_vector(filtered_maps);
+   output_data["fds"] = join_vector(filtered_fds);
+   output_data["environ"] = join_vector(filtered_environ);
+   output_data["exe"] = join_vector(filtered_exe);
+   output_data["logs"] = join_vector(filtered_logs);
+
+   if (!dump_csv) {
+       return 0;
+   }
 
     std::string prunedFolder = PRUNED_DIR;
     std::string unfilteredFolder = UNFILTERED_DIR;

@@ -37,4 +37,5 @@ std::vector<std::string> extractProcessNameAndMessage(const std::vector<std::str
 std::vector<std::string> readJournalForPid(pid_t pid, uint32_t numLines = LOG_LINES);
 std::vector<std::string> parse_proc_log(const std::string& input, const std::string& delimiters);
 std::string trim(const std::string& s);
-int collect_and_store_data(pid_t pid, const char* config_file);
+#include <map>
+int collect_and_store_data(pid_t pid, const std::unordered_map<std::string, std::unordered_set<std::string>>& ignoreMap, std::map<std::string, std::string>& output_data, bool dump_csv);
