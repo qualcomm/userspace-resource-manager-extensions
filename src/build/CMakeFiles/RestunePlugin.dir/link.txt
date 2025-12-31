@@ -1,2 +1,0 @@
-/usr/bin/ar qc libRestunePlugin.a CMakeFiles/RestunePlugin.dir/Plugin.o
-/usr/bin/ranlib libRestunePlugin.a
