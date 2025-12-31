@@ -5,6 +5,8 @@
 #include <sstream>
 #include <algorithm>
 
+#include <Urm/Extensions.h>
+
 enum USECASE {
     UNDETERMINED,
     URM_DECODE,
@@ -235,7 +237,7 @@ static void gstCamPostProcess(void* context) {
 }
 
 // Register post processing block for gst-camera
-// CLASSIFIER_REGISTER_POST_PROCESS_CB("gst-camera-per", gstCamPostProcess);
+CLASSIFIER_REGISTER_POST_PROCESS_CB("gst-camera-per", gstCamPostProcess);
 
 __attribute__((constructor))
 void registerWithUrm() {
