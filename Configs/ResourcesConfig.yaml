@@ -1,0 +1,120 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+ResourceConfigs:
+  - ResType: "0x05"
+    ResID: "0x0000"
+    Name: "RES_TUNER_KGSL_DEF_PWRLEVEL"
+    Path: "/sys/class/kgsl/kgsl-3d0/default_pwrlevel"
+    Supported: true
+    LowThreshold: 0
+    Permissions: "third_party"
+    Modes: ["display_on", "doze"]
+    Policy: "lower_is_better"
+    ApplyType: "global"
+
+  - ResType: "0x05"
+    ResID: "0x0001"
+    Name: "RES_TUNER_KGSL_DEVFREQ_MAX"
+    Path: "/sys/class/kgsl/kgsl-3d0/devfreq/max_freq"
+    Supported: true
+    Permissions: "third_party"
+    Modes: ["display_on", "doze"]
+    Policy: "lower_is_better"
+    ApplyType: "global"
+
+  - ResType: "0x05"
+    ResID: "0x0002"
+    Name: "RES_TUNER_KGSL_DEVFREQ_MIN"
+    Path: "/sys/class/kgsl/kgsl-3d0/devfreq/min_freq"
+    Supported: true
+    Permissions: "third_party"
+    Modes: ["display_on", "doze"]
+    Policy: "lower_is_better"
+    ApplyType: "global"
+
+  - ResType: "0x05"
+    ResID: "0x0003"
+    Name: "RES_TUNER_KGSL_IDLE_TIMER"
+    Path: "/sys/class/kgsl/kgsl-3d0/idle_timer"
+    Supported: true
+    LowThreshold: 0
+    Permissions: third_party
+    Modes: ["display_on", "doze"]
+    Policy: higher_is_better
+    ApplyType: "global"
+
+  - ResType: "0x05"
+    ResID: "0x0004"
+    Name: "RES_TUNER_KGSL_MAX_PWRLEVEL"
+    Path: "/sys/class/kgsl/kgsl-3d0/max_pwrlevel"
+    Supported: true
+    LowThreshold: 0
+    Permissions: third_party
+    Modes: ["display_on", "doze"]
+    Policy: higher_is_better
+    ApplyType: "global"
+
+  - ResType: "0x05"
+    ResID: "0x0005"
+    Name: "RES_TUNER_KGSL_MIN_PWRLEVEL"
+    Path: "/sys/class/kgsl/kgsl-3d0/min_pwrlevel"
+    Supported: true
+    LowThreshold: 0
+    Permissions: third_party
+    Modes: ["display_on", "doze"]
+    Policy: higher_is_better
+    ApplyType: "global"
+
+  - ResType: "0x05"
+    ResID: "0x0006"
+    Name: "RES_TUNER_KGSL_MIN_CLOCK"
+    Path: "/sys/class/kgsl/kgsl-3d0/min_clock_mhz"
+    Supported: true
+    LowThreshold: 0
+    Permissions: third_party
+    Modes: ["display_on", "doze"]
+    Policy: higher_is_better
+    ApplyType: "global"
+
+  - ResType: "0x05"
+    ResID: "0x0007"
+    Name: "RES_TUNER_KGSL_TOUCH_WAKE"
+    Path: "/sys/class/kgsl/kgsl-3d0/touch_wake"
+    Supported: true
+    LowThreshold: 0
+    Permissions: third_party
+    Modes: ["display_on", "doze"]
+    Policy: higher_is_better
+    ApplyType: "global"
+
+  - ResType: "0x0a"
+    ResID: "0x0000"
+    Name: "RES_TUNER_KGSL_DEVFREQ_UFS_MAX"
+    Path: "/sys/class/devfreq/1d84000.ufs/max_freq"
+    Supported: true
+    Permissions: third_party
+    Modes: ["display_on", "doze"]
+    Policy: higher_is_better
+    ApplyType: "global"
+
+  - ResType: "0x0a"
+    ResID: "0x0001"
+    Name: "RES_TUNER_KGSL_DEVFREQ_UFS_MIN"
+    Path: "/sys/class/devfreq/1d84000.ufs/min_freq"
+    Supported: true
+    Permissions: third_party
+    Modes: ["display_on", "doze"]
+    Policy: higher_is_better
+    ApplyType: "global"
+
+  - ResType: "0x0a"
+    ResID: "0x0002"
+    Name: "RES_TUNER_KGSL_DEVFREQ_UFS_POLLING_INTV"
+    Path: "/sys/class/devfreq/1d84000.ufs/polling_interval"
+    Supported: true
+    LowThreshold: 0
+    Permissions: third_party
+    Modes: ["display_on", "doze"]
+    Policy: higher_is_better
+    ApplyType: "global"

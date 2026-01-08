@@ -1,0 +1,174 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+SignalConfigs:
+  # Video decode
+  # Default decode 30 fps
+  - SigId: "0x00000005"
+    Type: 0
+    Name: "URM_VIDEO_DECODE"
+    Enable: true
+    TargetsEnabled: ["qcm6490"]
+    Permissions: ["third_party", "system"]
+    Resources:
+      - {ResCode: "RES_TUNER_CGROUP_RUN_ON_CORES", ResInfo: "0x00000000", Values: [2, 0,1,2,3]}
+      - {ResCode: "RES_TUNER_CGROUP_RUN_ON_CORES", ResInfo: "0x00000000", Values: [3, 4,5,6]}
+      - {ResCode: "RES_TUNER_CGROUP_RELATIVE_CPU_WEIGHT", ResInfo: "0x00000000", Values: [3, 90]}
+      - {ResCode: "RES_TUNER_CGROUP_HIGH_MEMORY", ResInfo: "0x00000000", Values: [3, 1073741824]}
+      - {ResCode: "RES_TUNER_CGROUP_RUN_ON_CORES", ResInfo: "0x00000000", Values: [4, 0,1,2,3,4,5,6]}
+      - {ResCode: "RES_TUNER_CGROUP_RELATIVE_CPU_WEIGHT", ResInfo: "0x00000000", Values: [4, 150]}
+      - {ResCode: "RES_TUNER_CGROUP_CPU_LATENCY", ResInfo: "0x00000000", Values: [4, -20]}
+      - {ResCode: "RES_TUNER_CGROUP_LOW_MEMORY", ResInfo: "0x00000000", Values: [4, 519430400]}
+      - {ResCode: "RES_TUNER_CGROUP_MIN_MEMORY", ResInfo: "0x00000000", Values: [4, 119430400]}
+      - {ResCode: "RES_TUNER_SCALING_MAX_FREQ", ResInfo: "0x00000000", Values: [940800]}
+      - {ResCode: "RES_TUNER_SCALING_MAX_FREQ", ResInfo: "0x00000100", Values: [940800]}
+      - {ResCode: "RES_TUNER_SCALING_MAX_FREQ", ResInfo: "0x00000200", Values: [940800]}
+
+  # Video decode
+  # Decode 5-20 concurrent sessions
+  - SigId: "0x00000005"
+    Type: 5
+    Name: "URM_VIDEO_DECODE"
+    Enable: true
+    TargetsEnabled: ["qcm6490"]
+    Permissions: ["third_party", "system"]
+    Resources:
+      - {ResCode: "RES_TUNER_CGROUP_RUN_ON_CORES", ResInfo: "0x00000000", Values: [2, 0,1,2,3]}
+      - {ResCode: "RES_TUNER_CGROUP_RUN_ON_CORES", ResInfo: "0x00000000", Values: [3, 4,5,6]}
+      - {ResCode: "RES_TUNER_CGROUP_RELATIVE_CPU_WEIGHT", ResInfo: "0x00000000", Values: [3, 90]}
+      - {ResCode: "RES_TUNER_CGROUP_HIGH_MEMORY", ResInfo: "0x00000000", Values: [3, 1073741824]}
+      - {ResCode: "RES_TUNER_CGROUP_RUN_ON_CORES", ResInfo: "0x00000000", Values: [4, 0,1,2,3,4,5,6]}
+      - {ResCode: "RES_TUNER_CGROUP_RELATIVE_CPU_WEIGHT", ResInfo: "0x00000000", Values: [4, 150]}
+      - {ResCode: "RES_TUNER_CGROUP_CPU_LATENCY", ResInfo: "0x00000000", Values: [4, -20]}
+      - {ResCode: "RES_TUNER_CGROUP_LOW_MEMORY", ResInfo: "0x00000000", Values: [4, 519430400]}
+      - {ResCode: "RES_TUNER_CGROUP_MIN_MEMORY", ResInfo: "0x00000000", Values: [4, 119430400]}
+      - {ResCode: "RES_TUNER_SCALING_MAX_FREQ", ResInfo: "0x00000000", Values: [940800]}
+      - {ResCode: "RES_TUNER_SCALING_MAX_FREQ", ResInfo: "0x00000100", Values: [1900800]}
+      - {ResCode: "RES_TUNER_SCALING_MAX_FREQ", ResInfo: "0x00000200", Values: [940800]}
+
+  # Video decode
+  # Decode 20+ concurrent sessions
+  - SigId: "0x00000005"
+    Type: 20
+    Name: "URM_VIDEO_DECODE"
+    Enable: true
+    TargetsEnabled: ["qcm6490"]
+    Permissions: ["third_party", "system"]
+    Resources:
+      - {ResCode: "RES_TUNER_CGROUP_RUN_ON_CORES", ResInfo: "0x00000000", Values: [2, 0,1,2,3]}
+      - {ResCode: "RES_TUNER_CGROUP_RUN_ON_CORES", ResInfo: "0x00000000", Values: [3, 4,5,6,7]}
+      - {ResCode: "RES_TUNER_CGROUP_RELATIVE_CPU_WEIGHT", ResInfo: "0x00000000", Values: [3, 90]}
+      - {ResCode: "RES_TUNER_CGROUP_HIGH_MEMORY", ResInfo: "0x00000000", Values: [3, 1073741824]}
+      - {ResCode: "RES_TUNER_CGROUP_RUN_ON_CORES", ResInfo: "0x00000000", Values: [4, 0,1,2,3,4,5,6,7]}
+      - {ResCode: "RES_TUNER_CGROUP_RELATIVE_CPU_WEIGHT", ResInfo: "0x00000000", Values: [4, 150]}
+      - {ResCode: "RES_TUNER_CGROUP_CPU_LATENCY", ResInfo: "0x00000000", Values: [4, -20]}
+      - {ResCode: "RES_TUNER_CGROUP_LOW_MEMORY", ResInfo: "0x00000000", Values: [4, 519430400]}
+      - {ResCode: "RES_TUNER_CGROUP_MIN_MEMORY", ResInfo: "0x00000000", Values: [4, 119430400]}
+
+  # Camera preview
+  # Default preview - 30fps
+  - SigId: "0x00000006"
+    Type: 0
+    Name: "URM_CAMERA_PREVIEW"
+    Enable: true
+    TargetsEnabled: ["qcm6490"]
+    Permissions: ["third_party", "system"]
+    Timeout: -1
+    Resources:
+      - {ResCode: "RES_TUNER_CGROUP_RUN_ON_CORES", ResInfo: "0x00000000", Values: [2, 0,1,2,3]}
+      - {ResCode: "RES_TUNER_CGROUP_RUN_ON_CORES", ResInfo: "0x00000000", Values: [3, 4,5,6]}
+      - {ResCode: "RES_TUNER_CGROUP_RELATIVE_CPU_WEIGHT", ResInfo: "0x00000000", Values: [3, 90]}
+      - {ResCode: "RES_TUNER_CGROUP_HIGH_MEMORY", ResInfo: "0x00000000", Values: [3, 1073741824]}
+      - {ResCode: "RES_TUNER_CGROUP_RUN_ON_CORES", ResInfo: "0x00000000", Values: [4, 0,1,2,3,4,5,6]}
+      - {ResCode: "RES_TUNER_CGROUP_RELATIVE_CPU_WEIGHT", ResInfo: "0x00000000", Values: [4, 150]}
+      - {ResCode: "RES_TUNER_CGROUP_CPU_LATENCY", ResInfo: "0x00000000", Values: [4, -20]}
+      - {ResCode: "RES_TUNER_CGROUP_LOW_MEMORY", ResInfo: "0x00000000", Values: [4, 519430400]}
+      - {ResCode: "RES_TUNER_CGROUP_MIN_MEMORY", ResInfo: "0x00000000", Values: [4, 119430400]}
+      - {ResCode: "RES_TUNER_SCALING_MAX_FREQ", ResInfo: "0x00000000", Values: [940800]}
+      - {ResCode: "RES_TUNER_SCALING_MAX_FREQ", ResInfo: "0x00000100", Values: [940800]}
+      - {ResCode: "RES_TUNER_SCALING_MAX_FREQ", ResInfo: "0x00000200", Values: [940800]}
+
+  # camera encode
+  # Default encode - 30fps
+  - SigId: "0x00000007"
+    Type: 0
+    Name: "URM_CAMERA_ENCODE"
+    Enable: true
+    TargetsEnabled: ["qcm6490"]
+    Permissions: ["third_party", "system"]
+    Resources:
+      - {ResCode: "RES_TUNER_CGROUP_RUN_ON_CORES", ResInfo: "0x00000000", Values: [2, 0,1,2,3]}
+      - {ResCode: "RES_TUNER_CGROUP_RUN_ON_CORES", ResInfo: "0x00000000", Values: [3, 4,5,6]}
+      - {ResCode: "RES_TUNER_CGROUP_RELATIVE_CPU_WEIGHT", ResInfo: "0x00000000", Values: [3, 90]}
+      - {ResCode: "RES_TUNER_CGROUP_HIGH_MEMORY", ResInfo: "0x00000000", Values: [3, 1073741824]}
+      - {ResCode: "RES_TUNER_CGROUP_RUN_ON_CORES", ResInfo: "0x00000000", Values: [4, 0,1,2,3,4,5,6]}
+      - {ResCode: "RES_TUNER_CGROUP_RELATIVE_CPU_WEIGHT", ResInfo: "0x00000000", Values: [4, 150]}
+      - {ResCode: "RES_TUNER_CGROUP_CPU_LATENCY", ResInfo: "0x00000000", Values: [4, -20]}
+      - {ResCode: "RES_TUNER_CGROUP_LOW_MEMORY", ResInfo: "0x00000000", Values: [4, 519430400]}
+      - {ResCode: "RES_TUNER_CGROUP_MIN_MEMORY", ResInfo: "0x00000000", Values: [4, 119430400]}
+      - {ResCode: "RES_TUNER_SCALING_MAX_FREQ", ResInfo: "0x00000000", Values: [1804800]}
+      - {ResCode: "RES_TUNER_SCALING_MAX_FREQ", ResInfo: "0x00000100", Values: [1900800]}
+      - {ResCode: "RES_TUNER_SCALING_MAX_FREQ", ResInfo: "0x00000200", Values: [940800]}
+
+  # camera encode multi-stream
+  # encode (0-12 streams)
+  - SigId: "0x00000008"
+    Type: 0
+    Name: URM_CAMERA_ENCODE_MULTI_STREAMS
+    Enable: true
+    TargetsEnabled: ["qcm6490"]
+    Permissions: ["third_party", "system"]
+    Resources:
+      - {ResCode: "RES_TUNER_CGROUP_RUN_ON_CORES", ResInfo: "0x00000000", Values: [2, 0,1,2,3]}
+      - {ResCode: "RES_TUNER_CGROUP_RUN_ON_CORES", ResInfo: "0x00000000", Values: [3, 4,5,6]}
+      - {ResCode: "RES_TUNER_CGROUP_RELATIVE_CPU_WEIGHT", ResInfo: "0x00000000", Values: [3, 90]}
+      - {ResCode: "RES_TUNER_CGROUP_HIGH_MEMORY", ResInfo: "0x00000000", Values: [3, 1073741824]}
+      - {ResCode: "RES_TUNER_CGROUP_RUN_ON_CORES", ResInfo: "0x00000000", Values: [4, 0,1,2,3,4,5,6]}
+      - {ResCode: "RES_TUNER_CGROUP_RELATIVE_CPU_WEIGHT", ResInfo: "0x00000000", Values: [4, 150]}
+      - {ResCode: "RES_TUNER_CGROUP_CPU_LATENCY", ResInfo: "0x00000000", Values: [4, -20]}
+      - {ResCode: "RES_TUNER_CGROUP_LOW_MEMORY", ResInfo: "0x00000000", Values: [4, 519430400]}
+      - {ResCode: "RES_TUNER_CGROUP_MIN_MEMORY", ResInfo: "0x00000000", Values: [4, 119430400]}
+      - {ResCode: "RES_TUNER_SCALING_MAX_FREQ", ResInfo: "0x00000000", Values: [1804800]}
+      - {ResCode: "RES_TUNER_SCALING_MAX_FREQ", ResInfo: "0x00000100", Values: [940800]}
+      - {ResCode: "RES_TUNER_SCALING_MAX_FREQ", ResInfo: "0x00000200", Values: [940800]}
+
+  # camera encode multi-stream
+  # encode (8-12 streams)
+  - SigId: "0x00000008"
+    Type: 8
+    Name: URM_CAMERA_ENCODE_MULTI_STREAMS
+    Enable: true
+    TargetsEnabled: ["qcm6490"]
+    Permissions: ["third_party", "system"]
+    Resources:
+      - {ResCode: "RES_TUNER_CGROUP_RUN_ON_CORES", ResInfo: "0x00000000", Values: [2, 0,1,2,3]}
+      - {ResCode: "RES_TUNER_CGROUP_RUN_ON_CORES", ResInfo: "0x00000000", Values: [3, 4,5,6]}
+      - {ResCode: "RES_TUNER_CGROUP_RELATIVE_CPU_WEIGHT", ResInfo: "0x00000000", Values: [3, 90]}
+      - {ResCode: "RES_TUNER_CGROUP_HIGH_MEMORY", ResInfo: "0x00000000", Values: [3, 1073741824]}
+      - {ResCode: "RES_TUNER_CGROUP_RUN_ON_CORES", ResInfo: "0x00000000", Values: [4, 0,1,2,3,4,5,6]}
+      - {ResCode: "RES_TUNER_CGROUP_RELATIVE_CPU_WEIGHT", ResInfo: "0x00000000", Values: [4, 150]}
+      - {ResCode: "RES_TUNER_CGROUP_CPU_LATENCY", ResInfo: "0x00000000", Values: [4, -20]}
+      - {ResCode: "RES_TUNER_CGROUP_LOW_MEMORY", ResInfo: "0x00000000", Values: [4, 519430400]}
+      - {ResCode: "RES_TUNER_CGROUP_MIN_MEMORY", ResInfo: "0x00000000", Values: [4, 119430400]}
+      - {ResCode: "RES_TUNER_SCALING_MAX_FREQ", ResInfo: "0x00000000", Values: [1804800]}
+      - {ResCode: "RES_TUNER_SCALING_MAX_FREQ", ResInfo: "0x00000100", Values: [1900800]}
+      - {ResCode: "RES_TUNER_SCALING_MAX_FREQ", ResInfo: "0x00000200", Values: [1900800]}
+
+# camera encode multi-stream
+# encode (12+ streams)
+  - SigId: "0x00000008"
+    Type: 12
+    Name: URM_CAMERA_ENCODE_MULTI_STREAMS
+    Enable: true
+    TargetsEnabled: ["qcm6490"]
+    Permissions: ["third_party", "system"]
+    Resources:
+      - {ResCode: "RES_TUNER_CGROUP_RUN_ON_CORES", ResInfo: "0x00000000", Values: [2, 0,1,2,3]}
+      - {ResCode: "RES_TUNER_CGROUP_RUN_ON_CORES", ResInfo: "0x00000000", Values: [3, 4,5,6,7]}
+      - {ResCode: "RES_TUNER_CGROUP_RELATIVE_CPU_WEIGHT", ResInfo: "0x00000000", Values: [3, 90]}
+      - {ResCode: "RES_TUNER_CGROUP_HIGH_MEMORY", ResInfo: "0x00000000", Values: [3, 1073741824]}
+      - {ResCode: "RES_TUNER_CGROUP_RUN_ON_CORES", ResInfo: "0x00000000", Values: [4, 0,1,2,3,4,5,6,7]}
+      - {ResCode: "RES_TUNER_CGROUP_RELATIVE_CPU_WEIGHT", ResInfo: "0x00000000", Values: [4, 150]}
+      - {ResCode: "RES_TUNER_CGROUP_CPU_LATENCY", ResInfo: "0x00000000", Values: [4, -20]}
+      - {ResCode: "RES_TUNER_CGROUP_LOW_MEMORY", ResInfo: "0x00000000", Values: [4, 519430400]}
+      - {ResCode: "RES_TUNER_CGROUP_MIN_MEMORY", ResInfo: "0x00000000", Values: [4, 119430400]}
