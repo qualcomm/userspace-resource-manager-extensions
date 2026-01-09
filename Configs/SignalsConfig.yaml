@@ -1,9 +1,9 @@
 SignalConfigs:
-  - SigId: "0x00000001"
-    Type: 0
+  - SigId: "0x0001"
+    Category: "0x01"
     Name: URM_APP_OPEN
     Enable: true
     Permissions: ["system", "third_party"]
     Resources:
-      - {ResCode: "0x00090002", ResInfo: "0x00000000", Values: [2, 0,1,2,3]}
-      - {ResCode: "0x00090011", ResInfo: "0x00000000", Values: [4, -20]}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
+      - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}

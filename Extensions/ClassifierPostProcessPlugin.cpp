@@ -6,15 +6,35 @@
 #include <dirent.h>
 #include <fstream>
 #include <sstream>
+#include <cstdint>
+#include <filesystem>
 #include <algorithm>
 #include <Urm/Extensions.h>
+#include <Urm/UrmAPIs.h>
 
-typedef struct {
-    pid_t mPid;
-    uint32_t mSigId;
-    uint32_t mSigSubtype;
-} PostProcessCBData;
+using namespace std;
+namespace fs = std::filesystem;
 
+void SanitizeNulls(char *buf, int len)
+{
+    /* /proc/<pid>/cmdline contains null charaters instead of spaces
+     * sanitize those null characters with spaces such that char*
+     * can be treaded till line end.
+     */
+    for (int i = 0; i < len; i++)
+        if (buf[i] == '\0')
+            buf[i] = ' ';
+}
+
+inline int32_t ReadFirstLine(const fs::path& p, std::string &line) {
+    int32_t ret = 0;
+
+    std::ifstream ifs(p);
+    if (!ifs.is_open()) return -1;
+    std::getline(ifs, line);
+    ret = line.size();
+    return ret;
+}
 
 bool CheckProcessCommSubstring(int pid, const std::string& target) {
     std::string processName = "";
@@ -28,20 +48,13 @@ bool CheckProcessCommSubstring(int pid, const std::string& target) {
 
     // Check if target is a substring of processName
     return processName.find(target) != std::string::npos;
-}s
-
-// Lowercase utility (safe for unsigned char)
-inline std::string to_lower(std::string s) {
-    std::transform(s.begin(), s.end(), s.begin(),
-                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-    return s;
 }
 
-inline int32_t ReadFirstLine(const fs::path& p, std::string &line) {
-    std::ifstream ifs(p);
-    if (!ifs.is_open()) return -1;
-    ret = std::getline(ifs, line);
-    return ret;
+// Lowercase utility (safe for unsigned char)
+inline void to_lower(std::string &s) {
+    std::transform(s.begin(), s.end(), s.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return;
 }
 
 /**
@@ -56,14 +69,15 @@ inline int32_t ReadFirstLine(const fs::path& p, std::string &line) {
  * - Handles races: threads may exit during iteration; missing files are skipped.
  */
 inline std::size_t CountThreadsWithName(pid_t pid,
-                                        std::string_view &commSubStr) {
+                                        const char *commSub) {
     const fs::path task_dir = fs::path("/proc") / std::to_string(pid) / "task";
     if (!fs::exists(task_dir) || !fs::is_directory(task_dir)) {
         return 0;
     }
 
     std::error_code ec;
-    const std::string commSubStr = to_lower(std::string(commSubStr));
+    std::string commSubStr = commSub;
+    to_lower(commSubStr);
 
     std::size_t count = 0;
 
@@ -78,9 +92,9 @@ inline std::size_t CountThreadsWithName(pid_t pid,
         int32_t ret = ReadFirstLine(entry.path() / "comm", tname);
         if (ret <= 0) continue;  // thread vanished or not accessible
 
-        const std::string threadname = to_lower(tname);
+        to_lower(tname);
 
-        if (threadname.find(commSubStr) != std::string::npos) {
+        if (tname.find(commSubStr) != std::string::npos) {
             ++count;
         }
     }
@@ -89,12 +103,12 @@ inline std::size_t CountThreadsWithName(pid_t pid,
 }
 
 
-int32_t FetchUsecaseDetails(int32_t pid, char *buf, size_t sz, uint32_t &sigId, uint32_t &sigType;) {
+int32_t FetchUsecaseDetails(int32_t pid, char *buf, size_t sz, uint32_t &sigId, uint32_t &sigType) {
     /* For encoder, width of encoding, v4l2h264enc in line
      * For decoder, v4l2h264dec, or may be 265 as well, decoder bit
      */    
-    int32_t ret = -1;
-    int32_t encode = 0, decode = 0;
+    int32_t ret = -1, numSrc = 0;
+    int32_t encode = 0, decode = 0, preview = 0;
     int32_t height = 0;
     std::string target = "gst-camera-per";
     const char *e_str = "v4l2h264enc";
@@ -103,11 +117,12 @@ int32_t FetchUsecaseDetails(int32_t pid, char *buf, size_t sz, uint32_t &sigId, 
     const char *n_str = "name=";
     const char *h_str = "height=";
     char *e = buf;
+    int32_t sigCat = URM_SIG_CAT_MULTIMEDIA;
     
     if ((e = strstr(e, e_str)) != NULL) {
         encode += 1;
-        sigId = URM_CAMERA_ENCODE;
-        char *name = buf;
+        sigId = CONSTRUCT_SIG_CODE(sigCat, URM_SIG_CAMERA_ENCODE);
+        const char *name = buf;
         if ((name = strstr(name, n_str)) != NULL) {
             name += strlen(n_str); 
         }
@@ -121,7 +136,7 @@ int32_t FetchUsecaseDetails(int32_t pid, char *buf, size_t sz, uint32_t &sigId, 
     int8_t multi = CheckProcessCommSubstring(pid, target);
 
     if ((numSrc > 1) || (multi)) {
-        sigId = URM_CAMERA_ENCODE_MULTI_STREAMS;
+        sigId = CONSTRUCT_SIG_CODE(sigCat, URM_SIG_CAMERA_ENCODE_MULTI_STREAMS);
         sigType = numSrc;
     }
 
@@ -135,7 +150,7 @@ int32_t FetchUsecaseDetails(int32_t pid, char *buf, size_t sz, uint32_t &sigId, 
     char *d = buf;
     if ((d = strstr(d, d_str)) != NULL) {
         decode += 1;
-        sigId = URM_VIDEO_DECODE;
+        sigId = CONSTRUCT_SIG_CODE(sigCat, URM_SIG_VIDEO_DECODE);
         numSrc = CountThreadsWithName(pid, d_str);
         sigType = numSrc;
     }
@@ -146,21 +161,21 @@ int32_t FetchUsecaseDetails(int32_t pid, char *buf, size_t sz, uint32_t &sigId, 
         size_t d_str_sz = strlen(qmm_str);
         if ((d = strstr(d, qmm_str)) != NULL) {
             preview += 1;
-            sigId = URM_CAMERA_PREVIEW;
+            sigId = CONSTRUCT_SIG_CODE(sigCat, URM_SIG_CAMERA_PREVIEW);
             ret = 0;
         }
     }
 
     if (encode > 0 && decode > 0) {
-        sigId = URM_ENCODE_DECODE;
+        sigId = CONSTRUCT_SIG_CODE(sigCat, URM_SIG_ENCODE_DECODE);
         ret = 0;
     }
     
     return ret;
 }
 
-int32_t WorkloadPostprocessCallback(void *cbData) {
-    WLPostprocessCBData *cbdata = static_cast<WLPostprocessCBData *>(cbData);
+void WorkloadPostprocessCallback(void *cbData) {
+    PostProcessCBData *cbdata = static_cast<PostProcessCBData *>(cbData);
     if (cbdata == NULL) {
         return;
     }
@@ -177,9 +192,9 @@ int32_t WorkloadPostprocessCallback(void *cbData) {
         return;
     }
 
-    const char* buf = cmdline.data();
+    char* buf = cmdline.data();
     size_t sz = cmdline.size();
-    sanitize_nulls(buf, len);
+    SanitizeNulls(buf, sz);
     FetchUsecaseDetails(pid, buf, sz, sigId, sigType);
     if(sigId != 0) {
         cbdata->mSigId = sigId;
@@ -187,23 +202,10 @@ int32_t WorkloadPostprocessCallback(void *cbData) {
     if(sigType != 0) {
         cbdata->mSigSubtype = sigType;
     }
-    return 0;
+    return;
 }
 
 __attribute__((constructor))
 void registerWithUrm() {
-    URM_REGISTER_WORKLOAD_POSTPROCESS_CB("gst-launch-", WorkloadPostprocessCallback)
+    CLASSIFIER_REGISTER_POST_PROCESS_CB("gst-launch-", WorkloadPostprocessCallback)
 }
-
-/*
- * Compilation Notes:
- * To build the above code, it needs to be linked with UrmExtAPIs lib exposed by Resource Tuner,
- * and built as a shared lib:
- * => Create the sharesd lib:
- *    "g++ -fPIC -shared -o libplugin.so Plugin.cpp -lExtAPIs"
- *    This creates a shared lib, libplugin.so
- * => Copy this lib to "/etc/urm/custom", the location where Resource Tuner expects
- *    the custom Extensions lib to be placed.
- * => Make sure the lib file has appropriate permissions:
- *    "sudo chmod o+r /etc/urm/custom/libplugin.so"
- */
