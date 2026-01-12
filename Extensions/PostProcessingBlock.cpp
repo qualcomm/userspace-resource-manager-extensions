@@ -6,43 +6,44 @@
 #include <dirent.h>
 #include <fstream>
 #include <sstream>
-#include <cstdint>
-#include <filesystem>
 #include <algorithm>
+
 #include <Urm/Extensions.h>
-#include <Urm/UrmAPIs.h>
 
-using namespace std;
-namespace fs = std::filesystem;
-
-void SanitizeNulls(char *buf, int len)
-{
+static void SanitizeNulls(char *buf, int32_t len) {
     /* /proc/<pid>/cmdline contains null charaters instead of spaces
      * sanitize those null characters with spaces such that char*
      * can be treaded till line end.
      */
-    for (int i = 0; i < len; i++)
-        if (buf[i] == '\0')
+    for(int32_t i = 0; i < len; i++) {
+        if (buf[i] == '\0') {
             buf[i] = ' ';
+        }
+    }
 }
 
-inline int32_t ReadFirstLine(const fs::path& p, std::string &line) {
-    int32_t ret = 0;
+static inline int32_t ReadFirstLine(const std::string& filePath, std::string &line) {
+    if(filePath.length() == 0) return "";
 
-    std::ifstream ifs(p);
-    if (!ifs.is_open()) return -1;
-    std::getline(ifs, line);
-    ret = line.size();
-    return ret;
+    std::ifstream fileStream(filePath, std::ios::in);
+
+    if(!fileStream.is_open()) {
+        return 0;
+    }
+
+    if(!getline(fileStream, line)) {
+        return 0;
+    }
+
+    fileStream.close();
+    return value;
 }
 
-bool CheckProcessCommSubstring(int pid, const std::string& target) {
+int8_t CheckProcessCommSubstring(int pid, const std::string& target) {
     std::string processName = "";
-    const fs::path comm_path = fs::path("/proc") / std::to_string(pid) / "comm";
+    const fs::path commPath = "/proc/" + std::to_string(pid) + "/comm";
 
-    int32_t ret = ReadFirstLine(comm_path, processName);
-
-    if (ret <= 0) {
+    if(ReadFirstLine(comm_path, processName) <= 0) {
         return false;
     }
 
@@ -51,7 +52,7 @@ bool CheckProcessCommSubstring(int pid, const std::string& target) {
 }
 
 // Lowercase utility (safe for unsigned char)
-inline void to_lower(std::string &s) {
+static inline void to_lower(std::string &s) {
     std::transform(s.begin(), s.end(), s.begin(),
                    [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
     return;
@@ -68,45 +69,46 @@ inline void to_lower(std::string &s) {
  * - Reads `comm` first (canonical thread name)
  * - Handles races: threads may exit during iteration; missing files are skipped.
  */
-inline std::size_t CountThreadsWithName(pid_t pid,
-                                        const char *commSub) {
-    const fs::path task_dir = fs::path("/proc") / std::to_string(pid) / "task";
-    if (!fs::exists(task_dir) || !fs::is_directory(task_dir)) {
+
+static int32_t countThreadsWithName(pid_t pid, const char* commSub) {
+    std::string commSubStr = std::string(commSub);
+    const std::string threadsListPath = "/proc" + std::to_string(pid) + "task/";
+
+    DIR* dir = nullptr;
+    if((dir = opendir(threadsListPath.c_str())) == nullptr) {
         return 0;
     }
 
-    std::error_code ec;
-    std::string commSubStr = commSub;
-    to_lower(commSubStr);
+    int32_t count = 0;
+    struct dirent* entry;
+    while((entry = readdir(dir)) != nullptr) {
+        std::string threadNamePath = threadsListPath + std::string(entry->d_name) + "/comm";
 
-    std::size_t count = 0;
+        std::ifstream fileStream(threadNamePath, std::ios::in);
+        if(!fileStream.is_open()) {
+            return 0;
+        }
 
-    for (const auto& entry : fs::directory_iterator(task_dir, ec)) {
-        if (ec) break;                        // stop on directory iteration error
-        if (!entry.is_directory()) continue;  // each TID is a directory
+        std::string value = "";
+        if(!getline(fileStream, value)) {
+            return 0;
+        }
 
-        const std::string tid_str = entry.path().filename().string();
-
-        // Read thread name
-        std::string tname =  "";
-        int32_t ret = ReadFirstLine(entry.path() / "comm", tname);
-        if (ret <= 0) continue;  // thread vanished or not accessible
-
-        to_lower(tname);
-
-        if (tname.find(commSubStr) != std::string::npos) {
-            ++count;
+        value = to_lower(value);
+        commSubStr = to_lower(commSubStr);
+        if(value.find(commSubStr) != std::string::npos) {
+            count++;
         }
     }
 
+    closedir(dir);
     return count;
 }
 
-
-int32_t FetchUsecaseDetails(int32_t pid, char *buf, size_t sz, uint32_t &sigId, uint32_t &sigType) {
+static int32_t FetchUsecaseDetails(int32_t pid, char *buf, size_t sz, uint32_t &sigId, uint32_t &sigType) {
     /* For encoder, width of encoding, v4l2h264enc in line
      * For decoder, v4l2h264dec, or may be 265 as well, decoder bit
-     */    
+     */
     int32_t ret = -1, numSrc = 0;
     int32_t encode = 0, decode = 0, preview = 0;
     int32_t height = 0;
@@ -118,13 +120,13 @@ int32_t FetchUsecaseDetails(int32_t pid, char *buf, size_t sz, uint32_t &sigId, 
     const char *h_str = "height=";
     char *e = buf;
     int32_t sigCat = URM_SIG_CAT_MULTIMEDIA;
-    
-    if ((e = strstr(e, e_str)) != NULL) {
+
+    if((e = strstr(e, e_str)) != NULL) {
         encode += 1;
         sigId = CONSTRUCT_SIG_CODE(sigCat, URM_SIG_CAMERA_ENCODE);
         const char *name = buf;
-        if ((name = strstr(name, n_str)) != NULL) {
-            name += strlen(n_str); 
+        if((name = strstr(name, n_str)) != NULL) {
+            name += strlen(n_str);
         }
 
         if(name == NULL) {
@@ -166,43 +168,43 @@ int32_t FetchUsecaseDetails(int32_t pid, char *buf, size_t sz, uint32_t &sigId, 
         }
     }
 
-    if (encode > 0 && decode > 0) {
+    if(encode > 0 && decode > 0) {
         sigId = CONSTRUCT_SIG_CODE(sigCat, URM_SIG_ENCODE_DECODE);
         ret = 0;
     }
-    
     return ret;
 }
 
 void WorkloadPostprocessCallback(void *cbData) {
     PostProcessCBData *cbdata = static_cast<PostProcessCBData *>(cbData);
-    if (cbdata == NULL) {
+    if(cbdata == NULL) {
         return;
     }
+
     pid_t pid = cbdata->mPid;
     uint32_t sigId = 0;
     uint32_t sigType = 0;
 
     std::string cmdline;
-    const fs::path cmdl_path = fs::path("/proc") / std::to_string(pid) / "cmdline";
+    std::string cmdLinePath = "/proc/" + std::to_string(pid) + "/cmdline";
 
-    int32_t ret = ReadFirstLine(cmdl_path, cmdline);
-
-    if (ret <= 0) {
+    if(ReadFirstLine(cmdLinePath, cmdline) <= 0) {
         return;
     }
 
     char* buf = cmdline.data();
     size_t sz = cmdline.size();
+
     SanitizeNulls(buf, sz);
     FetchUsecaseDetails(pid, buf, sz, sigId, sigType);
+
     if(sigId != 0) {
         cbdata->mSigId = sigId;
     }
+
     if(sigType != 0) {
         cbdata->mSigSubtype = sigType;
     }
-    return;
 }
 
 __attribute__((constructor))
