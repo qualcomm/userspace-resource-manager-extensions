@@ -1,13 +1,22 @@
 cmake_minimum_required(VERSION 3.6)
 
-set(CMAKE_CXX_STANDARD 17 LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 11 LANGUAGES CXX)
 
 project("URM-Extensions")
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
-# Install the extension "UrmExtensions.so" lib
+
+# Install the extension "RestunePlugin.so" lib
 file(GLOB SOURCES "Extensions/*.cpp")
-add_library(UrmExtensions ${SOURCES})
-set_target_properties(UrmExtensions PROPERTIES VERSION 1.0.0 SOVERSION 1)
-target_link_libraries(UrmExtensions UrmExtAPIs UrmAuxUtils)
+add_library(RestunePlugin ${SOURCES})
+set_target_properties(RestunePlugin PROPERTIES VERSION 1.0.0 SOVERSION 1)
+target_link_libraries(RestunePlugin UrmExtAPIs UrmAuxUtils)
 # install to standard /usr/lib or /lib
-install(TARGETS UrmExtensions DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS RestunePlugin DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+# Install the configs to /etc/urm/custom
+file(GLOB pluginConfigs "${CMAKE_CURRENT_SOURCE_DIR}/Configs/*.yaml")
+install(
+    FILES ${pluginConfigs}
+    DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/urm/custom/
+    PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+)
