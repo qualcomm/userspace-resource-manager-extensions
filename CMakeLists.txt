@@ -12,3 +12,11 @@ set_target_properties(RestunePlugin PROPERTIES VERSION 1.0.0 SOVERSION 1)
 target_link_libraries(RestunePlugin UrmExtAPIs UrmAuxUtils)
 # install to standard /usr/lib or /lib
 install(TARGETS RestunePlugin DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+# Install the configs to /etc/urm/custom
+file(GLOB pluginConfigs "${CMAKE_CURRENT_SOURCE_DIR}/Configs/*.yaml")
+install(
+    FILES ${pluginConfigs}
+    DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/urm/custom/
+    PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+)

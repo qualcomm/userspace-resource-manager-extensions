@@ -8,6 +8,7 @@
 #include <sstream>
 #include <algorithm>
 
+#include <Urm/Common.h>
 #include <Urm/Extensions.h>
 
 static void SanitizeNulls(char *buf, int32_t len) {
@@ -23,7 +24,7 @@ static void SanitizeNulls(char *buf, int32_t len) {
 }
 
 static inline int32_t ReadFirstLine(const std::string& filePath, std::string &line) {
-    if(filePath.length() == 0) return "";
+    if(filePath.length() == 0) return 0;
 
     std::ifstream fileStream(filePath, std::ios::in);
 
@@ -36,14 +37,14 @@ static inline int32_t ReadFirstLine(const std::string& filePath, std::string &li
     }
 
     fileStream.close();
-    return value;
+    return line.size();
 }
 
-int8_t CheckProcessCommSubstring(int pid, const std::string& target) {
+static int8_t CheckProcessCommSubstring(int pid, const std::string& target) {
     std::string processName = "";
-    const fs::path commPath = "/proc/" + std::to_string(pid) + "/comm";
+    std::string commPath = "/proc/" + std::to_string(pid) + "/comm";
 
-    if(ReadFirstLine(comm_path, processName) <= 0) {
+    if(ReadFirstLine(commPath, processName) <= 0) {
         return false;
     }
 
@@ -58,19 +59,8 @@ static inline void to_lower(std::string &s) {
     return;
 }
 
-/**
- * @brief Count threads under /proc/<pid>/task whose names contain `substring`.
- *
- * @param pid               Process ID to inspect.
- * @param substring         Substring to search for (e.g., "camsrc").
- * @return                  Number of matching threads. Returns 0 if /proc paths are missing.
- *
- * Notes:
- * - Reads `comm` first (canonical thread name)
- * - Handles races: threads may exit during iteration; missing files are skipped.
- */
-
-static int32_t countThreadsWithName(pid_t pid, const char* commSub) {
+// Count threads under /proc/<pid>/task whose names contain `substring`.
+static int32_t CountThreadsWithName(pid_t pid, const std::string& commSub) {
     std::string commSubStr = std::string(commSub);
     const std::string threadsListPath = "/proc" + std::to_string(pid) + "task/";
 
@@ -86,16 +76,18 @@ static int32_t countThreadsWithName(pid_t pid, const char* commSub) {
 
         std::ifstream fileStream(threadNamePath, std::ios::in);
         if(!fileStream.is_open()) {
+            closedir(dir);
             return 0;
         }
 
         std::string value = "";
         if(!getline(fileStream, value)) {
+            closedir(dir);
             return 0;
         }
 
-        value = to_lower(value);
-        commSubStr = to_lower(commSubStr);
+        to_lower(value);
+        to_lower(commSubStr);
         if(value.find(commSubStr) != std::string::npos) {
             count++;
         }
@@ -105,7 +97,11 @@ static int32_t countThreadsWithName(pid_t pid, const char* commSub) {
     return count;
 }
 
-static int32_t FetchUsecaseDetails(int32_t pid, char *buf, size_t sz, uint32_t &sigId, uint32_t &sigType) {
+static int32_t FetchUsecaseDetails(int32_t pid,
+                                   char *buf,
+                                   size_t sz,
+                                   uint32_t &sigId,
+                                   uint32_t &sigType) {
     /* For encoder, width of encoding, v4l2h264enc in line
      * For decoder, v4l2h264dec, or may be 265 as well, decoder bit
      */
@@ -121,15 +117,15 @@ static int32_t FetchUsecaseDetails(int32_t pid, char *buf, size_t sz, uint32_t &
     char *e = buf;
     int32_t sigCat = URM_SIG_CAT_MULTIMEDIA;
 
-    if((e = strstr(e, e_str)) != NULL) {
+    if((e = strstr(e, e_str)) != nullptr) {
         encode += 1;
         sigId = CONSTRUCT_SIG_CODE(sigCat, URM_SIG_CAMERA_ENCODE);
         const char *name = buf;
-        if((name = strstr(name, n_str)) != NULL) {
+        if((name = strstr(name, n_str)) != nullptr) {
             name += strlen(n_str);
         }
 
-        if(name == NULL) {
+        if(name == nullptr) {
             name = (char*)"camsrc";
         }
         numSrc = CountThreadsWithName(pid, name);
@@ -145,12 +141,12 @@ static int32_t FetchUsecaseDetails(int32_t pid, char *buf, size_t sz, uint32_t &
     char *h = buf;
     size_t h_str_sz = strlen(h_str);
     h = strstr(h, h_str);
-    if (h != NULL) {
-        height = strtol(h + h_str_sz, NULL, 10);
+    if (h != nullptr) {
+        height = strtol(h + h_str_sz, nullptr, 10);
     }
 
     char *d = buf;
-    if ((d = strstr(d, d_str)) != NULL) {
+    if ((d = strstr(d, d_str)) != nullptr) {
         decode += 1;
         sigId = CONSTRUCT_SIG_CODE(sigCat, URM_SIG_VIDEO_DECODE);
         numSrc = CountThreadsWithName(pid, d_str);
@@ -161,7 +157,7 @@ static int32_t FetchUsecaseDetails(int32_t pid, char *buf, size_t sz, uint32_t &
     if (encode == 0 && decode == 0) {
         char *d = buf;
         size_t d_str_sz = strlen(qmm_str);
-        if ((d = strstr(d, qmm_str)) != NULL) {
+        if ((d = strstr(d, qmm_str)) != nullptr) {
             preview += 1;
             sigId = CONSTRUCT_SIG_CODE(sigCat, URM_SIG_CAMERA_PREVIEW);
             ret = 0;
@@ -172,16 +168,21 @@ static int32_t FetchUsecaseDetails(int32_t pid, char *buf, size_t sz, uint32_t &
         sigId = CONSTRUCT_SIG_CODE(sigCat, URM_SIG_ENCODE_DECODE);
         ret = 0;
     }
+
     return ret;
 }
 
-void WorkloadPostprocessCallback(void *cbData) {
-    PostProcessCBData *cbdata = static_cast<PostProcessCBData *>(cbData);
-    if(cbdata == NULL) {
+static void WorkloadPostprocessCallback(void* context) {
+    if(context == nullptr) {
         return;
     }
 
-    pid_t pid = cbdata->mPid;
+    PostProcessCBData* cbData = static_cast<PostProcessCBData*>(context);
+    if(cbData == nullptr) {
+        return;
+    }
+
+    pid_t pid = cbData->mPid;
     uint32_t sigId = 0;
     uint32_t sigType = 0;
 
@@ -192,18 +193,18 @@ void WorkloadPostprocessCallback(void *cbData) {
         return;
     }
 
-    char* buf = cmdline.data();
+    char* buf = (char*)cmdline.data();
     size_t sz = cmdline.size();
 
     SanitizeNulls(buf, sz);
     FetchUsecaseDetails(pid, buf, sz, sigId, sigType);
 
     if(sigId != 0) {
-        cbdata->mSigId = sigId;
+        cbData->mSigId = sigId;
     }
 
     if(sigType != 0) {
-        cbdata->mSigSubtype = sigType;
+        cbData->mSigSubtype = sigType;
     }
 }
 
