@@ -1,17 +1,50 @@
 // Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: BSD-3-Clause-Clear
 
-#include <cstring>
 #include <string>
 #include <dirent.h>
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <memory>
+#include <mutex>
 
 #include <Urm/Common.h>
 #include <Urm/Extensions.h>
 
-static void SanitizeNulls(char *buf, int32_t len) {
+class PostProcessingBlock {
+private:
+    static std::once_flag mInitFlag;
+    static std::unique_ptr<PostProcessingBlock> mInstance;
+
+private:
+	inline void SanitizeNulls(char *buf, int32_t len);
+	inline int32_t ReadFirstLine(const std::string& filePath, std::string &line);
+	int8_t CheckProcessCommSubstring(int pid, const std::string& target);
+	inline void to_lower(std::string &s);
+	int32_t CountThreadsWithName(pid_t pid, const std::string& commSub);
+	int32_t FetchUsecaseDetails(int32_t pid, char *buf, size_t sz,
+                                   uint32_t &sigId, uint32_t &sigType);
+
+    PostProcessingBlock() = default;
+	
+    //no copy ctor, assignement operators    
+    PostProcessingBlock(const PostProcessingBlock&) = delete;
+    PostProcessingBlock& operator=(const PostProcessingBlock&) = delete;
+
+public:
+    static PostProcessingBlock& getInstance() {
+        std::call_once(mInitFlag, [] {
+            mInstance.reset(new PostProcessingBlock());
+        });
+        return *mInstance;
+    }
+
+    ~PostProcessingBlock() = default;
+    void PostProcess(pid_t pid, uint32_t &sigId, uint32_t &sigType);
+};
+
+inline void PostProcessingBlock::SanitizeNulls(char *buf, int32_t len) {
     /* /proc/<pid>/cmdline contains null charaters instead of spaces
      * sanitize those null characters with spaces such that char*
      * can be treaded till line end.
@@ -23,7 +56,7 @@ static void SanitizeNulls(char *buf, int32_t len) {
     }
 }
 
-static inline int32_t ReadFirstLine(const std::string& filePath, std::string &line) {
+inline int32_t PostProcessingBlock::ReadFirstLine(const std::string& filePath, std::string &line) {
     if(filePath.length() == 0) return 0;
 
     std::ifstream fileStream(filePath, std::ios::in);
@@ -40,7 +73,7 @@ static inline int32_t ReadFirstLine(const std::string& filePath, std::string &li
     return line.size();
 }
 
-static int8_t CheckProcessCommSubstring(int pid, const std::string& target) {
+int8_t PostProcessingBlock::CheckProcessCommSubstring(int pid, const std::string& target) {
     std::string processName = "";
     std::string commPath = "/proc/" + std::to_string(pid) + "/comm";
 
@@ -53,14 +86,14 @@ static int8_t CheckProcessCommSubstring(int pid, const std::string& target) {
 }
 
 // Lowercase utility (safe for unsigned char)
-static inline void to_lower(std::string &s) {
+inline void PostProcessingBlock::to_lower(std::string &s) {
     std::transform(s.begin(), s.end(), s.begin(),
                    [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
     return;
 }
 
 // Count threads under /proc/<pid>/task whose names contain `substring`.
-static int32_t CountThreadsWithName(pid_t pid, const std::string& commSub) {
+int32_t PostProcessingBlock::CountThreadsWithName(pid_t pid, const std::string& commSub) {
     std::string commSubStr = std::string(commSub);
     const std::string threadsListPath = "/proc" + std::to_string(pid) + "task/";
 
@@ -97,7 +130,7 @@ static int32_t CountThreadsWithName(pid_t pid, const std::string& commSub) {
     return count;
 }
 
-static int32_t FetchUsecaseDetails(int32_t pid,
+int32_t PostProcessingBlock::FetchUsecaseDetails(int32_t pid,
                                    char *buf,
                                    size_t sz,
                                    uint32_t &sigId,
@@ -172,6 +205,24 @@ static int32_t FetchUsecaseDetails(int32_t pid,
     return ret;
 }
 
+void PostProcessingBlock::PostProcess(pid_t pid, uint32_t &sigId, uint32_t &sigType) {
+	std::string cmdline;
+    std::string cmdLinePath = "/proc/" + std::to_string(pid) + "/cmdline";
+
+    if(ReadFirstLine(cmdLinePath, cmdline) <= 0) {
+        return;
+    }
+
+    char* buf = (char*)cmdline.data();
+    size_t sz = cmdline.size();
+
+    SanitizeNulls(buf, sz);
+    FetchUsecaseDetails(pid, buf, sz, sigId, sigType);
+}
+
+std::once_flag PostProcessingBlock::mInitFlag;
+std::unique_ptr<PostProcessingBlock> PostProcessingBlock::mInstance = nullptr;
+
 static void WorkloadPostprocessCallback(void* context) {
     if(context == nullptr) {
         return;
@@ -186,19 +237,8 @@ static void WorkloadPostprocessCallback(void* context) {
     uint32_t sigId = 0;
     uint32_t sigType = 0;
 
-    std::string cmdline;
-    std::string cmdLinePath = "/proc/" + std::to_string(pid) + "/cmdline";
-
-    if(ReadFirstLine(cmdLinePath, cmdline) <= 0) {
-        return;
-    }
-
-    char* buf = (char*)cmdline.data();
-    size_t sz = cmdline.size();
-
-    SanitizeNulls(buf, sz);
-    FetchUsecaseDetails(pid, buf, sz, sigId, sigType);
-
+    PostProcessingBlock::getInstance().PostProcess(pid, sigId, sigType);
+	
     if(sigId != 0) {
         cbData->mSigId = sigId;
     }
