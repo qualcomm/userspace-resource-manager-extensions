@@ -1,16 +1,8 @@
-**After repository creation:**
-- [ ] Update this `README.md`. Update the Project Name, description, and all sections. Remove this checklist.
-- [ ] If required, update `LICENSE.txt` and the License section with your project's approved license
-- [ ] Search this repo for "REPLACE-ME" and update all instances accordingly
-- [ ] Update `CONTRIBUTING.md` as needed
-- [ ] Review the workflows in `.github/workflows`, updating as needed. See https://docs.github.com/en/actions for information on what these files do and how they work.
-- [ ] Review and update the suggested Issue and PR templates as needed in `.github/ISSUE_TEMPLATE` and `.github/PULL_REQUEST_TEMPLATE`
+# Userspace Resource Manager Extensions (uRMExtns)
 
-# Project Name
-
-*\<update with your project name and a short description\>*
-
-Project that does ... implemented in ... runs on Qualcomm® *\<processor\>* 
+Official repo of URM Extensions project. Includes:
+- Extended configs
+- Extension modules
 
 ## Branches
 
@@ -18,15 +10,40 @@ Project that does ... implemented in ... runs on Qualcomm® *\<processor\>*
 
 ## Requirements
 
-List requirements to run the project, how to install them, instructions to use docker container, etc...
+This project depends on urm project https://github.com/qualcomm/userspace-resource-manager
 
-## Installation Instructions
+## Build and install Instructions
+* Create a build directory
+```bash
+rm -rf build && mkdir build && cd build
+```
+* Configure the project:
+Default Build
+```bash
+cmake .. -DCMAKE_INSTALL_PREFIX=/
+```
 
-How to install the software itself.
+* Build the project
+```bash
+cmake --build .
+```
+* Install to default directory (/usr/local)
+```bash
+sudo cmake --install .
+```
+* Start the URM Server (urm now picks all the extensions)
+```bash
+/usr/bin/urm
+```
 
-## Usage
+* Install to a custom temporary directory [Optional]
+```bash
+cmake --install . --prefix /tmp/urm-install
+```
 
-Describe how to use the project.
+## Documentation
+
+For further documentation, please refer README in docs section
 
 ## Development
 
@@ -38,10 +55,9 @@ How to contact maintainers. E.g. GitHub Issues, GitHub Discussions could be indi
 
 * [Report an Issue on GitHub](../../issues)
 * [Open a Discussion on GitHub](../../discussions)
-* [E-mail us](mailto:REPLACE-ME@qti.qualcomm.com) for general questions
+* [E-mail us](mailto:maintainers.resource-tuner-moderator@qti.qualcomm.com) for general questions
 
 ## License
 
-*\<update with your project name and license\>*
+*userspace-resource-manager-extensions* is licensed under the [BSD-3-Clause-Clear license](https://spdx.org/licenses/BSD-3-Clause-Clear.html). See [LICENSE.txt](LICENSE.txt) for the full license text.
 
-*\<REPLACE-ME\>* is licensed under the [BSD-3-clause License](https://spdx.org/licenses/BSD-3-Clause.html). See [LICENSE.txt](LICENSE.txt) for the full license text.
