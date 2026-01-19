@@ -13,6 +13,12 @@ Official repo of URM Extensions project. Includes:
 This project depends on urm project https://github.com/qualcomm/userspace-resource-manager
 
 ## Build and install Instructions
+### On Ubuntu
+* Step 1: Build Urm: Follow the steps provided here: https://github.com/qualcomm/userspace-resource-manager?tab=readme-ov-file#build-and-install-instructions
+
+Step 1 ensures that URM configs, libs, headers are installed. URM Extensions need the UrmExtApis and UrmAuxUtils (optional) libraries as well as the header files Extensions.h and Common.h for building. Successful execution of step 1 ensures these dependencies are met.
+
+* Step 2: Build and Install Plugin module
 * Create a build directory
 ```bash
 rm -rf build && mkdir build && cd build
@@ -27,19 +33,19 @@ cmake .. -DCMAKE_INSTALL_PREFIX=/
 ```bash
 cmake --build .
 ```
-* Install to default directory (/usr/local)
+* Install
 ```bash
 sudo cmake --install .
 ```
-* Start the URM Server (urm now picks all the extensions)
+
+Step 2 builds the Extensions module and install the lib: RestunePlugin.so to /usr/lib. When Urm is booted up, it looks up this lib as a source of any customizations / configurations.
+
+* Step 3: Start URM server
 ```bash
 /usr/bin/urm
 ```
 
-* Install to a custom temporary directory [Optional]
-```bash
-cmake --install . --prefix /tmp/urm-install
-```
+Finally the URM server is started, as the RestunePlugin.so library has already been installed as part of step 2, hence it is loaded and the customizations are applied.
 
 ## Documentation
 
