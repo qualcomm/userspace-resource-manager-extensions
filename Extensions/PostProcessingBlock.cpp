@@ -24,11 +24,10 @@ private:
 	inline void to_lower(std::string &s);
 	int32_t CountThreadsWithName(pid_t pid, const std::string& commSub);
 	int32_t FetchUsecaseDetails(int32_t pid, char *buf, size_t sz,
-                                   uint32_t &sigId, uint32_t &sigType);
+                                uint32_t &sigId, uint32_t &sigType);
 
     PostProcessingBlock() = default;
-	
-    //no copy ctor, assignement operators    
+
     PostProcessingBlock(const PostProcessingBlock&) = delete;
     PostProcessingBlock& operator=(const PostProcessingBlock&) = delete;
 
@@ -131,10 +130,10 @@ int32_t PostProcessingBlock::CountThreadsWithName(pid_t pid, const std::string& 
 }
 
 int32_t PostProcessingBlock::FetchUsecaseDetails(int32_t pid,
-                                   char *buf,
-                                   size_t sz,
-                                   uint32_t &sigId,
-                                   uint32_t &sigType) {
+                                                 char *buf,
+                                                 size_t sz,
+                                                 uint32_t& sigId,
+                                                 uint32_t& sigType) {
     /* For encoder, width of encoding, v4l2h264enc in line
      * For decoder, v4l2h264dec, or may be 265 as well, decoder bit
      */
@@ -238,7 +237,7 @@ static void WorkloadPostprocessCallback(void* context) {
     uint32_t sigType = 0;
 
     PostProcessingBlock::getInstance().PostProcess(pid, sigId, sigType);
-	
+
     if(sigId != 0) {
         cbData->mSigId = sigId;
     }
