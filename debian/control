@@ -8,7 +8,7 @@ Standards-Version: 1.0
 Homepage: https://github.com/qualcomm/userspace-resource-manager-extensions
 
 Package: userspace-resource-manager-extensions
-Architecture: amd64
+Architecture: any
 Section: libs
 Depends:  ${shlibs:Depends}, ${misc:Depends}
 Description: 
