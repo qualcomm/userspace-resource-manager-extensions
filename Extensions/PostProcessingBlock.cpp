@@ -9,8 +9,8 @@
 #include <memory>
 #include <mutex>
 
-#include <Urm/Common.h>
 #include <Urm/Extensions.h>
+#include <Urm/UrmPlatformAL.h>
 
 class PostProcessingBlock {
 private:
@@ -243,11 +243,11 @@ static void WorkloadPostprocessCallback(void* context) {
     }
 
     if(sigType != 0) {
-        cbData->mSigSubtype = sigType;
+        cbData->mSigType = sigType;
     }
 }
 
 __attribute__((constructor))
 void registerWithUrm() {
-    CLASSIFIER_REGISTER_POST_PROCESS_CB("gst-launch-", WorkloadPostprocessCallback)
+    URM_REGISTER_POST_PROCESS_CB("gst-launch-", WorkloadPostprocessCallback)
 }
