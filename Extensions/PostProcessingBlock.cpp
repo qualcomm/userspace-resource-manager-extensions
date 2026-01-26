@@ -147,11 +147,10 @@ int32_t PostProcessingBlock::FetchUsecaseDetails(int32_t pid,
     const char *n_str = "name=";
     const char *h_str = "height=";
     char *e = buf;
-    int32_t sigCat = URM_SIG_CAT_MULTIMEDIA;
 
     if((e = strstr(e, e_str)) != nullptr) {
         encode += 1;
-        sigId = CONSTRUCT_SIG_CODE(sigCat, URM_SIG_CAMERA_ENCODE);
+        sigId = URM_SIG_CAMERA_ENCODE;
         const char *name = buf;
         if((name = strstr(name, n_str)) != nullptr) {
             name += strlen(n_str);
@@ -166,7 +165,7 @@ int32_t PostProcessingBlock::FetchUsecaseDetails(int32_t pid,
     int8_t multi = CheckProcessCommSubstring(pid, target);
 
     if ((numSrc > 1) || (multi)) {
-        sigId = CONSTRUCT_SIG_CODE(sigCat, URM_SIG_CAMERA_ENCODE_MULTI_STREAMS);
+        sigId = URM_SIG_CAMERA_ENCODE_MULTI_STREAMS;
         sigType = numSrc;
     }
 
@@ -180,7 +179,7 @@ int32_t PostProcessingBlock::FetchUsecaseDetails(int32_t pid,
     char *d = buf;
     if ((d = strstr(d, d_str)) != nullptr) {
         decode += 1;
-        sigId = CONSTRUCT_SIG_CODE(sigCat, URM_SIG_VIDEO_DECODE);
+        sigId = URM_SIG_VIDEO_DECODE;
         numSrc = CountThreadsWithName(pid, d_str);
         sigType = numSrc;
     }
@@ -191,13 +190,13 @@ int32_t PostProcessingBlock::FetchUsecaseDetails(int32_t pid,
         size_t d_str_sz = strlen(qmm_str);
         if ((d = strstr(d, qmm_str)) != nullptr) {
             preview += 1;
-            sigId = CONSTRUCT_SIG_CODE(sigCat, URM_SIG_CAMERA_PREVIEW);
+            sigId = URM_SIG_CAMERA_PREVIEW;
             ret = 0;
         }
     }
 
     if(encode > 0 && decode > 0) {
-        sigId = CONSTRUCT_SIG_CODE(sigCat, URM_SIG_ENCODE_DECODE);
+        sigId = URM_SIG_ENCODE_DECODE;
         ret = 0;
     }
 
