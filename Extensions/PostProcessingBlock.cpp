@@ -232,18 +232,13 @@ static void WorkloadPostprocessCallback(void* context) {
     }
 
     pid_t pid = cbData->mPid;
-    uint32_t sigId = 0;
-    uint32_t sigType = 0;
+    uint32_t sigId = cbData->mSigId;
+    uint32_t sigType = cbData->mSigType;
 
     PostProcessingBlock::getInstance().PostProcess(pid, sigId, sigType);
 
-    if(sigId != 0) {
-        cbData->mSigId = sigId;
-    }
-
-    if(sigType != 0) {
-        cbData->mSigType = sigType;
-    }
+    cbData->mSigId = sigId;
+    cbData->mSigType = sigType;
 }
 
 __attribute__((constructor))
