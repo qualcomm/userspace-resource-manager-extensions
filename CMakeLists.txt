@@ -5,13 +5,15 @@ set(CMAKE_CXX_STANDARD 11 LANGUAGES CXX)
 project("URM-Extensions")
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 
-# Install the extension "RestunePlugin.so" lib
+include(GNUInstallDirs)
+
+# Install the extension "UrmPlugin.so" lib
 file(GLOB SOURCES "Extensions/*.cpp")
-add_library(RestunePlugin ${SOURCES})
-set_target_properties(RestunePlugin PROPERTIES VERSION 1.0.0 SOVERSION 1)
-target_link_libraries(RestunePlugin UrmExtAPIs UrmAuxUtils)
+add_library(UrmPlugin ${SOURCES})
+set_target_properties(UrmPlugin PROPERTIES VERSION 1.0.0 SOVERSION 1)
+target_link_libraries(UrmPlugin UrmExtAPIs UrmAuxUtils)
 # install to standard /usr/lib or /lib
-install(TARGETS RestunePlugin DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS UrmPlugin DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/urm/extensions)
 
 # Install the configs to /etc/urm/custom
 file(GLOB pluginConfigs "${CMAKE_CURRENT_SOURCE_DIR}/Configs/*.yaml")
