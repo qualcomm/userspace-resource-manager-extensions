@@ -15,14 +15,14 @@ SignalConfigs:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6,7]}
       - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [3, 90]}
-      - {ResCode: "RES_CGRP_HIGH_MEMORY", Values: [3, 1073741824]}
+      - {ResCode: "RES_CGRP_HIGH_MEM", Values: [3, 1048576]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [4, 0,1,2,3,4,5,6,7]}
       - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [4, 150]}
       - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
-      - {ResCode: "RES_CGRP_LOW_MEMORY", Values: [4, 519430400]}
-      - {ResCode: "RES_CGRP_MIN_MEMORY", Values: [4, 119430400]}
-      - {ResCode: "RES_SCALING_MAX_FREQ", ResInfo: "CLUSTER_LITTLE_ALL_CORES", Values: [1267200]}
-      - {ResCode: "RES_SCALING_MAX_FREQ", ResInfo: "CLUSTER_BIG_ALL_CORES", Values: [1267200]}
+      - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
+      - {ResCode: "RES_CGRP_MIN_MEM", Values: [4, 116631]}
+      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_LITTLE_ALL_CORES", Values: [1267200]}
+      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_BIG_ALL_CORES", Values: [1267200]}
 
   # Video decode
   # Decode 5+ concurrent sessions
@@ -37,14 +37,14 @@ SignalConfigs:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6,7]}
       - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [3, 90]}
-      - {ResCode: "RES_CGRP_HIGH_MEMORY", Values: [3, 1073741824]}
+      - {ResCode: "RES_CGRP_HIGH_MEM", Values: [3, 1048576]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [4, 0,1,2,3,4,5,6,7]}
       - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [4, 150]}
       - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
-      - {ResCode: "RES_CGRP_LOW_MEMORY", Values: [4, 519430400]}
-      - {ResCode: "RES_CGRP_MIN_MEMORY", Values: [4, 119430400]}
-      - {ResCode: "RES_SCALING_MAX_FREQ", ResInfo: "CLUSTER_LITTLE_ALL_CORES", Values: [1536000]}
-      - {ResCode: "RES_SCALING_MAX_FREQ", ResInfo: "CLUSTER_BIG_ALL_CORES", Values: [1536000]}
+      - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
+      - {ResCode: "RES_CGRP_MIN_MEM", Values: [4, 116631]}
+      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_LITTLE_ALL_CORES", Values: [1536000]}
+      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_BIG_ALL_CORES", Values: [1536000]}
 
   # Video decode
   # Decode 20+ concurrent sessions
@@ -59,12 +59,12 @@ SignalConfigs:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6,7]}
       - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [3, 90]}
-      - {ResCode: "RES_CGRP_HIGH_MEMORY", Values: [3, 1073741824]}
+      - {ResCode: "RES_CGRP_HIGH_MEM", Values: [3, 1048576]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [4, 0,1,2,3,4,5,6,7]}
       - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [4, 150]}
       - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
-      - {ResCode: "RES_CGRP_LOW_MEMORY", Values: [4, 519430400]}
-      - {ResCode: "RES_CGRP_MIN_MEMORY", Values: [4, 119430400]}
+      - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
+      - {ResCode: "RES_CGRP_MIN_MEM", Values: [4, 116631]}
 
   # Camera preview
   # Default preview - 30fps
@@ -78,14 +78,14 @@ SignalConfigs:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6,7]}
       - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [3, 90]}
-      - {ResCode: "RES_CGRP_HIGH_MEMORY", Values: [3, 1073741824]}
+      - {ResCode: "RES_CGRP_HIGH_MEM", Values: [3, 1048576]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [4, 0,1,2,3,4,5,6,7]}
       - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [4, 150]}
       - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
-      - {ResCode: "RES_CGRP_LOW_MEMORY", Values: [4, 519430400]}
-      - {ResCode: "RES_CGRP_MIN_MEMORY", Values: [4, 119430400]}
-      - {ResCode: "RES_SCALING_MAX_FREQ", ResInfo: "CLUSTER_LITTLE_ALL_CORES", Values: [1267200]}
-      - {ResCode: "RES_SCALING_MAX_FREQ", ResInfo: "CLUSTER_BIG_ALL_CORES", Values: [1267200]}
+      - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
+      - {ResCode: "RES_CGRP_MIN_MEM", Values: [4, 116631]}
+      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_LITTLE_ALL_CORES", Values: [1267200]}
+      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_BIG_ALL_CORES", Values: [1267200]}
 
   # camera encode
   # Default encode - 30fps
@@ -99,14 +99,14 @@ SignalConfigs:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6,7]}
       - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [3, 90]}
-      - {ResCode: "RES_CGRP_HIGH_MEMORY", Values: [3, 1073741824]}
+      - {ResCode: "RES_CGRP_HIGH_MEM", Values: [3, 1048576]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [4, 0,1,2,3,4,5,6,7]}
       - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [4, 150]}
       - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
-      - {ResCode: "RES_CGRP_LOW_MEMORY", Values: [4, 519430400]}
-      - {ResCode: "RES_CGRP_MIN_MEMORY", Values: [4, 119430400]}
-      - {ResCode: "RES_SCALING_MAX_FREQ", ResInfo: "CLUSTER_LITTLE_ALL_CORES", Values: [1267200]}
-      - {ResCode: "RES_SCALING_MAX_FREQ", ResInfo: "CLUSTER_BIG_ALL_CORES", Values: [1267200]}
+      - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
+      - {ResCode: "RES_CGRP_MIN_MEM", Values: [4, 116631]}
+      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_LITTLE_ALL_CORES", Values: [1267200]}
+      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_BIG_ALL_CORES", Values: [1267200]}
 
   # camera encode multi-stream
   # encode (0-12 streams)
@@ -120,14 +120,14 @@ SignalConfigs:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6,7]}
       - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [3, 90]}
-      - {ResCode: "RES_CGRP_HIGH_MEMORY", Values: [3, 1073741824]}
+      - {ResCode: "RES_CGRP_HIGH_MEM", Values: [3, 1048576]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [4, 0,1,2,3,4,5,6,7]}
       - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [4, 150]}
       - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
-      - {ResCode: "RES_CGRP_LOW_MEMORY", Values: [4, 519430400]}
-      - {ResCode: "RES_CGRP_MIN_MEMORY", Values: [4, 119430400]}
-      - {ResCode: "RES_SCALING_MAX_FREQ", ResInfo: "CLUSTER_LITTLE_ALL_CORES", Values: [1267200]}
-      - {ResCode: "RES_SCALING_MAX_FREQ", ResInfo: "CLUSTER_BIG_ALL_CORES", Values: [1267200]}
+      - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
+      - {ResCode: "RES_CGRP_MIN_MEM", Values: [4, 116631]}
+      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_LITTLE_ALL_CORES", Values: [1267200]}
+      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_BIG_ALL_CORES", Values: [1267200]}
 
 # camera encode multi-stream
 # encode (12+ streams)
@@ -142,9 +142,9 @@ SignalConfigs:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6,7]}
       - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [3, 90]}
-      - {ResCode: "RES_CGRP_HIGH_MEMORY", Values: [3, 1073741824]}
+      - {ResCode: "RES_CGRP_HIGH_MEM", Values: [3, 1048576]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [4, 0,1,2,3,4,5,6,7]}
       - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [4, 150]}
       - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
-      - {ResCode: "RES_CGRP_LOW_MEMORY", Values: [4, 519430400]}
-      - {ResCode: "RES_CGRP_MIN_MEMORY", Values: [4, 119430400]}
+      - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
+      - {ResCode: "RES_CGRP_MIN_MEM", Values: [4, 116631]}
