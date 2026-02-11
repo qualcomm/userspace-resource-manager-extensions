@@ -76,3 +76,24 @@ ResourceConfigs:
     Modes: ["display_on", "doze"]
     Policy: higher_is_better
     ApplyType: "global"
+
+  # Reserve "aa" for Cyclic Tests (RT Benchmarking)
+  - ResType: "0xaa"
+    ResID: "0x0000"
+    Name: "RES_CHANGE_GOV_PERF"
+    Path: ""
+    Supported: true
+    Permissions: third_party
+    Modes: ["display_on", "doze"]
+    Policy: pass_through
+    ApplyType: "global"
+
+  - ResType: "0xaa"
+    ResID: "0x0001"
+    Name: "RES_TIMER_MIGRATION"
+    Path: "/proc/sys/kernel/timer_migration"
+    Supported: true
+    Permissions: third_party
+    Modes: ["display_on", "doze"]
+    Policy: pass_through
+    ApplyType: "global"
