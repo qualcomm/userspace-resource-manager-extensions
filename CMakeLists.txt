@@ -13,7 +13,7 @@ add_library(UrmPlugin ${SOURCES})
 set_target_properties(UrmPlugin PROPERTIES VERSION 1.0.0 SOVERSION 1)
 target_link_libraries(UrmPlugin UrmExtAPIs UrmAuxUtils)
 # install to standard /usr/lib or /lib
-install(TARGETS UrmPlugin DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/urm/extensions)
+install(TARGETS UrmPlugin DESTINATION ${CMAKE_INSTALL_LIBDIR}/urm/)
 
 # Install the configs to /etc/urm/custom
 file(GLOB pluginConfigs "${CMAKE_CURRENT_SOURCE_DIR}/Configs/*.yaml")
