@@ -9,13 +9,14 @@ SignalConfigs:
       - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
 
   - SigId: "0x0001"
-    Category: "0xfe"
+    Category: "0x80"
     Name: RT_TRIGGER
     Enable: true
     Permissions: ["system", "third_party"]
     Resources:
-      - {ResCode: "0x00aa0000", Values: [0]}
-      - {ResCode: "0x00aa0001", Values: [0]}
+      - {ResCode: "0x00800000", Values: [0]}
+      - {ResCode: "0x00800001", Values: [0]}
+      - {ResCode: "0x00030003", Values: [-1]}
       - {ResCode: "0x00040003", ResInfo: "0x00000000", Values: [1]}
       - {ResCode: "0x00040004", ResInfo: "0x00000100", Values: [1]}
       - {ResCode: "0x00040005", ResInfo: "0x00000200", Values: [1]}

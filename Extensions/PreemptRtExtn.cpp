@@ -47,8 +47,8 @@ static void governorTearCallback(void* context) {
     return;
 }
 
-URM_REGISTER_RES_APPLIER_CB(0x00aa0000, governorApplierCallback)
-URM_REGISTER_RES_TEAR_CB(0x00aa0001, governorTearCallback)
+URM_REGISTER_RES_APPLIER_CB(0x00800000, governorApplierCallback)
+URM_REGISTER_RES_TEAR_CB(0x00800001, governorTearCallback)
 
 static void postProcessCallback(void* context) {
     if(context == nullptr) {
@@ -61,7 +61,7 @@ static void postProcessCallback(void* context) {
     }
 
     // Match to our usecase
-    cbData->mSigId = CONSTRUCT_SIG_CODE(0xfe, 0x0001);
+    cbData->mSigId = CONSTRUCT_SIG_CODE(0x80, 0x0001);
     cbData->mSigType = DEFAULT_SIGNAL_TYPE;
 }
 

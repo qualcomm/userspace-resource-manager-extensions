@@ -78,7 +78,7 @@ ResourceConfigs:
     ApplyType: "global"
 
   # Reserve "aa" for Cyclic Tests (RT Benchmarking)
-  - ResType: "0xaa"
+  - ResType: "0x80"
     ResID: "0x0000"
     Name: "RES_CHANGE_GOV_PERF"
     Path: ""
@@ -88,7 +88,7 @@ ResourceConfigs:
     Policy: pass_through
     ApplyType: "global"
 
-  - ResType: "0xaa"
+  - ResType: "0x80"
     ResID: "0x0001"
     Name: "RES_TIMER_MIGRATION"
     Path: "/proc/sys/kernel/timer_migration"
