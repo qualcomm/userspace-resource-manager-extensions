@@ -1,6 +1,9 @@
 // Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: BSD-3-Clause-Clear
 
+#include <fstream>
+#include <dirent.h>
+
 #include <Urm/Extensions.h>
 #include <Urm/UrmPlatformAL.h>
 
@@ -11,14 +14,12 @@ static void writeLineToFile(const std::string& fileName, const std::string& valu
 
     std::ofstream fileStream(fileName, std::ios::out | std::ios::trunc);
     if(!fileStream.is_open()) {
-        LOGE("URM_AUX_ROUTINE", "Failed to open file: " + fileName + " Error: " + strerror(errno));
         return;
     }
 
     fileStream<<value;
 
     if(fileStream.fail()) {
-        LOGE("URM_AUX_ROUTINE", "Failed to write to file: "+ fileName + " Error: " + strerror(errno));
     }
 
     fileStream.flush();
@@ -34,7 +35,7 @@ static void governorApplierCallback(void* context) {
     struct dirent* entry;
     while((entry = readdir(dir)) != nullptr) {
         if(strncmp(entry->d_name, "policy", 6) == 0) {
-            std::string filePath = POLICY_DIR_PATH + "/" + entry->d_name + "/governor";
+            std::string filePath = std::string(POLICY_DIR_PATH) + "/" + entry->d_name + "/governor";
             writeLineToFile(filePath, "performance");
         }
     }
@@ -61,7 +62,7 @@ static void postProcessCallback(void* context) {
 
     // Match to our usecase
     cbData->mSigId = CONSTRUCT_SIG_CODE(0xfe, 0x0001);
-    cbData->mSigType = DEFAULT_SIG_TYPE;
+    cbData->mSigType = DEFAULT_SIGNAL_TYPE;
 }
 
 URM_REGISTER_POST_PROCESS_CB("<comm-name>", postProcessCallback)
