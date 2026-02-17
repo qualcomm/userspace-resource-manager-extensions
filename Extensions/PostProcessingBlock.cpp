@@ -84,7 +84,7 @@ int8_t PostProcessingBlock::CheckProcessCommSubstring(int pid, const std::string
     return processName.find(target) != std::string::npos;
 }
 
-// Lowercase utility (safe for unsigned char)
+// Lowercase utility
 inline void PostProcessingBlock::to_lower(std::string &s) {
     std::transform(s.begin(), s.end(), s.begin(),
                    [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
