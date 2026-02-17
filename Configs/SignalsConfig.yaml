@@ -13,11 +13,10 @@ SignalConfigs:
     Name: RT_TRIGGER
     Enable: true
     Permissions: ["system", "third_party"]
+    Timeout: -1
     Resources:
+      - {ResCode: "0x00030003", Values: [-1]}
       - {ResCode: "0x00800000", Values: [0]}
       - {ResCode: "0x00800001", Values: [0]}
       - {ResCode: "0x00800002", Values: [0]}
-      - {ResCode: "0x00030003", Values: [-1]}
-      - {ResCode: "0x00040003", ResInfo: "0x00000000", Values: [1]}
-      - {ResCode: "0x00040004", ResInfo: "0x00000100", Values: [1]}
-      - {ResCode: "0x00040005", ResInfo: "0x00000200", Values: [1]}
+      - {ResCode: "0x00800003", Values: [0]}
