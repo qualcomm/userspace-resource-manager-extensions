@@ -8,10 +8,11 @@ option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 include(GNUInstallDirs)
 
 # Install the extension "UrmPlugin.so" lib
-file(GLOB SOURCES "Extensions/*.cpp")
+file(GLOB SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/Extensions/*.cpp")
 add_library(UrmPlugin ${SOURCES})
 set_target_properties(UrmPlugin PROPERTIES VERSION 1.0.0 SOVERSION 1)
 target_link_libraries(UrmPlugin UrmExtAPIs UrmAuxUtils)
+target_include_directories(UrmPlugin PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Extensions/Include)
 # install to standard /usr/lib or /lib
 install(TARGETS UrmPlugin DESTINATION ${CMAKE_INSTALL_LIBDIR}/urm/)
 

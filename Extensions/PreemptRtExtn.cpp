@@ -8,53 +8,15 @@
 #include <Urm/Extensions.h>
 #include <Urm/UrmPlatformAL.h>
 
+#include "Helpers.h"
+
 #define POLICY_DIR_PATH "/sys/devices/system/cpu/cpufreq/"
 #define WORKQUEUE_DIR_PATH "/sys/devices/virtual/workqueue/"
 
-static void writeLineToFile(const std::string& fileName, const std::string& value) {
-    if(fileName.length() == 0) return;
-
-    std::ofstream fileStream(fileName, std::ios::out | std::ios::trunc);
-    if(!fileStream.is_open()) {
-        return;
-    }
-
-    fileStream<<value;
-
-    if(fileStream.fail()) {}
-
-    fileStream.flush();
-    fileStream.close();
-}
-
-static std::string readLineFromFile(const std::string& fileName) {
-    if(fileName.length() == 0) return "";
-
-    std::ifstream fileStream(fileName, std::ios::in);
-    std::string value = "";
-
-    if(!fileStream.is_open()) {
-        return "";
-    }
-
-    if(!getline(fileStream, value)) {
-        return "";
-    }
-
-    fileStream.close();
-    return value;
-}
-
-// Lowercase utility
-static inline void toLower(std::string &s) {
-    std::transform(s.begin(), s.end(), s.begin(),
-                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-}
-
 static void getWqMask(std::string& wqMaskStr) {
     std::string machineNamePath = "/sys/devices/soc0/machine";
-    std::string machineName = readLineFromFile(machineNamePath);
-    toLower(machineName);
+    std::string machineName = "";
+    fetchMachineName(machineName);
 
     if(machineName == "qcs9100") {
         wqMaskStr = "7F";
