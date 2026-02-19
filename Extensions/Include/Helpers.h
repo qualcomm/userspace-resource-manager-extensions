@@ -6,6 +6,12 @@
 
 #include <string>
 
+#include <Urm/Extensions.h>
+#include <Urm/UrmPlatformAL.h>
+#include <Urm/Logger.h>
+#include <Urm/Resource.h>
+#include <Urm/ResourceRegistry.h>
+
 void writeLineToFile(const std::string& fileName, const std::string& value);
 void readLineFromFile(const std::string& fileName, std::string& line);
 void fetchMachineName(std::string& machineName);
