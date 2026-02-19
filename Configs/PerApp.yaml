@@ -6,3 +6,8 @@ PerAppConfigs:
     Threads:
        - {"cam-server": "FOCUSED_CGROUP_IDENTIFIER"}
        - {"gst-launch-": "FOCUSED_CGROUP_IDENTIFIER"}
+
+  - App: "cyclictest"
+    Threads:
+       - {"cyclictest": "FOCUSED_CGROUP_IDENTIFIER"}
+    Configurations: ["0x00800001"]
