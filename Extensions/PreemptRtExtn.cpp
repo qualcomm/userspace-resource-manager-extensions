@@ -25,6 +25,8 @@
 #include <sys/time.h>
 #include <syslog.h>
 
+#include "Helpers.h"
+
 #define POLICY_DIR_PATH "/sys/devices/system/cpu/cpufreq/"
 #define IRQ_DIR_PATH    "/proc/irq/"
 #define WQ_DIR_PATH     "/sys/devices/virtual/workqueue/"
@@ -52,71 +54,16 @@ static inline bool isLogEnabled() {
 
 static void logLine(const std::string& msg) {
     if (!isLogEnabled()) return;
-    static bool opened = false;
-    if (!opened) {
-        openlog("URM-EXT-RT", LOG_PID | LOG_CONS, LOG_DAEMON);
-        opened = true;
-    }
-
+    // rely on daemon's logging setup; no openlog() here
     syslog(LOG_INFO, "%s", msg.c_str());
 }
 
-// ---------------------------
-// Basic I/O helpers
-// ---------------------------
-static int writeAttr(const std::string& path, const std::string& value) {
-    int fd = ::open(path.c_str(), O_WRONLY | O_TRUNC);
-    if (fd < 0) {
-        if (isLogEnabled()) {
-            logLine("open fail: " + path + " errno=" + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
-        }
-        return errno;
-    }
-    std::string buf = value;
-    if (buf.empty() || buf.back() != '\n') buf.push_back('\n');
-    ssize_t n = ::write(fd, buf.c_str(), buf.size());
-    if (n < 0) {
-        if (isLogEnabled()) {
-            logLine("write fail: " + path + " errno=" + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
-        }
-        ::close(fd);
-        return errno;
-    }
-    ::close(fd);
-    if (isLogEnabled()) {
-        logLine("wrote: " + path + " <= \"" + value + "\"");
-    }
-    return 0;
-}
 
-static bool readAttr(const std::string& path, std::string* out) {
-    std::ifstream ifs(path);
-    if (!ifs.is_open()) return false;
-    std::stringstream ss; ss << ifs.rdbuf();
-    *out = ss.str();
-    while (!out->empty() && (out->back() == '\n' || out->back() == '\r')) out->pop_back();
-    return true;
+static inline void logWriteFailure(const std::string& path, int rc) {
+    if (!isLogEnabled()) return;
+    logLine("write failed for " + path + " rc=" + std::to_string(rc) +
+            " err='" + std::string(strerror(rc)) + "'");
 }
-
-static bool isWritable(const std::string& path) {
-    return access(path.c_str(), W_OK) == 0;
-}
-
-// ---------------------------
-// Small string helpers
-// ---------------------------
-static std::string trim(const std::string& s) {
-    size_t b = 0, e = s.size();
-    while (b < e && std::isspace(static_cast<unsigned char>(s[b]))) ++b;
-    while (e > b && std::isspace(static_cast<unsigned char>(s[e - 1]))) --e;
-    return s.substr(b, e - b);
-}
-
-static std::string toLower(std::string s) {
-    for (auto &c : s) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-    return s;
-}
-
 // ---------------------------
 // CPU list parsing & mask building
 // ---------------------------
@@ -174,7 +121,7 @@ static std::string csvToHexMask(const std::string& csv) {
 // ---------------------------
 static std::string readFileIfExists(const std::string& path) {
     std::string s;
-    if (readAttr(path, &s)) return s;
+    if (readLineFromFile(path, s)) return s;
     return {};
 }
 
@@ -210,7 +157,7 @@ static const std::map<std::string, MaskEntry> kHostPolicyMap = {
     { "qcs8300-ride-sx",  { "0,1,2,4,5,6,7", false, "f7", true } },
 
     // Hostnames that use IRQ: 0-6 and WQ: 7f
-    { "iq-9075-qvk",      { "0-6", false, "7f", true } },
+    { "iq-9075-evk",      { "0-6", false, "7f", true } },
     { "qcs9100-ride-sx",  { "0-6", false, "7f", true } },
     { "qcm6490-idp",      { "0-6", false, "7f", true } },
     { "rb3gen2-core-kit", { "0-6", false, "7f", true } },
@@ -218,13 +165,13 @@ static const std::map<std::string, MaskEntry> kHostPolicyMap = {
 
 // Machine-based policy
 static const std::map<std::string, MaskEntry> kMachinePolicyMap = {
-    { "QCS8275", { "0,1,2,4,5,6,7", false, "f7", true } },
-    { "QCS8300", { "0,1,2,4,5,6,7", false, "f7", true } },
+    { "qcs8275", { "0,1,2,4,5,6,7", false, "f7", true } },
+    { "qcs8300", { "0,1,2,4,5,6,7", false, "f7", true } },
 
-    { "QCS9075", { "0-6", false, "7f", true } },
-    { "QCM6490", { "0-6", false, "7f", true } },
-    { "QCS9100", { "0-6", false, "7f", true } },
-    { "QCS6490", { "0-6", false, "7f", true } },
+    { "qcs9075", { "0-6", false, "7f", true } },
+    { "qcm6490", { "0-6", false, "7f", true } },
+    { "qcs9100", { "0-6", false, "7f", true } },
+    { "qcs6490", { "0-6", false, "7f", true } },
 };
 
 // Default masks when no map entry matches
@@ -243,12 +190,15 @@ struct ResolvedMasks {
 static std::string strip0xLower(std::string s) {
     s = trim(s);
     if (s.size() >= 2 && s[0]=='0' && (s[1]=='x' || s[1]=='X')) s = s.substr(2);
-    return toLower(s);
+    toLower(s);
+    return s;
 }
 
 static ResolvedMasks resolveMasks() {
-    const std::string host    = trim(getHostname());
-    const std::string machine = trim(readFileIfExists("/sys/devices/soc0/machine"));
+    const std::string host = trim(getHostname());
+
+    std::string machine;
+    fetchMachineName(machine);
 
     // 1) Hostname exact match
     {
@@ -302,7 +252,7 @@ static ResolvedMasks resolveMasks() {
 // ---------------------------
 static bool isPreemptRtActive() {
     std::string rt;
-    if (readAttr("/sys/kernel/realtime", &rt)) {
+    if (readLineFromFile("/sys/kernel/realtime", rt)) {
         rt = trim(rt);
         if (isLogEnabled()) logLine(std::string("/sys/kernel/realtime = '") + rt + "'");
         if (rt == "1") return true;
@@ -310,7 +260,8 @@ static bool isPreemptRtActive() {
     }
     struct utsname u{};
     if (uname(&u) == 0) {
-        std::string ver = toLower(u.version);
+        std::string ver(u.version);
+        toLower(ver);
         if (isLogEnabled()) logLine(std::string("uname -v: ") + u.version);
         if (ver.find("preempt rt") != std::string::npos || ver.find("preempt_rt") != std::string::npos) {
             return true;
@@ -325,8 +276,8 @@ static bool isPreemptRtActive() {
 static bool gCpufreqApplied = false;
 static std::vector<std::pair<std::string, std::string>> gCpufreqGovBackup;
 
-static void cpufreqApplierCallback(void* /*context*/) {
-    if (isLogEnabled()) logLine("enter cpufreqApplierCallback");
+static void cpufreqGovApplierCallback(void* /*context*/) {
+    if (isLogEnabled()) logLine("enter cpufreqGovApplierCallback");
 
     if (gCpufreqApplied) return;
 
@@ -347,13 +298,19 @@ static void cpufreqApplierCallback(void* /*context*/) {
         if (!isWritable(govFile)) continue;
 
         std::string oldVal;
-        if (readAttr(govFile, &oldVal)) {
+        if (readLineFromFile(govFile, oldVal)) {
             gCpufreqGovBackup.emplace_back(govFile, oldVal);
             if (isLogEnabled()) logLine("[" + std::string(entry->d_name) + "] old governor: " + oldVal);
-            int rc = writeAttr(govFile, "performance");
+            int rc = writeLineToFile(govFile, "performance");
+            if (rc != 0) {
+               logWriteFailure(govFile, rc);
+            }
+            
             if (rc == 0 && isLogEnabled()) {
                 std::string now;
-                if (readAttr(govFile, &now)) logLine("verify " + govFile + " -> " + now);
+                if (readLineFromFile(govFile, now)) {
+                    logLine("verify " + govFile + " -> " + now);
+                }
             }
         }
     }
@@ -361,14 +318,17 @@ static void cpufreqApplierCallback(void* /*context*/) {
     gCpufreqApplied = !gCpufreqGovBackup.empty();
 }
 
-static void cpufreqTearCallback(void* /*context*/) {
+static void cpufreqGovTearCallback(void* /*context*/) {
     if (!gCpufreqApplied) return;
     if (isLogEnabled()) logLine("enter cpufreqTearCallback");
 
     for (const auto& kv : gCpufreqGovBackup) {
         const std::string& path = kv.first;
         const std::string& oldVal = kv.second;
-        if (isWritable(path)) writeAttr(path, oldVal);
+        if (isWritable(path)) {
+            int rc = writeLineToFile(path, oldVal);
+            if (rc != 0) logWriteFailure(path, rc);
+        }
     }
     gCpufreqGovBackup.clear();
     gCpufreqApplied = false;
@@ -406,9 +366,20 @@ static void irqAffinityApplierCallback(void* /*context*/) {
         if (!isWritable(smpFile)) continue;
 
         std::string oldVal;
-        if (readAttr(smpFile, &oldVal)) {
+
+        if (readLineFromFile(smpFile, oldVal)) {
             gIrqAffBackup.emplace_back(smpFile, oldVal);
-            writeAttr(smpFile, hexMask);
+
+            int rc = writeLineToFile(smpFile, hexMask);
+            if (rc != 0) {
+                logWriteFailure(smpFile, rc);
+            }
+            if (rc == 0 && isLogEnabled()) {
+                std::string now;
+                if (readLineFromFile(smpFile, now)) {
+                    logLine("verify " + smpFile + " -> " + now);
+                }
+            }
         }
     }
     closedir(dir);
@@ -422,7 +393,10 @@ static void irqAffinityTearCallback(void* /*context*/) {
     for (const auto& kv : gIrqAffBackup) {
         const std::string& path = kv.first;
         const std::string& oldVal = kv.second;
-        if (isWritable(path)) writeAttr(path, oldVal);
+        if (isWritable(path)) {
+            int rc = writeLineToFile(path, oldVal);
+            if (rc != 0) logWriteFailure(path, rc);
+        }
     }
     gIrqAffBackup.clear();
     gIrqApplied = false;
@@ -454,9 +428,19 @@ static void workqueueApplierCallback(void* /*context*/) {
         if (!isWritable(cpumaskFile)) continue;
 
         std::string oldVal;
-        if (readAttr(cpumaskFile, &oldVal)) {
+        if (readLineFromFile(cpumaskFile, oldVal)) {
             gWqMaskBackup.emplace_back(cpumaskFile, oldVal);
-            writeAttr(cpumaskFile, hexMask);
+
+            int rc = writeLineToFile(cpumaskFile, hexMask);
+            if (rc != 0) {
+                logWriteFailure(cpumaskFile, rc);
+            }
+            if (rc == 0 && isLogEnabled()) {
+                std::string now;
+                if (readLineFromFile(cpumaskFile, now)) {
+                    logLine("verify " + cpumaskFile + " -> " + now);
+                }
+            }
         }
     }
     closedir(dir);
@@ -470,35 +454,14 @@ static void workqueueTearCallback(void* /*context*/) {
     for (const auto& kv : gWqMaskBackup) {
         const std::string& path = kv.first;
         const std::string& oldVal = kv.second;
-        if (isWritable(path)) writeAttr(path, oldVal);
+        
+        if (isWritable(path)) {
+            int rc = writeLineToFile(path, oldVal);
+            if (rc != 0) logWriteFailure(path, rc);
+        }
     }
     gWqMaskBackup.clear();
     gWqApplied = false;
-}
-
-// ---------------------------
-// Post-process callback (only when PREEMPT_RT is active)
-// ---------------------------
-static void postProcessCallback(void* context) {
-    if (isLogEnabled()) logLine("enter postProcessCallback");
-    if (context == nullptr) return;
-
-    PostProcessCBData* cbData = static_cast<PostProcessCBData*>(context);
-    if (cbData == nullptr) return;
-
-    // Match to our usecase
-    cbData->mSigId   = CONSTRUCT_SIG_CODE(0x80, 0x0001);
-    cbData->mSigType = DEFAULT_SIGNAL_TYPE;
-}
-
-__attribute__((constructor))
-static void registerCyclictestIfRt() {
-    if (isPreemptRtActive()) {
-        if (isLogEnabled()) logLine("PREEMPT_RT active: registering post-process 'cyclictest'");
-        URM_REGISTER_POST_PROCESS_CB("cyclictest", postProcessCallback)
-    } else {
-        if (isLogEnabled()) logLine("PREEMPT_RT not active: skipping post-process 'cyclictest'");
-    }
 }
 
 // ---------------------------
@@ -510,8 +473,8 @@ static void registerCyclictestIfRt() {
 //   0x00800002 -> irqaffinity
 //   0x00800003 -> workqueue
 
-URM_REGISTER_RES_APPLIER_CB(0x00800001, cpufreqApplierCallback)
-URM_REGISTER_RES_TEAR_CB   (0x00800001, cpufreqTearCallback)
+URM_REGISTER_RES_APPLIER_CB(0x00800001, cpufreqGovApplierCallback)
+URM_REGISTER_RES_TEAR_CB   (0x00800001, cpufreqGovTearCallback)
 
 URM_REGISTER_RES_APPLIER_CB(0x00800002, irqAffinityApplierCallback)
 URM_REGISTER_RES_TEAR_CB   (0x00800002, irqAffinityTearCallback)
