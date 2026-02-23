@@ -18,8 +18,7 @@
 #include <Urm/Extensions.h>
 #include <Urm/UrmPlatformAL.h>
 #include <Urm/Logger.h>
-
-#include "Helpers.h"
+#include <Urm/TargetRegistry.h>
 
 #include "Helpers.h"
 
@@ -28,11 +27,13 @@
 #define WQ_DIR_PATH     "/sys/devices/virtual/workqueue/"
 
 // ---------------------------
-// Conditional logging (URM_EXT_LOG_RT)
+// Conditional logging (URM_EXT__RT)
 // ---------------------------
 static bool gLogInit = false;
 static bool gLogEnabled = false;
 static constexpr const char* kLogTag = "urm-ext-rt";
+static constexpr uint64_t CPU_COUNT = 8;
+constexpr uint64_t VALID_MASK = (1ULL << CPU_COUNT) - 1;
 
 static bool parseBoolEnv(const char* v) {
     if (!v) return false;
@@ -62,189 +63,7 @@ static inline void logWriteFailure(const std::string& path, int rc) {
     std::string msg = "write failed for " + path +
                       " rc=" + std::to_string(rc) +
                       " err='" + std::string(err ? err : "unknown") + "'";
-    LOGE(kLogTag, msg.c_str());
-}
-// ---------------------------
-// CPU list parsing & mask building
-// ---------------------------
-static std::vector<int> parseCpuList(const std::string& cpuListCsv) {
-    std::vector<int> cpus;
-    std::string token;
-    std::stringstream ss(cpuListCsv);
-    while (std::getline(ss, token, ',')) {
-        token = trim(token);
-        if (token.empty()) continue;
-        auto dash = token.find('-');
-        if (dash != std::string::npos) {
-            std::string a = trim(token.substr(0, dash));
-            std::string b = trim(token.substr(dash + 1));
-            char* endp1 = nullptr; char* endp2 = nullptr;
-            long lo = std::strtol(a.c_str(), &endp1, 10);
-            long hi = std::strtol(b.c_str(), &endp2, 10);
-            if (*endp1 == '\0' && *endp2 == '\0' && lo >= 0 && hi >= lo) {
-                for (long v = lo; v <= hi; ++v) cpus.push_back(static_cast<int>(v));
-            }
-        } else {
-            char* endp = nullptr;
-            long v = std::strtol(token.c_str(), &endp, 10);
-            if (*endp == '\0' && v >= 0) {
-                cpus.push_back(static_cast<int>(v));
-            }
-        }
-    }
-    return cpus;
-}
-
-static std::string cpuListToHexMask64(const std::vector<int>& cpus) {
-    uint64_t mask = 0;
-    for (int cpu : cpus) {
-        if (cpu >= 0 && cpu < 64) {
-            mask |= (1ULL << static_cast<unsigned>(cpu));
-        }
-    }
-    std::ostringstream oss;
-    oss << std::hex << std::nouppercase;
-    if (mask == 0) {
-        oss << "0";
-    } else {
-        oss << mask;
-    }
-    return oss.str();
-}
-
-static std::string csvToHexMask(const std::string& csv) {
-    return cpuListToHexMask64(parseCpuList(csv));
-}
-
-// ---------------------------
-// Hostname / Machine (exact, case-sensitive)
-// ---------------------------
-static std::string readFileIfExists(const std::string& path) {
-    std::string s;
-    if (readLineFromFile(path, s)) return s;
-    return {};
-}
-
-static std::string getHostname() {
-    char buf[256] = {0};
-    if (gethostname(buf, sizeof(buf) - 1) == 0 && buf[0] != '\0') {
-        return std::string(buf);
-    }
-    std::string h = readFileIfExists("/etc/hostname");
-    if (!h.empty()) return h;
-    struct utsname u{};
-    if (uname(&u) == 0) return std::string(u.nodename);
-    return {};
-}
-
-// ---------------------------
-//
-// Key = exact hostname / machine;
-// Value = { irqMaskSrc, irqIsHex, wqMaskSrc, wqIsHex }
-//
-// ---------------------------
-struct MaskEntry {
-    const char* irqSrc;  // CSV (e.g. "0-6") or HEX (e.g. "f7")
-    bool        irqIsHex;
-    const char* wqSrc;   // CSV or HEX
-    bool        wqIsHex;
-};
-
-// Hostname-based policy
-static const std::map<std::string, MaskEntry> kHostPolicyMap = {
-    // Hostnames that use IRQ: 0,1,2,4,5,6,7 and WQ: f7
-    { "iq-8275-evk",      { "0,1,2,4,5,6,7", false, "f7", true } },
-    { "qcs8300-ride-sx",  { "0,1,2,4,5,6,7", false, "f7", true } },
-
-    // Hostnames that use IRQ: 0-6 and WQ: 7f
-    { "iq-9075-evk",      { "0-6", false, "7f", true } },
-    { "qcs9100-ride-sx",  { "0-6", false, "7f", true } },
-    { "qcm6490-idp",      { "0-6", false, "7f", true } },
-    { "rb3gen2-core-kit", { "0-6", false, "7f", true } },
-};
-
-// Machine-based policy
-static const std::map<std::string, MaskEntry> kMachinePolicyMap = {
-    { "qcs8275", { "0,1,2,4,5,6,7", false, "f7", true } },
-    { "qcs8300", { "0,1,2,4,5,6,7", false, "f7", true } },
-
-    { "qcs9075", { "0-6", false, "7f", true } },
-    { "qcm6490", { "0-6", false, "7f", true } },
-    { "qcs9100", { "0-6", false, "7f", true } },
-    { "qcs6490", { "0-6", false, "7f", true } },
-};
-
-// Default masks when no map entry matches
-static const MaskEntry kDefaultMask = { "0-6", false, "7f", true };
-
-// ---------------------------
-// Resolve final masks (hex strings) using the maps
-// ---------------------------
-struct ResolvedMasks {
-    std::string irqHex;
-    std::string wqHex;
-    std::string matchedKey;
-    std::string matchedScope;
-};
-
-static std::string strip0xLower(std::string s) {
-    s = trim(s);
-    if (s.size() >= 2 && s[0]=='0' && (s[1]=='x' || s[1]=='X')) s = s.substr(2);
-    toLower(s);
-    return s;
-}
-
-static ResolvedMasks resolveMasks() {
-    const std::string host = trim(getHostname());
-
-    std::string machine;
-    fetchMachineName(machine);
-
-    // 1) Hostname exact match
-    {
-        auto it = kHostPolicyMap.find(host);
-        if (it != kHostPolicyMap.end()) {
-            const MaskEntry& e = it->second;
-            ResolvedMasks r;
-            r.irqHex = e.irqIsHex ? strip0xLower(e.irqSrc) : csvToHexMask(e.irqSrc);
-            r.wqHex  = e.wqIsHex  ? strip0xLower(e.wqSrc ) : csvToHexMask(e.wqSrc );
-            r.matchedKey = host;
-            r.matchedScope = "host";
-            if (isLogEnabled()) {
-                logLine("Resolved by host: '" + host + "' -> irq=" + r.irqHex + ", wq=" + r.wqHex);
-            }
-            return r;
-        }
-    }
-
-    // 2) Machine exact match
-    {
-        auto it = kMachinePolicyMap.find(machine);
-        if (it != kMachinePolicyMap.end()) {
-            const MaskEntry& e = it->second;
-            ResolvedMasks r;
-            r.irqHex = e.irqIsHex ? strip0xLower(e.irqSrc) : csvToHexMask(e.irqSrc);
-            r.wqHex  = e.wqIsHex  ? strip0xLower(e.wqSrc ) : csvToHexMask(e.wqSrc );
-            r.matchedKey = machine;
-            r.matchedScope = "machine";
-            if (isLogEnabled()) {
-                logLine("Resolved by machine: '" + machine + "' -> irq=" + r.irqHex + ", wq=" + r.wqHex);
-            }
-            return r;
-        }
-    }
-
-    // 3) Default
-    ResolvedMasks r;
-    r.irqHex = kDefaultMask.irqIsHex ? strip0xLower(kDefaultMask.irqSrc) : csvToHexMask(kDefaultMask.irqSrc);
-    r.wqHex  = kDefaultMask.wqIsHex  ? strip0xLower(kDefaultMask.wqSrc ) : csvToHexMask(kDefaultMask.wqSrc );
-    r.matchedKey = "<default>";
-    r.matchedScope = "default";
-    if (isLogEnabled()) {
-        logLine("Resolved by default -> irq=" + r.irqHex + ", wq=" + r.wqHex +
-                " (host='" + host + "', machine='" + machine + "')");
-    }
-    return r;
+    logLine(msg);
 }
 
 // ---------------------------
@@ -277,7 +96,7 @@ static bool gCpufreqApplied = false;
 static std::vector<std::pair<std::string, std::string>> gCpufreqGovBackup;
 
 static void cpufreqGovApplierCallback(void* /*context*/) {
-    if (isLogEnabled()) logLine("enter cpufreqGovApplierCallback");
+    logLine("enter cpufreqGovApplierCallback");
 
     if (gCpufreqApplied) return;
 
@@ -285,7 +104,7 @@ static void cpufreqGovApplierCallback(void* /*context*/) {
 
     DIR* dir = opendir(POLICY_DIR_PATH);
     if (!dir) {
-        if (isLogEnabled()) logLine(std::string("opendir fail: ") + POLICY_DIR_PATH + " errno=" + std::to_string(errno));
+        TYPELOGV(ERRNO_LOG, strerror(errno));
         return;
     }
 
@@ -300,13 +119,13 @@ static void cpufreqGovApplierCallback(void* /*context*/) {
         std::string oldVal;
         if (readLineFromFile(govFile, oldVal)) {
             gCpufreqGovBackup.emplace_back(govFile, oldVal);
-            if (isLogEnabled()) logLine("[" + std::string(entry->d_name) + "] old governor: " + oldVal);
+            logLine("[" + std::string(entry->d_name) + "] old governor: " + oldVal);
             int rc = writeLineToFile(govFile, "performance");
             if (rc != 0) {
                logWriteFailure(govFile, rc);
             }
             
-            if (rc == 0 && isLogEnabled()) {
+            if (rc == 0) {
                 std::string now;
                 if (readLineFromFile(govFile, now)) {
                     logLine("verify " + govFile + " -> " + now);
@@ -320,15 +139,12 @@ static void cpufreqGovApplierCallback(void* /*context*/) {
 
 static void cpufreqGovTearCallback(void* /*context*/) {
     if (!gCpufreqApplied) return;
-    if (isLogEnabled()) logLine("enter cpufreqTearCallback");
+    logLine("enter cpufreqTearCallback");
 
     for (const auto& kv : gCpufreqGovBackup) {
         const std::string& path = kv.first;
         const std::string& oldVal = kv.second;
-        if (isWritable(path)) {
-            int rc = writeLineToFile(path, oldVal);
-            if (rc != 0) logWriteFailure(path, rc);
-        }
+        AuxRoutines::writeToFile(path, oldVal);
     }
     gCpufreqGovBackup.clear();
     gCpufreqApplied = false;
@@ -341,14 +157,15 @@ static bool gIrqApplied = false;
 static std::vector<std::pair<std::string, std::string>> gIrqAffBackup;
 
 static void irqAffinityApplierCallback(void* /*context*/) {
-    if (isLogEnabled()) logLine("enter irqAffinityApplierCallback");
+    logLine("enter irqAffinityApplierCallback");
 
     if (gIrqApplied) return;
 
     gIrqAffBackup.clear();
 
-    const ResolvedMasks m = resolveMasks();
-    const std::string hexMask = m.irqHex.empty() ? std::string("7f") : m.irqHex;
+    int32_t args[2] = {GET_MAX_CLUSTER, -1};
+    uint64_t hexMask = GET_TARGET_INFO(GET_MASK, 2, args);
+    std::string maskStr = cpuMaskToHex((~(hexMask) & VALID_MASK ));
 
     DIR* dir = opendir(IRQ_DIR_PATH);
     if (!dir) return;
@@ -370,11 +187,11 @@ static void irqAffinityApplierCallback(void* /*context*/) {
         if (readLineFromFile(smpFile, oldVal)) {
             gIrqAffBackup.emplace_back(smpFile, oldVal);
 
-            int rc = writeLineToFile(smpFile, hexMask);
+            int rc = writeLineToFile(smpFile, maskStr);
             if (rc != 0) {
                 logWriteFailure(smpFile, rc);
             }
-            if (rc == 0 && isLogEnabled()) {
+            if (rc == 0) {
                 std::string now;
                 if (readLineFromFile(smpFile, now)) {
                     logLine("verify " + smpFile + " -> " + now);
@@ -388,15 +205,12 @@ static void irqAffinityApplierCallback(void* /*context*/) {
 
 static void irqAffinityTearCallback(void* /*context*/) {
     if (!gIrqApplied) return;
-    if (isLogEnabled()) logLine("enter irqAffinityTearCallback");
+    logLine("enter irqAffinityTearCallback");
 
     for (const auto& kv : gIrqAffBackup) {
         const std::string& path = kv.first;
         const std::string& oldVal = kv.second;
-        if (isWritable(path)) {
-            int rc = writeLineToFile(path, oldVal);
-            if (rc != 0) logWriteFailure(path, rc);
-        }
+        AuxRoutines::writeToFile(path, oldVal);
     }
     gIrqAffBackup.clear();
     gIrqApplied = false;
@@ -409,14 +223,14 @@ static bool gWqApplied = false;
 static std::vector<std::pair<std::string, std::string>> gWqMaskBackup;
 
 static void workqueueApplierCallback(void* /*context*/) {
-    if (isLogEnabled()) logLine("enter workqueueApplierCallback");
-
+    logLine("enter workqueueApplierCallback");
     if (gWqApplied) return;
 
     gWqMaskBackup.clear();
 
-    const ResolvedMasks m = resolveMasks();
-    const std::string hexMask = m.wqHex.empty() ? std::string("7f") : m.wqHex;
+    int32_t args[2] = {GET_MAX_CLUSTER, -1};
+    uint64_t hexMask = GET_TARGET_INFO(GET_MASK, 2, args);
+    std::string maskStr = cpuMaskToHex((~(hexMask) & VALID_MASK));
 
     DIR* dir = opendir(WQ_DIR_PATH);
     if (!dir) return;
@@ -431,11 +245,11 @@ static void workqueueApplierCallback(void* /*context*/) {
         if (readLineFromFile(cpumaskFile, oldVal)) {
             gWqMaskBackup.emplace_back(cpumaskFile, oldVal);
 
-            int rc = writeLineToFile(cpumaskFile, hexMask);
+            int rc = writeLineToFile(cpumaskFile, maskStr);
             if (rc != 0) {
                 logWriteFailure(cpumaskFile, rc);
             }
-            if (rc == 0 && isLogEnabled()) {
+            if (rc == 0) {
                 std::string now;
                 if (readLineFromFile(cpumaskFile, now)) {
                     logLine("verify " + cpumaskFile + " -> " + now);
@@ -449,16 +263,13 @@ static void workqueueApplierCallback(void* /*context*/) {
 
 static void workqueueTearCallback(void* /*context*/) {
     if (!gWqApplied) return;
-    if (isLogEnabled()) logLine("enter workqueueTearCallback");
+    logLine("enter workqueueTearCallback");
 
     for (const auto& kv : gWqMaskBackup) {
         const std::string& path = kv.first;
         const std::string& oldVal = kv.second;
-        
-        if (isWritable(path)) {
-            int rc = writeLineToFile(path, oldVal);
-            if (rc != 0) logWriteFailure(path, rc);
-        }
+
+        AuxRoutines::writeToFile(path, oldVal);
     }
     gWqMaskBackup.clear();
     gWqApplied = false;

@@ -19,5 +19,6 @@ bool isWritable(const std::string& path);
 int writeLineToFile(const std::string& fileName, const std::string& value);
 bool readLineFromFile(const std::string& fileName, std::string& line);
 void fetchMachineName(std::string& machineName);
+std::string cpuMaskToHex(uint64_t mask);
 
 #endif

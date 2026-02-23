@@ -10,6 +10,15 @@
 
 #include "Helpers.h"
 
+// cpumask to hex
+std::string cpuMaskToHex(uint64_t mask)
+{
+    char buf[32];
+    snprintf(buf, sizeof(buf), "%llx",
+             (unsigned long long)mask);
+    return std::string(buf);
+}
+
 // Lowercase utility
 void toLower(std::string &s) {
     std::transform(s.begin(), s.end(), s.begin(),
