@@ -1,7 +1,6 @@
 // Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: BSD-3-Clause-Clear
 
-#include <fstream>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -11,19 +10,16 @@
 #include <cerrno>
 #include <cstring>
 #include <strings.h>
-#include <cstdio>
 
 #include <dirent.h>
-#include <sys/stat.h>
 #include <unistd.h>
 #include <sys/utsname.h>
 
 #include <Urm/Extensions.h>
 #include <Urm/UrmPlatformAL.h>
+#include <Urm/Logger.h>
 
-#include <fcntl.h>
-#include <sys/time.h>
-#include <syslog.h>
+#include "Helpers.h"
 
 #include "Helpers.h"
 
@@ -36,6 +32,7 @@
 // ---------------------------
 static bool gLogInit = false;
 static bool gLogEnabled = false;
+static constexpr const char* kLogTag = "urm-ext-rt";
 
 static bool parseBoolEnv(const char* v) {
     if (!v) return false;
@@ -54,15 +51,18 @@ static inline bool isLogEnabled() {
 
 static void logLine(const std::string& msg) {
     if (!isLogEnabled()) return;
-    // rely on daemon's logging setup; no openlog() here
-    syslog(LOG_INFO, "%s", msg.c_str());
+    LOGI(kLogTag, msg.c_str());
 }
 
 
 static inline void logWriteFailure(const std::string& path, int rc) {
     if (!isLogEnabled()) return;
-    logLine("write failed for " + path + " rc=" + std::to_string(rc) +
-            " err='" + std::string(strerror(rc)) + "'");
+    const int e = (rc < 0) ? -rc : rc;
+    const char* err = strerror(e);
+    std::string msg = "write failed for " + path +
+                      " rc=" + std::to_string(rc) +
+                      " err='" + std::string(err ? err : "unknown") + "'";
+    LOGE(kLogTag, msg.c_str());
 }
 // ---------------------------
 // CPU list parsing & mask building
