@@ -76,6 +76,7 @@ uint64_t getTargetInfo(int32_t option,
 ```
 
 Usage:
+
 For example, to get a cpu mask (which can be used for example for IRQ affinity use cases):
 ```cpp
     int32_t args[2] = {0, 0};
