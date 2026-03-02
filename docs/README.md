@@ -68,19 +68,27 @@ Plugins can fetch target information using the "getTargetInfo" helper utility pr
 - Logical to Physical Mappings
 - Number of cores / clusters on the target
 
+```cpp
+// Utility to fetch target-specific information
+uint64_t getTargetInfo(int32_t option,
+                       int32_t numArgs,
+                       int32_t* args);
+```
+
+Usage:
 For example, to get a cpu mask (which can be used for example for IRQ affinity use cases):
 ```cpp
     int32_t args[2] = {0, 0};
     uint64_t mask = getTargetInfo(GET_MASK, 2, args); // all cores in silver cluster
 ```
 
-The first parameter in the args array, in this case is the logical cluster ID.
+- The first parameter in the args array, in this case is the logical cluster ID.
 Here, we use the logical identifier for the silver cluster, using logical identifiers in the code makes it target-architecture independent, hence portable.
 The clusters logical id's are ordered according to the cluster capacities. Hence: 0 represents silver / little, 1 represents gold / big and 2 represents prime.
 
-The second parameter in the args array, in this case is the number of cores in the cluster to be considered for mask creation. 0 represents all cores within the cluster, a non-zero positive value represents the exact number of cores to be considered.
+- The second parameter in the args array, in this case is the number of cores in the cluster to be considered for mask creation. 0 represents all cores within the cluster, a non-zero positive value represents the exact number of cores to be considered.
 
-To simple get a mask corresponding to the highest capacity cluster on the target, for all cores, the GET_MAX_CLUSTER option can be used, as:
+To simply get a mask corresponding to the highest capacity cluster on the target, for all cores, the GET_MAX_CLUSTER query can be used, as follows:
 ```cpp
     int32_t args[2] = {GET_MAX_CLUSTER, 0};
     uint64_t mask = getTargetInfo(GET_MASK, 2, args); // all cores in the highest capacity cluster
