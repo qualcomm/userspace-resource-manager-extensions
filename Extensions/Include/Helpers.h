@@ -11,6 +11,7 @@
 #include <Urm/Logger.h>
 #include <Urm/Resource.h>
 #include <Urm/ResourceRegistry.h>
+#include <Urm/TargetRegistry.h>
 
 void writeLineToFile(const std::string& fileName, const std::string& value);
 void readLineFromFile(const std::string& fileName, std::string& line);
