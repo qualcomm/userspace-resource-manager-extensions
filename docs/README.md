@@ -83,5 +83,5 @@ The second parameter in the args array, in this case is the number of cores in t
 To simple get a mask corresponding to the highest capacity cluster on the target, for all cores, the GET_MAX_CLUSTER option can be used, as:
 ```cpp
     int32_t args[2] = {GET_MAX_CLUSTER, 0};
-    uint64_t mask = getTargetInfo(GET_MASK, 2, args); // all cores in silver cluster
+    uint64_t mask = getTargetInfo(GET_MASK, 2, args); // all cores in the highest capacity cluster
 ```
