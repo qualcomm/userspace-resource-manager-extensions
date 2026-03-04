@@ -45,7 +45,7 @@ static void governorApplierCallback(void* context) {
 
 static void workqueueApplierCallback(void* context) {
     int32_t args[2] = {0, 0};
-    uint64_t mask = getTargetInfo(GET_MASK, 2, args); // all cores in silver cluster
+    uint64_t mask = GET_TARGET_INFO(GET_MASK, 2, args); // all cores in silver cluster
     (void)mask;
 
     DIR* dir = opendir(WORKQUEUE_DIR_PATH);
