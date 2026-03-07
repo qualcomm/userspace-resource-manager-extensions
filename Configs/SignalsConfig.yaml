@@ -21,3 +21,11 @@ SignalConfigs:
       - {ResCode: "0x00040003", ResInfo: "0x00000000", Values: [1]}
       - {ResCode: "0x00040004", ResInfo: "0x00000100", Values: [1]}
       - {ResCode: "0x00040005", ResInfo: "0x00000200", Values: [1]}
+
+  - SigId: "0x0001"
+    Category: "0x81"
+    Name: CAM_OPEN
+    Enable: true
+    Permissions: ["system", "third_party"]
+    Resources:
+      - {ResCode: "0x00030000", Values: [100]}

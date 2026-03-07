@@ -107,3 +107,24 @@ ResourceConfigs:
     Modes: ["display_on", "doze"]
     Policy: pass_through
     ApplyType: "global"
+
+  # Reserve "90" for Downstream Resources
+  - ResType: "0x90"
+    ResID: "0x0000"
+    Name: "RES_SCHED_BOOST"
+    Path: "/proc/sys/walt/sched_boost"
+    Supported: true
+    Permissions: third_party
+    Modes: ["display_on", "doze"]
+    Policy: pass_through
+    ApplyType: "global"
+
+  - ResType: "0x90"
+    ResID: "0x0001"
+    Name: "RES_CPU_MAX_FREQ"
+    Path: "/sys/kernel/msm_performance/parameters/cpu_max_freq"
+    Supported: true
+    Permissions: third_party
+    Modes: ["display_on", "doze"]
+    Policy: higher_is_better
+    ApplyType: "cluster"
