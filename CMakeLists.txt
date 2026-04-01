@@ -37,11 +37,6 @@ file(GLOB SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/Extensions/*.cpp")
 add_library(UrmPlugin ${SOURCES})
 set_target_properties(UrmPlugin PROPERTIES VERSION 1.0.0 SOVERSION 1)
 
-# Set linker flags to ensure GNU_HASH
-#set_target_properties(UrmPlugin PROPERTIES
-#    LINK_FLAGS "-Wl,-O1 -Wl,--hash-style=gnu -Wl,--as-needed"
-#)
-
 target_link_libraries(UrmPlugin UrmExtAPIs RestuneCore UrmAuxUtils)
 target_include_directories(UrmPlugin PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Extensions/Include)
 
