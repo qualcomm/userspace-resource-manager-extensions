@@ -29,12 +29,6 @@ file(COPY ${URM_MODULA_HEADERS} DESTINATION ${URM_HEADERS_DEST})
 file(GLOB_RECURSE URM_RESTUNE_HEADERS "${URM_SOURCE_PATH}/resource-tuner/*.h")
 file(COPY ${URM_RESTUNE_HEADERS} DESTINATION ${URM_HEADERS_DEST})
 
-# Copy headers from public_headers if exists
-if(EXISTS "${URM_SOURCE_PATH}/public_headers")
-    file(GLOB_RECURSE URM_PUBLIC_HEADERS "${URM_SOURCE_PATH}/public_headers/*.h")
-    file(COPY ${URM_PUBLIC_HEADERS} DESTINATION ${URM_HEADERS_DEST})
-endif()
-
 # Add URM headers include path
 include_directories(${URM_HEADERS_DIR})
 
@@ -44,7 +38,7 @@ add_library(UrmPlugin ${SOURCES})
 set_target_properties(UrmPlugin PROPERTIES VERSION 1.0.0 SOVERSION 1)
 
 # Set linker flags to ensure GNU_HASH
-set_target_properties(UrmPlugin PROPERTIES 
+set_target_properties(UrmPlugin PROPERTIES
     LINK_FLAGS "-Wl,-O1 -Wl,--hash-style=gnu -Wl,--as-needed"
 )
 
@@ -53,7 +47,7 @@ target_include_directories(UrmPlugin PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Extensi
 
 # Add explicit permissions to library install
 install(
-    TARGETS UrmPlugin 
+    TARGETS UrmPlugin
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/urm/
     PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 )
