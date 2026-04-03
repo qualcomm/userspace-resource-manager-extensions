@@ -8,9 +8,11 @@
 #include <algorithm>
 #include <memory>
 #include <mutex>
+#include <thread>
 
 #include <Urm/Extensions.h>
 #include <Urm/UrmPlatformAL.h>
+#include <Urm/Logger.h>
 
 struct ThreadInfo {
     int64_t cpuUsage;
@@ -37,12 +39,12 @@ static void getThreadIds(pid_t pid, std::vector<int>& tids) {
     closedir(dir);
 }
 
-/* Read utime + stime for a thread */
-static int64_t readThreadCpuTime(pid_t pid, pid_t tid) {
+static int64_t readThreadCpuTime(pid_t pid, pid_t tid)
+{
     std::string path = "/proc/" + std::to_string(pid) +
                        "/task/" + std::to_string(tid) + "/stat";
  
-    std::ifstream file(path.c_str());
+    std::ifstream file(path);
     if (!file.is_open()) {
         return 0;
     }
@@ -51,17 +53,43 @@ static int64_t readThreadCpuTime(pid_t pid, pid_t tid) {
     std::getline(file, line);
     file.close();
  
-    std::istringstream iss(line);
-    std::string token;
-    int64_t utime = 0, stime = 0;
- 
-    for(int32_t i = 1; i <= 15; ++i) {
-        iss >> token;
-        if (i == 14) utime = atoll(token.c_str());
-        if (i == 15) stime = atoll(token.c_str());
+    // The second field (comm) is inside parentheses and may contain spaces.
+    // We must skip everything up to the closing ')'.
+    auto closingParen = line.rfind(')');
+    if (closingParen == std::string::npos) {
+        return 0;
     }
  
-    return utime;
+    // Create a stream starting after ") "
+    std::istringstream iss(line.substr(closingParen + 2));
+ 
+    /*
+     * Field numbers after comm:
+     *  3  state
+     *  4  ppid
+     *  5  pgrp
+     *  6  session
+     *  7  tty_nr
+     *  8  tpgid
+     *  9  flags
+     * 10  minflt
+     * 11  cminflt
+     * 12  majflt
+     * 13  cmajflt
+     * 14  utime  <-- what we want
+     */
+ 
+    std::string token;
+    for (int i = 3; i < 14; ++i) {
+        iss >> token; // skip fields 3..13
+    }
+ 
+    int64_t utime = 0;
+    iss >> utime;
+    int64_t stime = 0;
+    iss >> stime;
+ 
+    return utime + stime;  // in clock ticks (jiffies)
 }
 
 static void workloadPostprocessCallback(void* context) {
@@ -90,6 +118,10 @@ static void workloadPostprocessCallback(void* context) {
             .tid = tids[i]
         };
     }
+
+    for(size_t i = 0; i < tids.size(); i++) {
+        LOGE("URM_EXT_LOGS", "capacity = " + std::to_string(cpuUtilization[i].cpuUsage));
+    }
     
     std::sort(cpuUtilization.begin(), cpuUtilization.end(), [](ThreadInfo& a, ThreadInfo& b) {
         return a.cpuUsage > b.cpuUsage;
@@ -101,12 +133,14 @@ static void workloadPostprocessCallback(void* context) {
     int32_t actualArgCount = std::min((int32_t)cpuUtilization.size(), 6);
     int32_t* args = (int32_t*) calloc(actualArgCount, 0);
 
+    LOGE("URM_EXT_LOGS", "args count passed = " + std::to_string(actualArgCount));
     for(int32_t i = 0; i < actualArgCount; i++) {
         args[i] = cpuUtilization[i].tid;
+        LOGE("URM_EXT_LOGS", "arg at i = " + std::to_string(args[i]) + " with capacity = " + std::to_string(cpuUtilization[i].cpuUsage));
     }
     cbData->mNumArgs = actualArgCount;
     cbData->mArgs = args;
 }
 
 // genie-t2t-run
-URM_REGISTER_POST_PROCESS_CB("vi", workloadPostprocessCallback);
+URM_REGISTER_POST_PROCESS_CB("genie-t2t-run", workloadPostprocessCallback);
