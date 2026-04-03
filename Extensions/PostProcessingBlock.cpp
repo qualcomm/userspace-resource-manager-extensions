@@ -242,6 +242,6 @@ static void WorkloadPostprocessCallback(void* context) {
 }
 
 __attribute__((constructor))
-void registerWithUrm() {
+static void registerWithUrm() {
     URM_REGISTER_POST_PROCESS_CB("gst-launch-", WorkloadPostprocessCallback)
 }
