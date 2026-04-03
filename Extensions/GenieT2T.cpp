@@ -22,7 +22,7 @@ struct ThreadInfo {
 static void getThreadIds(pid_t pid, std::vector<int>& tids) {
     std::string taskPath = "/proc/" + std::to_string(pid) + "/task";
     DIR* dir = opendir(taskPath.c_str());
-    if (dir == nullptr) {
+    if(dir == nullptr) {
         return;
     }
  
@@ -39,13 +39,12 @@ static void getThreadIds(pid_t pid, std::vector<int>& tids) {
     closedir(dir);
 }
 
-static int64_t readThreadCpuTime(pid_t pid, pid_t tid)
-{
+static int64_t readThreadCpuTime(pid_t pid, pid_t tid) {
     std::string path = "/proc/" + std::to_string(pid) +
                        "/task/" + std::to_string(tid) + "/stat";
  
     std::ifstream file(path);
-    if (!file.is_open()) {
+    if(!file.is_open()) {
         return 0;
     }
  
@@ -54,7 +53,7 @@ static int64_t readThreadCpuTime(pid_t pid, pid_t tid)
     file.close();
  
     auto closingParen = line.rfind(')');
-    if (closingParen == std::string::npos) {
+    if(closingParen == std::string::npos) {
         return 0;
     }
 
