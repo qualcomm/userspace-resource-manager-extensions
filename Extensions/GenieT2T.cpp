@@ -53,35 +53,16 @@ static int64_t readThreadCpuTime(pid_t pid, pid_t tid)
     std::getline(file, line);
     file.close();
  
-    // The second field (comm) is inside parentheses and may contain spaces.
-    // We must skip everything up to the closing ')'.
     auto closingParen = line.rfind(')');
     if (closingParen == std::string::npos) {
         return 0;
     }
- 
-    // Create a stream starting after ") "
+
     std::istringstream iss(line.substr(closingParen + 2));
- 
-    /*
-     * Field numbers after comm:
-     *  3  state
-     *  4  ppid
-     *  5  pgrp
-     *  6  session
-     *  7  tty_nr
-     *  8  tpgid
-     *  9  flags
-     * 10  minflt
-     * 11  cminflt
-     * 12  majflt
-     * 13  cmajflt
-     * 14  utime  <-- what we want
-     */
  
     std::string token;
     for (int i = 3; i < 14; ++i) {
-        iss >> token; // skip fields 3..13
+        iss >> token;
     }
  
     int64_t utime = 0;
@@ -89,7 +70,7 @@ static int64_t readThreadCpuTime(pid_t pid, pid_t tid)
     int64_t stime = 0;
     iss >> stime;
  
-    return utime + stime;  // in clock ticks (jiffies)
+    return utime + stime;
 }
 
 static void workloadPostprocessCallback(void* context) {
@@ -118,10 +99,6 @@ static void workloadPostprocessCallback(void* context) {
             .tid = tids[i]
         };
     }
-
-    for(size_t i = 0; i < tids.size(); i++) {
-        LOGE("URM_EXT_LOGS", "capacity = " + std::to_string(cpuUtilization[i].cpuUsage));
-    }
     
     std::sort(cpuUtilization.begin(), cpuUtilization.end(), [](ThreadInfo& a, ThreadInfo& b) {
         return a.cpuUsage > b.cpuUsage;
@@ -133,10 +110,8 @@ static void workloadPostprocessCallback(void* context) {
     int32_t actualArgCount = std::min((int32_t)cpuUtilization.size(), 6);
     int32_t* args = (int32_t*) calloc(actualArgCount, 0);
 
-    LOGE("URM_EXT_LOGS", "args count passed = " + std::to_string(actualArgCount));
     for(int32_t i = 0; i < actualArgCount; i++) {
         args[i] = cpuUtilization[i].tid;
-        LOGE("URM_EXT_LOGS", "arg at i = " + std::to_string(args[i]) + " with capacity = " + std::to_string(cpuUtilization[i].cpuUsage));
     }
     cbData->mNumArgs = actualArgCount;
     cbData->mArgs = args;
