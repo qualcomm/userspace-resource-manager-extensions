@@ -1,0 +1,2 @@
+etc/urm/target/*
+usr/lib/${DEB_HOST_MULTIARCH}/urm/*.so*
