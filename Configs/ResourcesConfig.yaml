@@ -107,3 +107,13 @@ ResourceConfigs:
     Modes: ["display_on", "doze"]
     Policy: pass_through
     ApplyType: "global"
+
+  - ResType: "0xf0"
+    ResID: "0x0001"
+    Name: "RES_IRQ_AFFINE_ALL"
+    Path: ""
+    Supported: true
+    Permissions: "third_party"
+    Modes: ["display_on"]
+    Policy: "pass_through"
+    ApplyType: "global"
