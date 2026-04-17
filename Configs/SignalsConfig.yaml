@@ -22,11 +22,12 @@ SignalConfigs:
       - {ResCode: "0x00040004", ResInfo: "0x00000100", Values: [1]}
       - {ResCode: "0x00040005", ResInfo: "0x00000200", Values: [1]}
 
-  - SigId: "0x0002"
-    Category: "0x80"
-    Name: THREAD_CONF
+  - SigId: "0x0123"
+    Category: "0xf1"
+    Name: GENIE_T2T_RUN
     Enable: true
-    Permissions: ["system", "third_party"]
+    Permissions: ["third_party"]
     Timeout: -1
     Resources:
-      - {ResCode: "0x00030004", Values: ["%d", "%d", "%d", "%d", "%d", "%d", 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]}
+    - {ResCode: "0x00f00001", ResInfo: "0x00000000", Values: [0, 1, 2, 3, 4, 5]}
+    - {ResCode: "0x00090002", ResInfo: "0x00000000", Values: [2, 0, 1, 2, 3, 4, 5]}
