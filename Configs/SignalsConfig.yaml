@@ -26,7 +26,7 @@ SignalConfigs:
     Category: "0xf1"
     Name: GENIE_T2T_RUN
     Enable: true
-    Permissions: ["third_party"]
+    Permissions: ["system", "third_party"]
     Timeout: -1
     Resources:
     - {ResCode: "0x00f00001", ResInfo: "0x00000000", Values: [0, 1, 2, 3, 4, 5]}

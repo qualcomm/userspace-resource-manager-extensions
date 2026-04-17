@@ -87,4 +87,4 @@ URM_REGISTER_RES_APPLIER_CB(0x00f00001, irqAffinityApplierCallback)
 URM_REGISTER_RES_TEAR_CB(0x00f00001, irqAffinityTearCallback)
 
 // genie-t2t-run
-URM_REGISTER_POST_PROCESS_CB("genie-t2t-run", workloadPostprocessCallback);
+URM_REGISTER_POST_PROCESS_CB("vi", workloadPostprocessCallback);
