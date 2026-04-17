@@ -1,14 +1,14 @@
 // Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 // SPDX-License-Identifier: BSD-3-Clause-Clear
 
+#include <thread>
 #include <string>
-#include <dirent.h>
+#include <mutex>
+#include <memory>
 #include <fstream>
 #include <sstream>
+#include <dirent.h>
 #include <algorithm>
-#include <memory>
-#include <mutex>
-#include <thread>
 
 #include "Helpers.h"
 
@@ -42,11 +42,11 @@ static void irqAffinityApplierCallback(void* context) {
 
             // Convert to hex
             std::ostringstream oss;
-            oss << std::hex << std::nouppercase;
-            if (mask == 0) {
-                oss << "0";
+            oss<<std::hex<<std::nouppercase;
+            if(mask == 0) {
+                oss<<"0";
             } else {
-                oss << mask;
+                oss<<mask;
             }
             std::string hexMask = oss.str();
             TYPELOGV(NOTIFY_NODE_WRITE_S, filePath.c_str(), hexMask.c_str());
@@ -62,7 +62,7 @@ static void irqAffinityTearCallback(void* context) {
     for(const auto& kv : gIrqAffBackup) {
         const std::string& path = kv.first;
         const std::string& oldVal = kv.second;
-        TYPELOGV(NOTIFY_NODE_RESET, path.c_str(),oldVal.c_str());
+        TYPELOGV(NOTIFY_NODE_RESET, path.c_str(), oldVal.c_str());
         AuxRoutines::writeToFile(path, oldVal);
     }
     gIrqAffBackup.clear();
@@ -87,4 +87,4 @@ URM_REGISTER_RES_APPLIER_CB(0x00f00001, irqAffinityApplierCallback)
 URM_REGISTER_RES_TEAR_CB(0x00f00001, irqAffinityTearCallback)
 
 // genie-t2t-run
-URM_REGISTER_POST_PROCESS_CB("vi", workloadPostprocessCallback);
+URM_REGISTER_POST_PROCESS_CB("genie-t2t-run", workloadPostprocessCallback);
