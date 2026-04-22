@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.6)
 
 set(CMAKE_CXX_STANDARD 11 LANGUAGES CXX)
+add_compile_options(-Wall -Wextra)
 
 project("URM-Extensions")
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)

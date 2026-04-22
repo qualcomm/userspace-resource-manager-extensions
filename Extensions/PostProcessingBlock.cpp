@@ -134,9 +134,12 @@ int32_t PostProcessingBlock::FetchUsecaseDetails(int32_t pid,
                                                  size_t sz,
                                                  uint32_t& sigId,
                                                  uint32_t& sigType) {
-    /* For encoder, width of encoding, v4l2h264enc in line
+    /* 
+     * For encoder, width of encoding, v4l2h264enc in line
      * For decoder, v4l2h264dec, or may be 265 as well, decoder bit
      */
+    (void)sz;
+
     int32_t ret = -1, numSrc = 0;
     int32_t encode = 0, decode = 0, preview = 0;
     int32_t height = 0;
@@ -187,7 +190,6 @@ int32_t PostProcessingBlock::FetchUsecaseDetails(int32_t pid,
     /*Preview case*/
     if (encode == 0 && decode == 0) {
         char *d = buf;
-        size_t d_str_sz = strlen(qmm_str);
         if ((d = strstr(d, qmm_str)) != nullptr) {
             preview += 1;
             sigId = URM_SIG_CAMERA_PREVIEW;
