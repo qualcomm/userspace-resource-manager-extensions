@@ -77,19 +77,9 @@ ResourceConfigs:
     Policy: higher_is_better
     ApplyType: "global"
 
-  # Reserve "80" for Cyclic Tests (RT Benchmarking)
+  # Reserve "80" for RT Benchmarking(cyclictest)
   - ResType: "0x80"
     ResID: "0x0000"
-    Name: "RES_CHANGE_GOV_PERF"
-    Path: ""
-    Supported: true
-    Permissions: third_party
-    Modes: ["display_on", "doze"]
-    Policy: pass_through
-    ApplyType: "global"
-
-  - ResType: "0x80"
-    ResID: "0x0001"
     Name: "RES_TIMER_MIGRATION"
     Path: "/proc/sys/kernel/timer_migration"
     Supported: true
@@ -99,7 +89,27 @@ ResourceConfigs:
     ApplyType: "global"
 
   - ResType: "0x80"
+    ResID: "0x0001"
+    Name: "RES_CPU_FREQ_GOV"
+    Path: ""
+    Supported: true
+    Permissions: third_party
+    Modes: ["display_on", "doze"]
+    Policy: pass_through
+    ApplyType: "global"
+
+  - ResType: "0x80"
     ResID: "0x0002"
+    Name: "RES_IRQ_AFFINITY"
+    Path: ""
+    Supported: true
+    Permissions: third_party
+    Modes: ["display_on", "doze"]
+    Policy: pass_through
+    ApplyType: "global"
+
+  - ResType: "0x80"
+    ResID: "0x0003"
     Name: "RES_CPU_WQ_AFFINITY"
     Path: ""
     Supported: true
