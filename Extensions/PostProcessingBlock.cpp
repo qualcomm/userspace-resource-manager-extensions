@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <memory>
 #include <mutex>
+#include <vector>
 
 #include <Urm/Extensions.h>
 #include <Urm/UrmPlatformAL.h>
@@ -20,7 +21,7 @@ private:
 private:
 	inline void SanitizeNulls(char *buf, int32_t len);
 	inline int32_t ReadFirstLine(const std::string& filePath, std::string &line);
-	int8_t CheckProcessCommSubstring(int pid, const std::string& target);
+    int8_t CheckProcessCommSubstring(int pid, const std::vector<std::string>& targets);
 	inline void to_lower(std::string &s);
 	int32_t CountThreadsWithName(pid_t pid, const std::string& commSub);
 	int32_t FetchUsecaseDetails(int32_t pid, char *buf, size_t sz,
@@ -72,7 +73,8 @@ inline int32_t PostProcessingBlock::ReadFirstLine(const std::string& filePath, s
     return line.size();
 }
 
-int8_t PostProcessingBlock::CheckProcessCommSubstring(int pid, const std::string& target) {
+int8_t PostProcessingBlock::CheckProcessCommSubstring(int pid,
+                                                      const std::vector<std::string>& targets) {
     std::string processName = "";
     std::string commPath = "/proc/" + std::to_string(pid) + "/comm";
 
@@ -80,8 +82,13 @@ int8_t PostProcessingBlock::CheckProcessCommSubstring(int pid, const std::string
         return false;
     }
 
-    // Check if target is a substring of processName
-    return processName.find(target) != std::string::npos;
+    // Check if any target is a substring of processName
+    for(const auto& target : targets) {
+        if(processName.find(target) != std::string::npos) {
+            return true;  // Found a match
+        }
+    }
+    return false;  // No matches found
 }
 
 // Lowercase utility
@@ -140,7 +147,7 @@ int32_t PostProcessingBlock::FetchUsecaseDetails(int32_t pid,
     int32_t ret = -1, numSrc = 0;
     int32_t encode = 0, decode = 0, preview = 0;
     int32_t height = 0;
-    std::string target = "gst-camera-per";
+    std::vector<std::string> targets = {"gst-camera-per", "gst-launch-1.0"};
     const char *e_str = "v4l2h264enc";
     const char *d_str = "v4l2h264dec";
     const char *qmm_str = "qtiqmmfsrc";
@@ -162,7 +169,7 @@ int32_t PostProcessingBlock::FetchUsecaseDetails(int32_t pid,
         numSrc = CountThreadsWithName(pid, name);
     }
 
-    int8_t multi = CheckProcessCommSubstring(pid, target);
+    int8_t multi = CheckProcessCommSubstring(pid, targets);
 
     if ((numSrc > 1) || (multi)) {
         sigId = URM_SIG_CAMERA_ENCODE_MULTI_STREAMS;
