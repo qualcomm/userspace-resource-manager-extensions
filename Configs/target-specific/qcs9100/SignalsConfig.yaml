@@ -7,10 +7,12 @@ SignalConfigs:
   # Default decode
   - SigId: "0x0001"
     Category: "0x03"
+    SigType: 0
     Name: "URM_SIG_VIDEO_DECODE"
     Enable: true
     TargetsEnabled: ["qcs9100", "qcs9075"]
     Permissions: ["third_party", "system"]
+    Timeout: -1
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6,7]}
@@ -33,6 +35,7 @@ SignalConfigs:
     Enable: true
     TargetsEnabled: ["qcs9100", "qcs9075"]
     Permissions: ["third_party", "system"]
+    Timeout: -1
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6,7]}
@@ -55,6 +58,7 @@ SignalConfigs:
     Enable: true
     TargetsEnabled: ["qcs9100", "qcs9075"]
     Permissions: ["third_party", "system"]
+    Timeout: -1
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6,7]}
@@ -74,6 +78,7 @@ SignalConfigs:
     Enable: true
     TargetsEnabled: ["qcs9100", "qcs9075"]
     Permissions: ["third_party", "system"]
+    Timeout: -1
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6,7]}
@@ -95,6 +100,7 @@ SignalConfigs:
     Enable: true
     TargetsEnabled: ["qcs9100", "qcs9075"]
     Permissions: ["third_party", "system"]
+    Timeout: -1
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6,7]}
@@ -109,13 +115,15 @@ SignalConfigs:
       - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_BIG_ALL_CORES", Values: [1267200]}
 
   # camera encode multi-stream
-  # encode (0-12 streams)
+  # encode (0-12 streams) [sigtype : 0 for normal load (≤12 stream)]
   - SigId: "0x0004"
     Category: "0x03"
-    Name: URM_SIG_CAMERA_ENCODE_MULTI_STREAMS
+    SigType: 0
+    Name: "URM_SIG_CAMERA_ENCODE_MULTI_STREAMS"
     Enable: true
     TargetsEnabled: ["qcs9100", "qcs9075"]
     Permissions: ["third_party", "system"]
+    Timeout: -1
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6,7]}
@@ -129,15 +137,16 @@ SignalConfigs:
       - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_LITTLE_ALL_CORES", Values: [1267200]}
       - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_BIG_ALL_CORES", Values: [1267200]}
 
-# camera encode multi-stream
-# encode (12+ streams)
+  # camera encode multi-stream
+  # encode (12+ streams) [sigtype : 13 for high load (>12 stream)]
   - SigId: "0x0004"
     Category: "0x03"
-    SigType: 12
-    Name: URM_SIG_CAMERA_ENCODE_MULTI_STREAMS
+    SigType: 13
+    Name: "URM_SIG_CAMERA_ENCODE_MULTI_STREAMS"
     Enable: true
     TargetsEnabled: ["qcs9100", "qcs9075"]
     Permissions: ["third_party", "system"]
+    Timeout: -1
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6,7]}
