@@ -138,8 +138,8 @@ int32_t PostProcessingBlock::countEncoders(const char* buffer, const char* encod
 }
 
 std::string PostProcessingBlock::extractSourceName(const char* buffer,
-                                                 const char* namePrefix,
-                                                 const char* defaultName) {
+                                                   const char* namePrefix,
+                                                   const char* defaultName) {
     if (buffer == nullptr || namePrefix == nullptr) {
         return std::string(defaultName);
     }
