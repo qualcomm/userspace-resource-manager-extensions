@@ -31,3 +31,18 @@ install(
     DIRECTORY ${targetConfigs}
     DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/urm/target
 )
+
+# Install post_boot scripts to /etc/urm/initscripts/post_boot/
+install(
+    FILES
+        initscripts/post_boot/urm_post_boot.sh
+        initscripts/post_boot/post_boot_qcm6490.sh
+        initscripts/post_boot/post_boot_qcm8300.sh
+        initscripts/post_boot/post_boot_qcs9075.sh
+        initscripts/post_boot/post_boot_qcs9100.sh
+    DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/urm/initscripts/post_boot
+    PERMISSIONS
+        OWNER_READ OWNER_WRITE OWNER_EXECUTE
+        GROUP_READ GROUP_EXECUTE
+        WORLD_READ WORLD_EXECUTE
+)
