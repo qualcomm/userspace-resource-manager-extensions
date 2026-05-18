@@ -37,7 +37,7 @@ install(
     FILES
         initscripts/post_boot/post_boot.sh
         initscripts/post_boot/post_boot_qcm6490.sh
-        initscripts/post_boot/post_boot_qcm8300.sh
+        initscripts/post_boot/post_boot_qcs8300.sh
         initscripts/post_boot/post_boot_qcs9075.sh
         initscripts/post_boot/post_boot_qcs9100.sh
     DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/urm/initscripts/post_boot
