@@ -35,7 +35,7 @@ install(
 # Install post_boot scripts to /etc/urm/initscripts/post_boot/
 install(
     FILES
-        initscripts/post_boot/urm_post_boot.sh
+        initscripts/post_boot/post_boot.sh
         initscripts/post_boot/post_boot_qcm6490.sh
         initscripts/post_boot/post_boot_qcm8300.sh
         initscripts/post_boot/post_boot_qcs9075.sh

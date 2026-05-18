@@ -7,7 +7,7 @@ if [ -f /sys/devices/soc0/machine ]; then
 fi
 
 case "$machine" in
-    QCM6490 | qcm6490)
+    QCM6490 | qcm6490 | QCS6490 | qcs6490)
         /etc/urm/initscripts/post_boot/post_boot_qcm6490.sh
         ;;
     QCM8300 | qcm8300)
