@@ -10,7 +10,7 @@ case "$machine" in
     QCM6490 | qcm6490 | QCS6490 | qcs6490)
         /etc/urm/initscripts/post_boot/post_boot_qcm6490.sh
         ;;
-    QCS300 | qcs8300)
+    QCS8300 | qcs8300)
         /etc/urm/initscripts/post_boot/post_boot_qcs8300.sh
         ;;
     QCS9100 | qcs9100)
