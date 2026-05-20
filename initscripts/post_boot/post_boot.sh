@@ -2,24 +2,23 @@
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
-if [ -f /sys/devices/soc0/machine ]; then
-    machine=`cat /sys/devices/soc0/machine`
-fi
+check_and_execute() {
+    script_path="$1"
+    if [ -x "$script_path" ]; then
+        "$script_path"
+    fi
+}
 
-case "$machine" in
-    QCM6490 | qcm6490 | QCS6490 | qcs6490)
-        /etc/urm/initscripts/post_boot/post_boot_qcm6490.sh
-        ;;
-    QCS8300 | qcs8300)
-        /etc/urm/initscripts/post_boot/post_boot_qcs8300.sh
-        ;;
-    QCS9100 | qcs9100)
-        /etc/urm/initscripts/post_boot/post_boot_qcs9100.sh
-        ;;
-    QCS9075 | qcs9075)
-        /etc/urm/initscripts/post_boot/post_boot_qcs9075.sh
-        ;;
-    *)
-        # Empty default case
-        ;;
-esac
+POST_BOOT_DIR="/etc/urm/initscripts/post_boot"
+
+# Try postboot common
+script="$POST_BOOT_DIR/post_boot_common.sh"
+check_and_execute "$script"
+
+# Check if there exists any target-specific post boot script
+if [ -f /sys/devices/soc0/machine ]; then
+    machine=$(cat /sys/devices/soc0/machine 2>/dev/null | tr '[:upper:]' '[:lower:]')
+    # Try dynamic script resolution
+    script="$POST_BOOT_DIR/post_boot_${machine}.sh"
+    check_and_execute "$script"
+fi
