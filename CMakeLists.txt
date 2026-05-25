@@ -34,13 +34,10 @@ install(
 
 # Install post_boot scripts to /etc/urm/initscripts/post_boot/
 install(
-    FILES
-        initscripts/post_boot/post_boot.sh
-        initscripts/post_boot/post_boot_qcm6490.sh
-        initscripts/post_boot/post_boot_qcs8300.sh
-        initscripts/post_boot/post_boot_qcs9075.sh
-        initscripts/post_boot/post_boot_qcs9100.sh
+    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/initscripts/post_boot/
     DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/urm/initscripts/post_boot
+    FILES_MATCHING
+    PATTERN "*.sh"
     PERMISSIONS
         OWNER_READ OWNER_WRITE OWNER_EXECUTE
         GROUP_READ GROUP_EXECUTE
