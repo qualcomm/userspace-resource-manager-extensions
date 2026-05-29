@@ -3,13 +3,16 @@ Section: libs
 Priority: optional
 Maintainer: Jagadeesh Pagadala <jpagadal@qti.qualcomm.com>
 Build-Depends: debhelper-compat (= 13), dh-sequence-cmake, cmake, pkgconf,
- libglib2.0-dev, userspace-resource-manager
-Standards-Version: 1.0
+ userspace-resource-manager (>= 1.0.0-1)
+Standards-Version: 4.6.2
 Homepage: https://github.com/qualcomm/userspace-resource-manager-extensions
 
 Package: userspace-resource-manager-extensions
 Architecture: any
 Section: libs
-Depends:  ${shlibs:Depends}, ${misc:Depends}
-Description: 
+Depends: userspace-resource-manager (>= 1.0.0-1), ${shlibs:Depends}, ${misc:Depends}
+Description: Userspace Resource Manager extension plugins
+ A set of GStreamer camera and video workload post-processing plugins
+ for the Qualcomm Userspace Resource Manager (URM). Provides runtime
+ signal classification to drive system resource tuning policies.
 

@@ -77,6 +77,16 @@ ResourceConfigs:
     Policy: higher_is_better
     ApplyType: "global"
 
+  - ResType: "0x09"
+    ResID: "0x000f"
+    Name: "RES_CGRP_IO_WEIGHT"
+    Path: "/sys/fs/cgroup/%s/io.bfq.weight"
+    Supported: true
+    Permissions: "system"
+    Modes: ["display_on"]
+    Policy: "instant_apply"
+    ApplyType: "cgroup"
+
   # Reserve "80" for RT Benchmarking(cyclictest)
   - ResType: "0x80"
     ResID: "0x0000"

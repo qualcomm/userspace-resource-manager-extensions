@@ -22,10 +22,11 @@ private:
     inline void    SanitizeNulls(char *buf, int32_t len);
     inline int32_t ReadFirstLine(const std::string& filePath, std::string &line);
     inline void    to_lower(std::string &s);
-    int32_t        CountThreadsWithName(pid_t pid, const std::string& commSub);
-    int32_t        FetchUsecaseDetails(int32_t pid, char *buf, uint32_t &sigId, uint32_t &sigType);
+    int32_t        countThreadsWithName(pid_t pid, const std::string& commSub);
+    int32_t        fetchUsecaseDetails(int32_t pid, char *buf, uint32_t &sigId, uint32_t &sigType);
     int32_t        countEncoders(const char* buffer, const char* encoderStr);
     std::string    extractSourceName(const char* buffer, const char* namePrefix, const char* defaultName);
+    uint32_t       extractFrameRate(const char* buffer, const char* frameRatePrefix);
 
     uint32_t       calculateEncoderSigType(int32_t count);
     uint32_t       calculateDecoderSigType(int32_t threadCount);
@@ -83,9 +84,9 @@ inline void PostProcessingBlock::to_lower(std::string &s) {
 }
 
 // Count threads under /proc/<pid>/task whose names contain `substring`.
-int32_t PostProcessingBlock::CountThreadsWithName(pid_t pid, const std::string& commSub) {
+int32_t PostProcessingBlock::countThreadsWithName(pid_t pid, const std::string& commSub) {
     std::string commSubStr = std::string(commSub);
-    const std::string threadsListPath = "/proc/" + std::to_string(pid) + "task/";
+    const std::string threadsListPath = "/proc/" + std::to_string(pid) + "/task/";
 
     DIR* dir = nullptr;
     if((dir = opendir(threadsListPath.c_str())) == nullptr) {
@@ -164,6 +165,41 @@ std::string PostProcessingBlock::extractSourceName(const char* buffer,
     return std::string(defaultName);
 }
 
+uint32_t PostProcessingBlock::extractFrameRate(const char* buffer,
+                                               const char* frameRatePrefix) {
+    if (buffer == nullptr || frameRatePrefix == nullptr) {
+        return 0;
+    }
+
+    // Locate "framerate="
+    const char* ptr = strstr(buffer, frameRatePrefix);
+    if (ptr == nullptr) {
+        return 0;
+    }
+
+    ptr += strlen(frameRatePrefix);
+
+    // Parse the numerator
+    char* endPtr = nullptr;
+    int64_t numerator = strtol(ptr, &endPtr, 10);
+    if (endPtr == ptr || numerator < 0) {
+        // No valid digits found
+        return 0;
+    }
+
+    // Check for an optional denominator separated by '/'
+    int64_t denominator = 1;
+    if (*endPtr == '/') {
+        const char* denomStart = endPtr + 1;
+        int64_t parsedDenom = strtol(denomStart, &endPtr, 10);
+        if (endPtr != denomStart && parsedDenom > 0) {
+            denominator = parsedDenom;
+        }
+    }
+
+    return static_cast<uint32_t>(numerator / denominator);
+}
+
 /**
  * @brief Calculate sigType value for encoder based on count thresholds
  *
@@ -186,16 +222,14 @@ uint32_t PostProcessingBlock::calculateEncoderSigType(int32_t count) {
 uint32_t PostProcessingBlock::calculateDecoderSigType(int32_t threadCount) {
     if (threadCount < 5){
         return 0;
-    }
-    else if (threadCount >= 5 && threadCount <= 20) {
+    } else if (threadCount >= 5 && threadCount <= 20) {
         return 5;
-    }
-    else {
+    } else {
         return 21;
     }
 }
 
-int32_t PostProcessingBlock::FetchUsecaseDetails(int32_t pid,
+int32_t PostProcessingBlock::fetchUsecaseDetails(int32_t pid,
                                                  char *buf,
                                                  uint32_t& sigId,
                                                  uint32_t& sigType) {
@@ -205,50 +239,49 @@ int32_t PostProcessingBlock::FetchUsecaseDetails(int32_t pid,
      */
 
     // GStreamer element identifiers for different video operations
-    const char* encoderStr  = "v4l2h264enc";    // Hardware H.264 encoder element
-    const char* decoderStr  = "v4l2h264dec";    // Hardware H.264 decoder element
-    const char* qmmSrcStr   = "qtiqmmfsrc";     // Qualcomm multimedia source element
-    const char* namePrefix  = "name=";          // GStreamer element name attribute
-    const char* defaultName = "camsrc";         // Default camera source name
+    const char* encoderStr      = "v4l2h264enc";    // Hardware H.264 encoder element
+    const char* decoderStr      = "v4l2h264dec";    // Hardware H.264 decoder element
+    const char* qmmSrcStr       = "qtiqmmfsrc";     // Qualcomm multimedia source element
+    const char* namePrefix      = "name=";          // GStreamer element name attribute
+    const char* defaultName     = "camsrc";         // Default camera source name
+    const char* frameRatePrefix = "framerate=";     // GStreamer frame rate attribute
 
-    int32_t result = -1;  // Return -1 if no use case detected
+    // Extract frame rate once; used by encoder and preview paths.
+    uint32_t fps = extractFrameRate(buf, frameRatePrefix);
 
     // Check for encoder
-    if (strstr(buf, encoderStr) != nullptr) {
-        int32_t encoderCount   = countEncoders(buf, encoderStr);
+    if(strstr(buf, encoderStr) != nullptr) {
         std::string sourceName = extractSourceName(buf, namePrefix, defaultName);
-        int32_t numSrc         = CountThreadsWithName(pid, sourceName);
+        int32_t encoderCount = countEncoders(buf, encoderStr);
+        int32_t numSrc = countThreadsWithName(pid, sourceName);
 
         // Encode Multi stream case
         if (encoderCount > 1) {
-            sigId   = URM_SIG_CAMERA_ENCODE_MULTI_STREAMS;
-            sigType = calculateEncoderSigType(encoderCount);;
-            LOGE("FetchUsecaseDetails - varun", std::string("ENCODE_MULTI_STREAM"));
+            sigId = URM_SIG_CAMERA_ENCODE_MULTI_STREAMS;
+            sigType = calculateEncoderSigType(encoderCount);
+        } else {
+            // Encode single stream case
+            sigId = URM_SIG_CAMERA_ENCODE;
         }
-        // Encode single stream case
-        else {
-            sigId   = URM_SIG_CAMERA_ENCODE;
-            sigType = calculateEncoderSigType(numSrc);
-            LOGE("FetchUsecaseDetails - varun", std::string("ENCODE"));
-        }
-        result = 0;
-    }
-    // Check for decoder
-    else if (strstr(buf, decoderStr) != nullptr) {
-        int32_t numSources = CountThreadsWithName(pid, decoderStr);
-        sigId   = URM_SIG_VIDEO_DECODE;
-        sigType = calculateDecoderSigType(numSources);
-        result  = 0;
-        LOGE("FetchUsecaseDetails - varun", std::string("DECODE"));
-    }
-    // Check for preview
-    else if (strstr(buf, qmmSrcStr) != nullptr) {
-        sigId = URM_SIG_CAMERA_PREVIEW;
-        sigType = 0;
-        result = 0;
+
+        return 0;
     }
 
-    return result;
+    // Check for decoder
+    if(strstr(buf, decoderStr) != nullptr) {
+        int32_t numSources = countThreadsWithName(pid, decoderStr);
+        sigId   = URM_SIG_VIDEO_DECODE;
+        sigType = calculateDecoderSigType(numSources);
+        return 0;
+    }
+
+    // Check for preview
+    if(strstr(buf, qmmSrcStr) != nullptr) {
+        sigId = URM_SIG_CAMERA_PREVIEW;
+        return 0;
+    }
+
+    return -1;
 }
 
 void PostProcessingBlock::PostProcess(pid_t pid, uint32_t &sigId, uint32_t &sigType) {
@@ -263,7 +296,7 @@ void PostProcessingBlock::PostProcess(pid_t pid, uint32_t &sigId, uint32_t &sigT
     size_t sz = cmdline.size();
 
     SanitizeNulls(buf, sz);
-    FetchUsecaseDetails(pid, buf, sigId, sigType);
+    fetchUsecaseDetails(pid, buf, sigId, sigType);
 }
 
 std::once_flag PostProcessingBlock::mInitFlag;

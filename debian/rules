@@ -1,18 +1,20 @@
 #!/usr/bin/make -f
 
+include /usr/share/dpkg/architecture.mk
+
 %:
-	dh $@
+	dh $@ --buildsystem=cmake
+
+override_dh_auto_configure:
+	dh_auto_configure -- \
+		-DBUILD_SHARED_LIBS=ON \
+		-DCMAKE_BUILD_TYPE=RelWithDebInfo
 
 override_dh_auto_install:
 	dh_auto_install -- DESTDIR=$(CURDIR)/debian/tmp
-	mkdir -p debian/tmp/usr/lib/systemd/system/
-	if [ -f debian/tmp/usr/lib/${DEB_HOST_MULTIARCH}/systemd/system/urm.service ]; then \
-	  mv debian/tmp/usr/lib/${DEB_HOST_MULTIARCH}/systemd/system/urm.service debian/tmp/usr/lib/systemd/system/urm.service; \
-	  rmdir debian/tmp/usr/lib/${DEB_HOST_MULTIARCH}/systemd/ 2>/dev/null || true; \
-	fi
 
 override_dh_install:
 	dh_install
 
 override_dh_shlibdeps:
-	dh_shlibdeps -l/usr/lib/${DEB_HOST_MULTIARCH}
+	dh_shlibdeps -l/usr/lib/$(DEB_HOST_MULTIARCH)
