@@ -1,2 +1,3 @@
 etc/urm/target/*
-usr/lib/${DEB_HOST_MULTIARCH}/urm/*.so*
+etc/urm/initscripts/post_boot/*.sh
+usr/lib/*/urm/*.so*
