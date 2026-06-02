@@ -23,8 +23,8 @@ SignalConfigs:
       - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
       - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
       - {ResCode: "RES_CGRP_MIN_MEM", Values: [4, 116631]}
-      - {ResCode: "RES_CGRP_UCLAMP_MAX", Values: [358]}
-      - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [204]}
+      - {ResCode: "RES_CGRP_UCLAMP_MAX", Values: [4, 204]}
+      - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [358]}
 
   # Video decode
   # Decode 5+ concurrent sessions
@@ -46,8 +46,8 @@ SignalConfigs:
       - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
       - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
       - {ResCode: "RES_CGRP_MIN_MEM", Values: [4, 116631]}
-      - {ResCode: "RES_CGRP_UCLAMP_MAX", Values: [358]}
-      - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [204]}
+      - {ResCode: "RES_CGRP_UCLAMP_MAX", Values: [4, 204]}
+      - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [358]}
 
   # Video decode
   # Decode 20+ concurrent sessions
@@ -89,8 +89,8 @@ SignalConfigs:
       - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
       - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
       - {ResCode: "RES_CGRP_MIN_MEM", Values: [4, 116631]}
-      - {ResCode: "RES_CGRP_UCLAMP_MAX", Values: [358]}
-      - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [204]}
+      - {ResCode: "RES_CGRP_UCLAMP_MAX", Values: [4, 204]}
+      - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [358]}
 
   # Camera encode
   # Default encode - 30fps
@@ -111,8 +111,8 @@ SignalConfigs:
       - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
       - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
       - {ResCode: "RES_CGRP_MIN_MEM", Values: [4, 116631]}
-      - {ResCode: "RES_CGRP_UCLAMP_MAX", Values: [358]}
-      - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [204]}
+      - {ResCode: "RES_CGRP_UCLAMP_MAX", Values: [4, 204]}
+      - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [358]}
 
   # Camera encode multi-stream
   # encode (0-12 streams)
@@ -134,8 +134,8 @@ SignalConfigs:
       - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
       - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
       - {ResCode: "RES_CGRP_MIN_MEM", Values: [4, 116631]}
-      - {ResCode: "RES_CGRP_UCLAMP_MAX", Values: [716]}
-      - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [512]}
+      - {ResCode: "RES_CGRP_UCLAMP_MAX", Values: [4, 512]}
+      - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [716]}
 
   # Camera encode multi-stream
   # encode (12+ streams)
