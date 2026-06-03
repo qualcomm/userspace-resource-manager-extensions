@@ -81,7 +81,7 @@ SignalConfigs:
     Timeout: -1
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3,4,5]}
-      - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 0,1,2,3,4,5}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 0,1,2,3,4,5]}
       - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [3, 90]}
       - {ResCode: "RES_CGRP_HIGH_MEM", Values: [3, 1048576]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [4, 0,1,2,3,4,5]}
