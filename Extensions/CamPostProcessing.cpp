@@ -255,6 +255,7 @@ int32_t PostProcessingBlock::fetchUsecaseDetails(int32_t pid,
 
     // Extract frame rate once; used by encoder and preview paths.
     uint32_t fps = extractFrameRate(buf, frameRatePrefix);
+    (void)fps;
 
     // Check for encoder
     const char* matchedEncoder = nullptr;
@@ -268,6 +269,7 @@ int32_t PostProcessingBlock::fetchUsecaseDetails(int32_t pid,
         std::string sourceName = extractSourceName(buf, namePrefix, defaultName);
         int32_t encoderCount   = countEncoders(buf, matchedEncoder);
         int32_t numSrc         = countThreadsWithName(pid, sourceName);
+        (void)numSrc;
 
         // Encode Multi stream case
         if (encoderCount > 1) {
