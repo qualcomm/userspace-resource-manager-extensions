@@ -9,6 +9,17 @@ check_and_execute() {
     fi
 }
 
+get_ram_mb() {
+    RAM_MB=0
+    while read key value _; do
+        [ "$key" = "MemTotal:" ] && break
+    done < /proc/meminfo
+    RAM_MB=$((value / 1024))
+    export RAM_MB
+}
+
+get_ram_mb
+
 POST_BOOT_DIR="/etc/urm/initscripts/post_boot"
 
 # Try postboot common
