@@ -30,7 +30,7 @@ ResourceConfigs:
     Supported: true
     Permissions: "third_party"
     Modes: ["display_on", "doze"]
-    Policy: "lower_is_better"
+    Policy: "higher_is_better"
     ApplyType: "global"
 
   - ResType: "0x05"
@@ -39,9 +39,9 @@ ResourceConfigs:
     Path: "/sys/class/kgsl/kgsl-3d0/idle_timer"
     Supported: true
     LowThreshold: 0
-    Permissions: third_party
+    Permissions: "third_party"
     Modes: ["display_on", "doze"]
-    Policy: higher_is_better
+    Policy: "lower_is_better"
     ApplyType: "global"
 
   - ResType: "0x05"
@@ -50,9 +50,9 @@ ResourceConfigs:
     Path: "/sys/class/kgsl/kgsl-3d0/max_pwrlevel"
     Supported: true
     LowThreshold: 0
-    Permissions: third_party
+    Permissions: "third_party"
     Modes: ["display_on", "doze"]
-    Policy: higher_is_better
+    Policy: "lower_is_better"
     ApplyType: "global"
 
   - ResType: "0x05"
@@ -61,9 +61,9 @@ ResourceConfigs:
     Path: "/sys/class/kgsl/kgsl-3d0/min_pwrlevel"
     Supported: true
     LowThreshold: 0
-    Permissions: third_party
+    Permissions: "third_party"
     Modes: ["display_on", "doze"]
-    Policy: higher_is_better
+    Policy: "lower_is_better"
     ApplyType: "global"
 
   - ResType: "0x05"
@@ -72,9 +72,9 @@ ResourceConfigs:
     Path: "/sys/class/kgsl/kgsl-3d0/touch_wake"
     Supported: true
     LowThreshold: 0
-    Permissions: third_party
+    Permissions: "third_party"
     Modes: ["display_on", "doze"]
-    Policy: higher_is_better
+    Policy: "lower_is_better"
     ApplyType: "global"
 
   - ResType: "0x09"
@@ -95,7 +95,7 @@ ResourceConfigs:
     Supported: true
     Permissions: third_party
     Modes: ["display_on", "doze"]
-    Policy: pass_through
+    Policy: "pass_through"
     ApplyType: "global"
 
   - ResType: "0x80"
@@ -105,7 +105,7 @@ ResourceConfigs:
     Supported: true
     Permissions: third_party
     Modes: ["display_on", "doze"]
-    Policy: pass_through
+    Policy: "pass_through"
     ApplyType: "global"
 
   - ResType: "0x80"
@@ -113,9 +113,9 @@ ResourceConfigs:
     Name: "RES_IRQ_AFFINITY"
     Path: ""
     Supported: true
-    Permissions: third_party
+    Permissions: "third_party"
     Modes: ["display_on", "doze"]
-    Policy: pass_through
+    Policy: "pass_through"
     ApplyType: "global"
 
   - ResType: "0x80"
@@ -123,9 +123,9 @@ ResourceConfigs:
     Name: "RES_CPU_WQ_AFFINITY"
     Path: ""
     Supported: true
-    Permissions: third_party
+    Permissions: "third_party"
     Modes: ["display_on", "doze"]
-    Policy: pass_through
+    Policy: "pass_through"
     ApplyType: "global"
 
   - ResType: "0xf0"
