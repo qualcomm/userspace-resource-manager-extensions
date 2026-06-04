@@ -239,8 +239,15 @@ int32_t PostProcessingBlock::fetchUsecaseDetails(int32_t pid,
      */
 
     // GStreamer element identifiers for different video operations
-    const char* encoderStr      = "v4l2h264enc";    // Hardware H.264 encoder element
-    const char* decoderStr      = "v4l2h264dec";    // Hardware H.264 decoder element
+    const std::vector<const char*> encoderList = {
+        "v4l2h264enc",    // Hardware H.264 encoder element
+        "qtic2venc",      // Qualcomm C2 encoder element
+    };
+    const std::vector<const char*> decoderList = {
+        "v4l2h264dec",    // Hardware H.264 decoder element
+        "qtic2vdec",      // Qualcomm C2 decoder element
+    };
+
     const char* qmmSrcStr       = "qtiqmmfsrc";     // Qualcomm multimedia source element
     const char* namePrefix      = "name=";          // GStreamer element name attribute
     const char* defaultName     = "camsrc";         // Default camera source name
@@ -250,14 +257,21 @@ int32_t PostProcessingBlock::fetchUsecaseDetails(int32_t pid,
     uint32_t fps = extractFrameRate(buf, frameRatePrefix);
 
     // Check for encoder
-    if(strstr(buf, encoderStr) != nullptr) {
+    const char* matchedEncoder = nullptr;
+    for (const char* enc : encoderList) {
+        if (strstr(buf, enc) != nullptr) {
+            matchedEncoder = enc;
+            break;
+        }
+    }
+    if(matchedEncoder != nullptr) {
         std::string sourceName = extractSourceName(buf, namePrefix, defaultName);
-        int32_t encoderCount = countEncoders(buf, encoderStr);
-        int32_t numSrc = countThreadsWithName(pid, sourceName);
+        int32_t encoderCount   = countEncoders(buf, matchedEncoder);
+        int32_t numSrc         = countThreadsWithName(pid, sourceName);
 
         // Encode Multi stream case
         if (encoderCount > 1) {
-            sigId = URM_SIG_CAMERA_ENCODE_MULTI_STREAMS;
+            sigId   = URM_SIG_CAMERA_ENCODE_MULTI_STREAMS;
             sigType = calculateEncoderSigType(encoderCount);
         } else {
             // Encode single stream case
@@ -268,10 +282,17 @@ int32_t PostProcessingBlock::fetchUsecaseDetails(int32_t pid,
     }
 
     // Check for decoder
-    if(strstr(buf, decoderStr) != nullptr) {
-        int32_t numSources = countThreadsWithName(pid, decoderStr);
-        sigId   = URM_SIG_VIDEO_DECODE;
-        sigType = calculateDecoderSigType(numSources);
+    const char* matchedDecoder = nullptr;
+    for (const char* dec : decoderList) {
+        if (strstr(buf, dec) != nullptr) {
+            matchedDecoder = dec;
+            break;
+        }
+    }
+    if(matchedDecoder != nullptr) {
+        int32_t numSources = countThreadsWithName(pid, matchedDecoder);
+        sigId              = URM_SIG_VIDEO_DECODE;
+        sigType            = calculateDecoderSigType(numSources);
         return 0;
     }
 
