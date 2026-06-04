@@ -1,21 +1,15 @@
 # 1. Architecture Overview
 
-> **Repository**: https://github.com/rajulup/userspace-resource-manager-extensions
-> **License**: BSD-3-Clause-Clear
-> **Depends on**: https://github.com/qualcomm/userspace-resource-manager
-
 ## Table of Contents
-1. [System Layers](#system-layers)
+1. [Architectural Layers](#architectural-layers)
 2. [Plugin Loading Sequence](#plugin-loading-sequence)
-3. [Config Resolution Order](#config-resolution-order)
-4. [Signal Processing Pipeline](#signal-processing-pipeline)
-5. [Key Interfaces](#key-interfaces)
-6. [Data Flow Diagram](#data-flow-diagram)
-7. [Component Responsibilities](#component-responsibilities)
+3. [Config Processing Order](#config-processing-order)
+4. [Key Interfaces](#key-interfaces)
+5. [Data Flow Diagram](#data-flow-diagram)
 
 ---
 
-## System Layers
+## Architectural Layers
 
 ```
 +----------------------------------------------------------+
@@ -53,9 +47,9 @@
 
 ---
 
-## Plugin Loading Sequence
+## Plugins
 
-When URM starts, it performs the following steps in order:
+Plugins allow users to influence URM behaviour, through well defined hooks. When URM starts, it performs the following steps in order:
 
 1. **Load base upstream resources and signals** from the core URM config.
 2. **Discover extension plugins** - scans /usr/lib/urm/ for *.so files.
@@ -68,54 +62,22 @@ When URM starts, it performs the following steps in order:
 
 ---
 
-## Config Resolution Order
+## Config Processing Order
 
-URM resolves configuration in the following priority order (highest wins):
+URM processes configuration in the following order:
 
 ```
-Priority 1 (highest): /etc/urm/target/<detected-target>/SignalsConfig.yaml
-Priority 2:           /etc/urm/target/<detected-target>/ResourcesConfig.yaml
-Priority 3:           /etc/urm/target/SignalsConfig.yaml   (generic)
-Priority 4:           /etc/urm/target/ResourcesConfig.yaml (generic)
-Priority 5 (lowest):  URM core built-in defaults
+1: Upstream (common) Configurations
+2: Target-Agnostic Configurations
+3. Target-Specific Configurations (indexed by target name)
+4. Any custom configurations (registered through the Extensions Callback)
 ```
 
+Configuration Overriding is supported, for example a Target-Specific Resource with the same ResCode as one in the Upstream Configurations, then the Upstream Configuration, in this case, will be Overridden.
+
+
+Note:
 The target name is detected at runtime from /sys/devices/soc0/machine and lowercased.
-
----
-
-## Signal Processing Pipeline
-
-```
-Client calls tuneResources() / sendSignal()
-         |
-         v
-URM receives signal (SigId + SigType + PID)
-         |
-         v
-Post-Process Callback invoked (if registered for this process name)
-  PostProcessingBlock::PostProcess(pid, sigId, sigType)
-    - reads /proc/<pid>/cmdline
-    - detects GStreamer pipeline elements (encoder/decoder/preview)
-    - updates sigId and sigType based on workload
-         |
-         v
-Signal matched against SignalsConfig (SigId + SigType + TargetsEnabled)
-         |
-         v
-Resource list extracted from matched signal config
-         |
-         v
-For each resource:
-  - Custom applier callback (if registered via URM_REGISTER_RES_APPLIER_CB)
-  - OR default sysfs write to resource Path
-         |
-         v
-Resources held for Timeout duration (or indefinitely if Timeout=-1)
-         |
-         v
-Teardown: custom teardown callback OR restore previous sysfs value
-```
 
 ---
 
@@ -141,11 +103,10 @@ Teardown: custom teardown callback OR restore previous sysfs value
 
 ```cpp
 // Resource apply/teardown callback
-int32_t myApplier(void* res);
-int32_t myTeardown(void* res);
+typedef void (*ResourceLifecycleCallback)(void*);
 
 // Post-process callback
-void myPostProcess(void* context);  // context is PostProcessCBData*
+typedef void (*PostProcessingCallback)(void*); // where the argument is PostProcessCBData*
 
 struct PostProcessCBData {
     pid_t    mPid;     // Process ID that triggered the signal
@@ -187,17 +148,3 @@ Client Application
 ```
 
 ---
-
-## Component Responsibilities
-
-| Component | File(s) | Responsibility |
-|-----------|---------|----------------|
-| PostProcessingBlock | Extensions/PostProcessingBlock.cpp | Detects GStreamer multimedia workloads; maps generic signals to typed variants |
-| CyclicTestsExt | Extensions/CyclicTestsExt.cpp | Registers custom resource appliers for RT benchmark (cyclictest) resources |
-| ResourcesConfig | Configs/ResourcesConfig.yaml | Declares all custom resource IDs, sysfs paths, policies, and thresholds |
-| SignalsConfig (generic) | Configs/SignalsConfig.yaml | Declares generic signals (app open, RT trigger, AI inference) |
-| SignalsConfig (target) | Configs/target-specific/*/SignalsConfig.yaml | Per-target CPU frequency and cgroup tuning for multimedia signals |
-| PerApp.yaml | Configs/PerApp.yaml | Maps process thread names to cgroup identifiers |
-| InitConfig.yaml | Configs/InitConfig.yaml | IRQ affinity initialization settings |
-| post_boot.sh | initscripts/post_boot/post_boot.sh | Dispatcher: auto-detects target and runs target-specific boot script |
-| post_boot_*.sh | initscripts/post_boot/post_boot_<target>.sh | Target-specific kernel tuning (governor, RT clamp, swap, cgroups) |

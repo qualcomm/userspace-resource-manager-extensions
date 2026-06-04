@@ -1,4 +1,4 @@
-# 9. Post-Boot Init Scripts
+# 8. Post-Boot Init Scripts
 
 **Directory**: initscripts/post_boot/
 
