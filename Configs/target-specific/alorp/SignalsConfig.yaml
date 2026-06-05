@@ -23,7 +23,9 @@ SignalConfigs:
       - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
       - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
       - {ResCode: "RES_CGRP_MIN_MEM", Values: [4, 116631]}
-      - {ResCode: "RES_CGRP_UCLAMP_MAX", Values: [4, 204]}
+      - {ResCode: "RES_CGRP_UCLAMP_MIN", Values: [4, 0]}
+      - {ResCode: "RES_CGRP_UCLAMP_MAX", Values: [4, 20]}
+      - {ResCode: "RES_SCHED_UTIL_CLAMP_MIN", Values: [0]}
       - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [358]}
 
   # Video decode
@@ -46,7 +48,9 @@ SignalConfigs:
       - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
       - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
       - {ResCode: "RES_CGRP_MIN_MEM", Values: [4, 116631]}
-      - {ResCode: "RES_CGRP_UCLAMP_MAX", Values: [4, 204]}
+      - {ResCode: "RES_CGRP_UCLAMP_MIN", Values: [4, 0]}
+      - {ResCode: "RES_CGRP_UCLAMP_MAX", Values: [4, 20]}
+      - {ResCode: "RES_SCHED_UTIL_CLAMP_MIN", Values: [0]}
       - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [358]}
 
   # Video decode
@@ -89,7 +93,9 @@ SignalConfigs:
       - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
       - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
       - {ResCode: "RES_CGRP_MIN_MEM", Values: [4, 116631]}
-      - {ResCode: "RES_CGRP_UCLAMP_MAX", Values: [4, 204]}
+      - {ResCode: "RES_CGRP_UCLAMP_MIN", Values: [4, 0]}
+      - {ResCode: "RES_CGRP_UCLAMP_MAX", Values: [4, 20]}
+      - {ResCode: "RES_SCHED_UTIL_CLAMP_MIN", Values: [0]}
       - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [358]}
 
   # Camera encode
@@ -111,7 +117,9 @@ SignalConfigs:
       - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
       - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
       - {ResCode: "RES_CGRP_MIN_MEM", Values: [4, 116631]}
-      - {ResCode: "RES_CGRP_UCLAMP_MAX", Values: [4, 204]}
+      - {ResCode: "RES_CGRP_UCLAMP_MIN", Values: [4, 0]}
+      - {ResCode: "RES_CGRP_UCLAMP_MAX", Values: [4, 20]}
+      - {ResCode: "RES_SCHED_UTIL_CLAMP_MIN", Values: [0]}
       - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [358]}
 
   # Camera encode multi-stream
@@ -134,7 +142,9 @@ SignalConfigs:
       - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
       - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
       - {ResCode: "RES_CGRP_MIN_MEM", Values: [4, 116631]}
-      - {ResCode: "RES_CGRP_UCLAMP_MAX", Values: [4, 512]}
+      - {ResCode: "RES_CGRP_UCLAMP_MIN", Values: [4, 0]}
+      - {ResCode: "RES_CGRP_UCLAMP_MAX", Values: [4, 50]}
+      - {ResCode: "RES_SCHED_UTIL_CLAMP_MIN", Values: [0]}
       - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [716]}
 
   # Camera encode multi-stream
