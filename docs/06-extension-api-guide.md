@@ -61,13 +61,13 @@ __attribute__((constructor)) so they execute when UrmPlugin.so is loaded.
 Example:
 
 ```cpp
-    #include <Urm/Extensions.h>
+#include <Urm/Extensions.h>
 
-    __attribute__((constructor))
-    static void registerWithUrm() {
-        URM_REGISTER_POST_PROCESS_CB("gst-launch-1.0", WorkloadPostprocessCallback)
-        URM_REGISTER_POST_PROCESS_CB("gst-camera-per-port-example", WorkloadPostprocessCallback)
-    }
+__attribute__((constructor))
+static void registerWithUrm() {
+    URM_REGISTER_POST_PROCESS_CB("gst-launch-1.0", WorkloadPostprocessCallback)
+    URM_REGISTER_POST_PROCESS_CB("gst-camera-per-port-example", WorkloadPostprocessCallback)
+}
 ```
 
 ---

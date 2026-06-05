@@ -11,6 +11,6 @@ URM Extensions uses four YAML configuration files plus target-specific overrides
 | InitConfig.yaml | IRQ affinity initialization settings | Generic |
 
 
-These Configs are discussed in detail as part of URM documentation. Refer: https://github.com/qualcomm/userspace-resource-manager/blob/main/docs/README.md#43-configs
+These Configs are discussed in detail as part of URM documentation. Refer: [URM-Configs](https://github.com/qualcomm/userspace-resource-manager/blob/main/docs/README.md#43-configs).
 
 ---

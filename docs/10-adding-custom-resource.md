@@ -34,7 +34,7 @@ Add an entry to Configs/ResourcesConfig.yaml, along the lines of:
         ApplyType: "global"
 ```
 
-For an explanation on each of the above fields, refer: https://github.com/qualcomm/userspace-resource-manager/blob/main/docs/README.md#432-resource-configs
+For an explanation on each of the above fields, refer: [Resource-Configs](https://github.com/qualcomm/userspace-resource-manager/blob/main/docs/README.md#432-resource-configs)
 
 ---
 

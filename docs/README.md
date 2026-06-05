@@ -25,10 +25,11 @@ Userspace Resource Manager (URM) without touching its core codebase. It ships:
 | 4 | [Resources Reference](./04-resources-reference.md) | All custom resources with IDs, paths, and policies |
 | 5 | [Signals Reference](./05-signals-reference.md) | All custom signals with per-target tuning tables |
 | 6 | [Extension API Guide](./06-extension-api-guide.md) | How to write C++ extension modules |
-| 7 | [Per-App Configuration Guide](./08-per-app-configuration.md) | Thread-to-cgroup mapping and per-app resource overrides |
-| 8 | [Post-Boot Init Scripts](./09-post-boot-init-scripts.md) | Target-specific kernel tuning at boot |
-| 9 | [Adding a New Target](./10-adding-new-target.md) | Step-by-step guide to onboard a new hardware target |
-| 10 | [Adding a Custom Resource](./11-adding-custom-resource.md) | Yaml Configs, Callbacks |
+| 7 | [Per-App Configuration Guide](./07-per-app-configuration.md) | Thread-to-cgroup mapping and per-app resource overrides |
+| 8 | [Post-Boot Init Scripts](./08-post-boot-init-scripts.md) | Target-specific kernel tuning at boot |
+| 9 | [Adding a New Target](./09-adding-new-target.md) | Step-by-step guide to onboard a new hardware target |
+| 10 | [Adding a Custom Resource](./10-adding-custom-resource.md) | Yaml Configs, Callbacks |
+| 11 | [Post Processing Blocks](./11-post-processing-blocks.md) | Cutomizing Config Selection |
 
 ---
 

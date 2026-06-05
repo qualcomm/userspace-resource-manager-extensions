@@ -16,7 +16,7 @@
 
 The extensions depend on the URM core libraries and headers.
 Follow the instructions at:
-https://github.com/qualcomm/userspace-resource-manager#build-and-install-instructions
+[URM-Build](https://github.com/qualcomm/userspace-resource-manager/blob/main/README.md#requirements)
 
 After this step, the following must be available on your system:
 - Libraries: libUrmExtAPIs.so, libRestuneCore.so, libUrmAuxUtils.so
@@ -70,8 +70,10 @@ The CMake build compiles all .cpp files under Extensions/ into a single shared l
 | Configs/target-specific/qcs9100/ | /etc/urm/target/qcs9100/ | 644 |
 | initscripts/post_boot/*.sh | /etc/urm/initscripts/post_boot/ | 755 |
 
-Note: The library installs to CMAKE_INSTALL_LIBDIR/urm/ which resolves to /usr/lib/urm/
-on most systems. Configs install to CMAKE_INSTALL_SYSCONFDIR/urm/target/ = /etc/urm/target/.
+Note:
+- The library installs to CMAKE_INSTALL_LIBDIR/urm/ which resolves to /usr/lib/urm/
+on most systems.
+- Configs install to CMAKE_INSTALL_SYSCONFDIR/urm/target/ = /etc/urm/target/.
 
 ---
 
