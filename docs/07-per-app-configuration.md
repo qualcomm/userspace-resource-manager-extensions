@@ -1,4 +1,4 @@
-# 8. Per-App Configuration Guide
+# 7. Per-App Configuration Guide
 
 **File**: Configs/PerApp.yaml
 
