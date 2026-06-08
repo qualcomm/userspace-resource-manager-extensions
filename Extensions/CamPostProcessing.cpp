@@ -13,6 +13,13 @@
 #include <Urm/Extensions.h>
 #include <Urm/UrmPlatformAL.h>
 
+enum SignalExtraAttrIndex {
+    SIGNAL_EXTRA_ATTR_FPS    = 0, //!< Frames per second
+    SIGNAL_EXTRA_ATTR_HEIGHT = 1, //!< Frame height in pixels
+    SIGNAL_EXTRA_ATTR_WIDTH  = 2, //!< Frame width in pixels
+    SIGNAL_EXTRA_ATTRS_COUNT = 3  //!< Total number of extra attributes (must remain last)
+};
+
 class PostProcessingBlock {
 private:
     static std::once_flag mInitFlag;
@@ -23,10 +30,12 @@ private:
     inline int32_t ReadFirstLine(const std::string& filePath, std::string &line);
     inline void    to_lower(std::string &s);
     int32_t        countThreadsWithName(pid_t pid, const std::string& commSub);
-    int32_t        fetchUsecaseDetails(int32_t pid, char *buf, uint32_t &sigId, uint32_t &sigType);
+    int32_t        fetchUsecaseDetails(int32_t pid, char *buf, uint32_t &sigId, uint32_t &sigType, uint32_t** extraArgs);
     int32_t        countEncoders(const char* buffer, const char* encoderStr);
     std::string    extractSourceName(const char* buffer, const char* namePrefix, const char* defaultName);
     uint32_t       extractFrameRate(const char* buffer, const char* frameRatePrefix);
+    uint32_t       extractHeight(const char* buffer);
+    uint32_t       extractWidth(const char* buffer);
 
     uint32_t       calculateEncoderSigType(int32_t count);
     uint32_t       calculateDecoderSigType(int32_t threadCount);
@@ -44,7 +53,7 @@ public:
     }
 
     ~PostProcessingBlock() = default;
-    void PostProcess(pid_t pid, uint32_t &sigId, uint32_t &sigType);
+    void PostProcess(pid_t pid, uint32_t &sigId, uint32_t &sigType, uint32_t** extraArgs);
 };
 
 inline void PostProcessingBlock::SanitizeNulls(char *buf, int32_t len) {
@@ -165,6 +174,48 @@ std::string PostProcessingBlock::extractSourceName(const char* buffer,
     return std::string(defaultName);
 }
 
+uint32_t PostProcessingBlock::extractHeight(const char* buffer) {
+    if(buffer == nullptr) {
+        return 0;
+    }
+
+    const char* ptr = strstr(buffer, "height=");
+    if(ptr == nullptr) {
+        return 0;
+    }
+
+    ptr += strlen("height=");
+
+    char* endPtr = nullptr;
+    int64_t value = strtol(ptr, &endPtr, 10);
+    if(endPtr == ptr || value < 0) {
+        return 0;
+    }
+
+    return static_cast<uint32_t>(value);
+}
+
+uint32_t PostProcessingBlock::extractWidth(const char* buffer) {
+    if(buffer == nullptr) {
+        return 0;
+    }
+
+    const char* ptr = strstr(buffer, "width=");
+    if(ptr == nullptr) {
+        return 0;
+    }
+
+    ptr += strlen("width=");
+
+    char* endPtr = nullptr;
+    int64_t value = strtol(ptr, &endPtr, 10);
+    if(endPtr == ptr || value < 0) {
+        return 0;
+    }
+
+    return static_cast<uint32_t>(value);
+}
+
 uint32_t PostProcessingBlock::extractFrameRate(const char* buffer,
                                                const char* frameRatePrefix) {
     if (buffer == nullptr || frameRatePrefix == nullptr) {
@@ -232,7 +283,8 @@ uint32_t PostProcessingBlock::calculateDecoderSigType(int32_t threadCount) {
 int32_t PostProcessingBlock::fetchUsecaseDetails(int32_t pid,
                                                  char *buf,
                                                  uint32_t& sigId,
-                                                 uint32_t& sigType) {
+                                                 uint32_t& sigType,
+                                                 uint32_t** extraArgs) {
     /**
      * For encoder, width of encoding, v4l2h264enc in line
      * For decoder, v4l2h264dec, or may be 265 as well, decoder bit
@@ -253,9 +305,17 @@ int32_t PostProcessingBlock::fetchUsecaseDetails(int32_t pid,
     const char* defaultName     = "camsrc";         // Default camera source name
     const char* frameRatePrefix = "framerate=";     // GStreamer frame rate attribute
 
+    LOGI("CAM_BLOCK", "Post Processing Block for Camera Called");
     // Extract frame rate once; used by encoder and preview paths.
-    uint32_t fps = extractFrameRate(buf, frameRatePrefix);
-    (void)fps;
+    *extraArgs = new uint32_t[SIGNAL_EXTRA_ATTRS_COUNT];
+    (*extraArgs)[SIGNAL_EXTRA_ATTR_FPS] = extractFrameRate(buf, frameRatePrefix);
+    (*extraArgs)[SIGNAL_EXTRA_ATTR_HEIGHT] = extractHeight(buf);
+    (*extraArgs)[SIGNAL_EXTRA_ATTR_WIDTH] = extractWidth(buf);
+
+    LOGI("CAM_BLOCK", "Printing Stats");
+    LOGI("CAM_BLOCK", "fps=" + std::to_string((*extraArgs)[SIGNAL_EXTRA_ATTR_FPS]));
+    LOGI("CAM_BLOCK", "height=" + std::to_string((*extraArgs)[SIGNAL_EXTRA_ATTR_HEIGHT]));
+    LOGI("CAM_BLOCK", "width=" + std::to_string((*extraArgs)[SIGNAL_EXTRA_ATTR_WIDTH]));
 
     // Check for encoder
     const char* matchedEncoder = nullptr;
@@ -265,15 +325,14 @@ int32_t PostProcessingBlock::fetchUsecaseDetails(int32_t pid,
             break;
         }
     }
+
     if(matchedEncoder != nullptr) {
         std::string sourceName = extractSourceName(buf, namePrefix, defaultName);
-        int32_t encoderCount   = countEncoders(buf, matchedEncoder);
-        int32_t numSrc         = countThreadsWithName(pid, sourceName);
-        (void)numSrc;
+        int32_t encoderCount = countEncoders(buf, matchedEncoder);
 
         // Encode Multi stream case
         if (encoderCount > 1) {
-            sigId   = URM_SIG_CAMERA_ENCODE_MULTI_STREAMS;
+            sigId = URM_SIG_CAMERA_ENCODE_MULTI_STREAMS;
             sigType = calculateEncoderSigType(encoderCount);
         } else {
             // Encode single stream case
@@ -291,10 +350,11 @@ int32_t PostProcessingBlock::fetchUsecaseDetails(int32_t pid,
             break;
         }
     }
+
     if(matchedDecoder != nullptr) {
         int32_t numSources = countThreadsWithName(pid, matchedDecoder);
-        sigId              = URM_SIG_VIDEO_DECODE;
-        sigType            = calculateDecoderSigType(numSources);
+        sigId = URM_SIG_VIDEO_DECODE;
+        sigType = calculateDecoderSigType(numSources);
         return 0;
     }
 
@@ -307,7 +367,10 @@ int32_t PostProcessingBlock::fetchUsecaseDetails(int32_t pid,
     return -1;
 }
 
-void PostProcessingBlock::PostProcess(pid_t pid, uint32_t &sigId, uint32_t &sigType) {
+void PostProcessingBlock::PostProcess(pid_t pid,
+                                      uint32_t &sigId,
+                                      uint32_t &sigType,
+                                      uint32_t** extraArgs) {
 	std::string cmdline;
     std::string cmdLinePath = "/proc/" + std::to_string(pid) + "/cmdline";
 
@@ -319,7 +382,7 @@ void PostProcessingBlock::PostProcess(pid_t pid, uint32_t &sigId, uint32_t &sigT
     size_t sz = cmdline.size();
 
     SanitizeNulls(buf, sz);
-    fetchUsecaseDetails(pid, buf, sigId, sigType);
+    fetchUsecaseDetails(pid, buf, sigId, sigType, extraArgs);
 }
 
 std::once_flag PostProcessingBlock::mInitFlag;
@@ -339,10 +402,17 @@ static void WorkloadPostprocessCallback(void* context) {
     uint32_t sigId = cbData->mSigId;
     uint32_t sigType = cbData->mSigType;
 
-    PostProcessingBlock::getInstance().PostProcess(pid, sigId, sigType);
+    uint32_t* extraArgs = nullptr;
+    cbData->mArgs = nullptr;
+    PostProcessingBlock::getInstance().PostProcess(pid, sigId, sigType, &extraArgs);
+
+    LOGI("CAM_BLOCK", "Back Populated, sigId=" + std::to_string(sigId));
+    LOGI("CAM_BLOCK", "Back Populated, sigType=" + std::to_string(sigType));
 
     cbData->mSigId = sigId;
     cbData->mSigType = sigType;
+    cbData->mArgs = extraArgs;
+    cbData->mNumArgs = SIGNAL_EXTRA_ATTRS_COUNT;
 }
 
 __attribute__((constructor))
