@@ -99,15 +99,18 @@ SignalConfigs:
       - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [358]}
 
   # Camera encode
-  # Default encode - 30fps
+  # Default encode - 8k 30fps case
   - SigId: "0x0003"
     Category: "0x03"
-    SigType: 0
     Name: "URM_SIG_CAMERA_ENCODE"
     Enable: true
     TargetsEnabled: ["alorp"]
     Permissions: ["third_party", "system"]
     Timeout: -1
+    ExtraAttrs:
+      - Fps: 30
+      - Height: 4320
+      - Width: 7680
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3,4,5]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 0,1,2,3,4,5]}
@@ -122,17 +125,25 @@ SignalConfigs:
       - {ResCode: "RES_CGRP_UCLAMP_MAX", Values: [4, 20]}
       - {ResCode: "RES_SCHED_UTIL_CLAMP_MIN", Values: [0]}
       - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [358]}
-
+      - {ResCode: "RES_CPU_ONLINE_PER_CORE", ResInfo: "0x00000101", Values: [0]}
+      - {ResCode: "RES_CPU_ONLINE_PER_CORE", ResInfo: "0x00000102", Values: [0]}
+      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_LITTLE_ALL_CORES", Values: [700000]}
+      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_BIG_ALL_CORES", Values: [700000]}
+      
+      
   # Camera encode
-  # Default encode - 120fps
+  # Default encode - 1080p 240fps case
   - SigId: "0x0003"
     Category: "0x03"
-    SigType: 120
     Name: "URM_SIG_CAMERA_ENCODE"
     Enable: true
     TargetsEnabled: ["alorp"]
     Permissions: ["third_party", "system"]
     Timeout: -1
+    ExtraAttrs:
+      - Fps: 240
+      - Height: 1080
+      - Width: 1920
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3,4,5]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 0,1,2,3,4,5]}
@@ -144,10 +155,76 @@ SignalConfigs:
       - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
       - {ResCode: "RES_CGRP_MIN_MEM", Values: [4, 116631]}
       - {ResCode: "RES_CGRP_UCLAMP_MIN", Values: [4, 0]}
-      - {ResCode: "RES_CGRP_UCLAMP_MAX", Values: [4, 30]}
+      - {ResCode: "RES_CGRP_UCLAMP_MAX", Values: [4, 20]}
       - {ResCode: "RES_SCHED_UTIL_CLAMP_MIN", Values: [0]}
       - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [358]}
+      - {ResCode: "RES_CPU_ONLINE_PER_CORE", ResInfo: "0x00000101", Values: [0]}
+      - {ResCode: "RES_CPU_ONLINE_PER_CORE", ResInfo: "0x00000102", Values: [0]}
+      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_LITTLE_ALL_CORES", Values: [800000]}
+      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_BIG_ALL_CORES", Values: [800000]}
 
+  # Camera encode
+  # Default encode - 4k 60fps case
+  - SigId: "0x0003"
+    Category: "0x03"
+    Name: "URM_SIG_CAMERA_ENCODE"
+    Enable: true
+    TargetsEnabled: ["alorp"]
+    Permissions: ["third_party", "system"]
+    Timeout: -1
+    ExtraAttrs:
+      - Fps: 60
+      - Height: 2160
+      - Width: 3840
+    Resources:
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3,4,5]}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 0,1,2,3,4,5]}
+      - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [3, 90]}
+      - {ResCode: "RES_CGRP_HIGH_MEM", Values: [3, 1048576]}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [4, 0,1,2,3,4,5]}
+      - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [4, 150]}
+      - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
+      - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
+      - {ResCode: "RES_CGRP_MIN_MEM", Values: [4, 116631]}
+      - {ResCode: "RES_SCHED_UTIL_CLAMP_MIN", Values: [0]}
+      - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [358]}
+      - {ResCode: "RES_CPU_ONLINE_PER_CORE", ResInfo: "0x00000101", Values: [0]}
+      - {ResCode: "RES_CPU_ONLINE_PER_CORE", ResInfo: "0x00000102", Values: [0]}
+      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_LITTLE_ALL_CORES", Values: [1000000]}
+      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_BIG_ALL_CORES", Values: [1000000]}
+
+  # Camera encode
+  # Default encode - 1080p30fps case
+  - SigId: "0x0003"
+    Category: "0x03"
+    Name: "URM_SIG_CAMERA_ENCODE"
+    Enable: true
+    TargetsEnabled: ["alorp"]
+    Permissions: ["third_party", "system"]
+    Timeout: -1
+    ExtraAttrs:
+      - Fps: 30
+      - Height: 1080
+      - Width: 1920
+    Resources:
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3,4,5]}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 0,1,2,3,4,5]}
+      - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [3, 90]}
+      - {ResCode: "RES_CGRP_HIGH_MEM", Values: [3, 1048576]}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [4, 0,1,2,3,4,5]}
+      - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [4, 150]}
+      - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
+      - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
+      - {ResCode: "RES_CGRP_MIN_MEM", Values: [4, 116631]}
+      - {ResCode: "RES_CGRP_UCLAMP_MIN", Values: [4, 0]}
+      - {ResCode: "RES_CGRP_UCLAMP_MAX", Values: [4, 20]}
+      - {ResCode: "RES_SCHED_UTIL_CLAMP_MIN", Values: [0]}
+      - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [358]}
+      - {ResCode: "RES_CPU_ONLINE_PER_CORE", ResInfo: "0x00000101", Values: [0]}
+      - {ResCode: "RES_CPU_ONLINE_PER_CORE", ResInfo: "0x00000102", Values: [0]}
+      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_LITTLE_ALL_CORES", Values: [700000]}
+      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_BIG_ALL_CORES", Values: [700000]}
+      
   # Camera encode multi-stream
   # encode (0-12 streams)
   - SigId: "0x0004"
@@ -172,6 +249,8 @@ SignalConfigs:
       - {ResCode: "RES_CGRP_UCLAMP_MAX", Values: [4, 50]}
       - {ResCode: "RES_SCHED_UTIL_CLAMP_MIN", Values: [0]}
       - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [716]}
+      - {ResCode: "RES_CPU_ONLINE_PER_CORE", ResInfo: "0x00000101", Values: [0]}
+      - {ResCode: "RES_CPU_ONLINE_PER_CORE", ResInfo: "0x00000102", Values: [0]}
 
   # Camera encode multi-stream
   # encode (12+ streams)
@@ -193,3 +272,5 @@ SignalConfigs:
       - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
       - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
       - {ResCode: "RES_CGRP_MIN_MEM", Values: [4, 116631]}
+      - {ResCode: "RES_CPU_ONLINE_PER_CORE", ResInfo: "0x00000101", Values: [0]}
+      - {ResCode: "RES_CPU_ONLINE_PER_CORE", ResInfo: "0x00000102", Values: [0]}

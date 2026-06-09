@@ -27,7 +27,6 @@ private:
     int32_t        countEncoders(const char* buffer, const char* encoderStr);
     std::string    extractSourceName(const char* buffer, const char* namePrefix, const char* defaultName);
     uint32_t       extractFrameRate(const char* buffer, const char* frameRatePrefix);
-    uint32_t       extractMaxFrameRate(const char* buffer, const char* frameRatePrefix);
 
     uint32_t       calculateEncoderSigType(int32_t count);
     uint32_t       calculateDecoderSigType(int32_t threadCount);
@@ -166,50 +165,6 @@ std::string PostProcessingBlock::extractSourceName(const char* buffer,
     return std::string(defaultName);
 }
 
-/**
- * @brief Searches all occurrences of frameRatePrefix in buffer and
- *        returns the highest frame rate value found (numerator/denominator).
- *        Returns 0 if none found or inputs are invalid.
- */
-uint32_t PostProcessingBlock::extractMaxFrameRate(const char* buffer,
-    const char* frameRatePrefix) {
-    uint32_t maxFrameRate = 0;
-
-    if (buffer == nullptr || frameRatePrefix == nullptr) {
-        return maxFrameRate;
-    }
-
-    const char* ptr = buffer;
-
-    while ((ptr = strstr(ptr, frameRatePrefix)) != nullptr) {
-        ptr += strlen(frameRatePrefix);
-
-        char* endPtr = nullptr;
-        int64_t numerator = strtol(ptr, &endPtr, 10);
-        if (endPtr == ptr || numerator < 0) {
-            continue;
-        }
-
-        int64_t denominator = 1;
-        if (*endPtr == '/') {
-            const char* denomStart = endPtr + 1;
-            int64_t parsedDenom = strtol(denomStart, &endPtr, 10);
-            if (endPtr != denomStart && parsedDenom > 0) {
-                denominator = parsedDenom;
-            }
-        }
-
-        uint32_t frameRate = static_cast<uint32_t>(numerator / denominator);
-        if (frameRate > maxFrameRate) {
-            maxFrameRate = frameRate;
-        }
-
-        ptr = endPtr;
-    }
-
-    return maxFrameRate;
-}
-
 uint32_t PostProcessingBlock::extractFrameRate(const char* buffer,
                                                const char* frameRatePrefix) {
     if (buffer == nullptr || frameRatePrefix == nullptr) {
@@ -298,8 +253,9 @@ int32_t PostProcessingBlock::fetchUsecaseDetails(int32_t pid,
     const char* defaultName     = "camsrc";         // Default camera source name
     const char* frameRatePrefix = "framerate=";     // GStreamer frame rate attribute
 
-    // Extract the highest frame rate from the pipeline string
-    uint32_t fps = extractMaxFrameRate(buf, frameRatePrefix);
+    // Extract frame rate once; used by encoder and preview paths.
+    uint32_t fps = extractFrameRate(buf, frameRatePrefix);
+    (void)fps;
 
     // Check for encoder
     const char* matchedEncoder = nullptr;
@@ -319,19 +275,9 @@ int32_t PostProcessingBlock::fetchUsecaseDetails(int32_t pid,
         if (encoderCount > 1) {
             sigId   = URM_SIG_CAMERA_ENCODE_MULTI_STREAMS;
             sigType = calculateEncoderSigType(encoderCount);
-        } 
-        else 
-        {
-             // Single-stream encode: differentiate by frame rate
-            // sigType=120 for high frame rate (>=120fps), sigType=0 for standard (<120fps)
+        } else {
+            // Encode single stream case
             sigId = URM_SIG_CAMERA_ENCODE;
-
-            if(fps >= 120){
-                sigType = 120;
-            }
-            else{
-                sigType = 0;
-            }
         }
 
         return 0;
