@@ -129,8 +129,7 @@ SignalConfigs:
       - {ResCode: "RES_CPU_ONLINE_PER_CORE", ResInfo: "0x00000102", Values: [0]}
       - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_LITTLE_ALL_CORES", Values: [700000]}
       - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_BIG_ALL_CORES", Values: [700000]}
-      
-      
+
   # Camera encode
   # Default encode - 1080p 240fps case
   - SigId: "0x0003"
@@ -224,7 +223,7 @@ SignalConfigs:
       - {ResCode: "RES_CPU_ONLINE_PER_CORE", ResInfo: "0x00000102", Values: [0]}
       - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_LITTLE_ALL_CORES", Values: [700000]}
       - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_BIG_ALL_CORES", Values: [700000]}
-      
+
   # Camera encode multi-stream
   # encode (0-12 streams)
   - SigId: "0x0004"
