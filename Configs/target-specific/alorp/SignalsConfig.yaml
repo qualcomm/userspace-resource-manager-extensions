@@ -156,7 +156,7 @@ SignalConfigs:
       - {ResCode: "RES_CGRP_UCLAMP_MIN", Values: [4, 0]}
       - {ResCode: "RES_CGRP_UCLAMP_MAX", Values: [4, 20]}
       - {ResCode: "RES_SCHED_UTIL_CLAMP_MIN", Values: [0]}
-      - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [358]}
+      - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [50]}
       - {ResCode: "RES_CPU_ONLINE_PER_CORE", ResInfo: "0x00000101", Values: [0]}
       - {ResCode: "RES_CPU_ONLINE_PER_CORE", ResInfo: "0x00000102", Values: [0]}
       - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_LITTLE_ALL_CORES", Values: [800000]}
@@ -186,7 +186,7 @@ SignalConfigs:
       - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
       - {ResCode: "RES_CGRP_MIN_MEM", Values: [4, 116631]}
       - {ResCode: "RES_SCHED_UTIL_CLAMP_MIN", Values: [0]}
-      - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [358]}
+      - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [410]}
       - {ResCode: "RES_CPU_ONLINE_PER_CORE", ResInfo: "0x00000101", Values: [0]}
       - {ResCode: "RES_CPU_ONLINE_PER_CORE", ResInfo: "0x00000102", Values: [0]}
       - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_LITTLE_ALL_CORES", Values: [1000000]}
