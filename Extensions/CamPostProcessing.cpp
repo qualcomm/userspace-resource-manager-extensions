@@ -179,20 +179,18 @@ uint32_t PostProcessingBlock::extractHeight(const char* buffer) {
         return 0;
     }
 
-    const char* ptr = strstr(buffer, "height=");
-    if(ptr == nullptr) {
-        return 0;
+    uint32_t maxVal = 0;
+    const char* ptr = buffer;
+    while((ptr = strstr(ptr, "height=")) != nullptr) {
+        ptr += strlen("height=");
+        char* endPtr = nullptr;
+        int64_t value = strtol(ptr, &endPtr, 10);
+        if(endPtr != ptr && value > 0 && static_cast<uint32_t>(value) > maxVal) {
+            maxVal = static_cast<uint32_t>(value);
+        }
     }
 
-    ptr += strlen("height=");
-
-    char* endPtr = nullptr;
-    int64_t value = strtol(ptr, &endPtr, 10);
-    if(endPtr == ptr || value < 0) {
-        return 0;
-    }
-
-    return static_cast<uint32_t>(value);
+    return maxVal;
 }
 
 uint32_t PostProcessingBlock::extractWidth(const char* buffer) {
@@ -200,20 +198,18 @@ uint32_t PostProcessingBlock::extractWidth(const char* buffer) {
         return 0;
     }
 
-    const char* ptr = strstr(buffer, "width=");
-    if(ptr == nullptr) {
-        return 0;
+    uint32_t maxVal = 0;
+    const char* ptr = buffer;
+    while((ptr = strstr(ptr, "width=")) != nullptr) {
+        ptr += strlen("width=");
+        char* endPtr = nullptr;
+        int64_t value = strtol(ptr, &endPtr, 10);
+        if(endPtr != ptr && value > 0 && static_cast<uint32_t>(value) > maxVal) {
+            maxVal = static_cast<uint32_t>(value);
+        }
     }
 
-    ptr += strlen("width=");
-
-    char* endPtr = nullptr;
-    int64_t value = strtol(ptr, &endPtr, 10);
-    if(endPtr == ptr || value < 0) {
-        return 0;
-    }
-
-    return static_cast<uint32_t>(value);
+    return maxVal;
 }
 
 uint32_t PostProcessingBlock::extractFrameRate(const char* buffer,
@@ -222,33 +218,33 @@ uint32_t PostProcessingBlock::extractFrameRate(const char* buffer,
         return 0;
     }
 
-    // Locate "framerate="
-    const char* ptr = strstr(buffer, frameRatePrefix);
-    if (ptr == nullptr) {
-        return 0;
-    }
+    uint32_t maxVal = 0;
+    const char* ptr = buffer;
+    while((ptr = strstr(ptr, frameRatePrefix)) != nullptr) {
+        ptr += strlen(frameRatePrefix);
 
-    ptr += strlen(frameRatePrefix);
+        char* endPtr = nullptr;
+        int64_t numerator = strtol(ptr, &endPtr, 10);
+        if(endPtr == ptr || numerator < 0) {
+            continue;
+        }
 
-    // Parse the numerator
-    char* endPtr = nullptr;
-    int64_t numerator = strtol(ptr, &endPtr, 10);
-    if (endPtr == ptr || numerator < 0) {
-        // No valid digits found
-        return 0;
-    }
+        int64_t denominator = 1;
+        if(*endPtr == '/') {
+            const char* denomStart = endPtr + 1;
+            int64_t parsedDenom = strtol(denomStart, &endPtr, 10);
+            if(endPtr != denomStart && parsedDenom > 0) {
+                denominator = parsedDenom;
+            }
+        }
 
-    // Check for an optional denominator separated by '/'
-    int64_t denominator = 1;
-    if (*endPtr == '/') {
-        const char* denomStart = endPtr + 1;
-        int64_t parsedDenom = strtol(denomStart, &endPtr, 10);
-        if (endPtr != denomStart && parsedDenom > 0) {
-            denominator = parsedDenom;
+        uint32_t fps = static_cast<uint32_t>(numerator / denominator);
+        if(fps > maxVal) {
+            maxVal = fps;
         }
     }
 
-    return static_cast<uint32_t>(numerator / denominator);
+    return maxVal;
 }
 
 /**
