@@ -1,0 +1,14 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+ResourceConfigs:
+  - ResType: "0x0c"
+    ResID: "0x0000"
+    Name: "RES_DDR_BOOST_FREQ"
+    Path: "/sys/devices/system/cpu/bus_dcvs/DDR/boost_freq"
+    Supported: true
+    LowThreshold: 0
+    Permissions: "third_party"
+    Modes: ["display_on", "doze"]
+    Policy: "higher_is_better"
+    ApplyType: "global"
