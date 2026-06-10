@@ -163,6 +163,37 @@ SignalConfigs:
       - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_BIG_ALL_CORES", Values: [800000]}
 
   # Camera encode
+  # Default encode - 4k 120fps case
+  - SigId: "0x0003"
+    Category: "0x03"
+    Name: "URM_SIG_CAMERA_ENCODE"
+    Enable: true
+    TargetsEnabled: ["alorp"]
+    Permissions: ["third_party", "system"]
+    Timeout: -1
+    ExtraAttrs:
+      - Fps: 120
+      - Height: 2160
+      - Width: 3840
+    Resources:
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3,4,5]}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 0,1,2,3,4,5]}
+      - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [3, 90]}
+      - {ResCode: "RES_CGRP_HIGH_MEM", Values: [3, 1048576]}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [4, 0,1,2,3,4,5]}
+      - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [4, 150]}
+      - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
+      - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
+      - {ResCode: "RES_CGRP_MIN_MEM", Values: [4, 116631]}
+      - {ResCode: "RES_SCHED_UTIL_CLAMP_MIN", Values: [0]}
+      - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [410]}
+      - {ResCode: "RES_CPU_ONLINE_PER_CORE", ResInfo: "0x00000101", Values: [0]}
+      - {ResCode: "RES_CPU_ONLINE_PER_CORE", ResInfo: "0x00000102", Values: [0]}
+      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_LITTLE_ALL_CORES", Values: [700000]}
+      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_BIG_ALL_CORES", Values: [700000]}
+      - {ResCode: "0x000c0000", Values: [2092000]} # this is for RES_DDR_BOOST_FREQ
+
+  # Camera encode
   # Default encode - 4k 60fps case
   - SigId: "0x0003"
     Category: "0x03"
