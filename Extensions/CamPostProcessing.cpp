@@ -9,16 +9,7 @@
 #include <memory>
 #include <mutex>
 
-#include <Urm/Logger.h>
-#include <Urm/Extensions.h>
-#include <Urm/UrmPlatformAL.h>
-
-enum SignalExtraAttrIndex {
-    SIGNAL_EXTRA_ATTR_FPS    = 0, //!< Frames per second
-    SIGNAL_EXTRA_ATTR_HEIGHT = 1, //!< Frame height in pixels
-    SIGNAL_EXTRA_ATTR_WIDTH  = 2, //!< Frame width in pixels
-    SIGNAL_EXTRA_ATTRS_COUNT = 3  //!< Total number of extra attributes (must remain last)
-};
+#include "Helpers.h"
 
 class PostProcessingBlock {
 private:
@@ -301,17 +292,16 @@ int32_t PostProcessingBlock::fetchUsecaseDetails(int32_t pid,
     const char* defaultName     = "camsrc";         // Default camera source name
     const char* frameRatePrefix = "framerate=";     // GStreamer frame rate attribute
 
-    LOGI("CAM_BLOCK", "Post Processing Block for Camera Called");
     // Extract frame rate once; used by encoder and preview paths.
     *extraArgs = new uint32_t[SIGNAL_EXTRA_ATTRS_COUNT];
     (*extraArgs)[SIGNAL_EXTRA_ATTR_FPS] = extractFrameRate(buf, frameRatePrefix);
     (*extraArgs)[SIGNAL_EXTRA_ATTR_HEIGHT] = extractHeight(buf);
     (*extraArgs)[SIGNAL_EXTRA_ATTR_WIDTH] = extractWidth(buf);
 
-    LOGI("CAM_BLOCK", "Printing Stats");
-    LOGI("CAM_BLOCK", "fps=" + std::to_string((*extraArgs)[SIGNAL_EXTRA_ATTR_FPS]));
-    LOGI("CAM_BLOCK", "height=" + std::to_string((*extraArgs)[SIGNAL_EXTRA_ATTR_HEIGHT]));
-    LOGI("CAM_BLOCK", "width=" + std::to_string((*extraArgs)[SIGNAL_EXTRA_ATTR_WIDTH]));
+    LOGD("CAM_BLOCK", "Printing Query Stats");
+    LOGD("CAM_BLOCK", "fps=" + std::to_string((*extraArgs)[SIGNAL_EXTRA_ATTR_FPS]));
+    LOGD("CAM_BLOCK", "height=" + std::to_string((*extraArgs)[SIGNAL_EXTRA_ATTR_HEIGHT]));
+    LOGD("CAM_BLOCK", "width=" + std::to_string((*extraArgs)[SIGNAL_EXTRA_ATTR_WIDTH]));
 
     // Check for encoder
     const char* matchedEncoder = nullptr;
@@ -399,16 +389,11 @@ static void WorkloadPostprocessCallback(void* context) {
     uint32_t sigType = cbData->mSigType;
 
     uint32_t* extraArgs = nullptr;
-    cbData->mArgs = nullptr;
     PostProcessingBlock::getInstance().PostProcess(pid, sigId, sigType, &extraArgs);
 
-    LOGI("CAM_BLOCK", "Back Populated, sigId=" + std::to_string(sigId));
-    LOGI("CAM_BLOCK", "Back Populated, sigType=" + std::to_string(sigType));
-
-    cbData->mSigId = sigId;
-    cbData->mSigType = sigType;
-    cbData->mArgs = extraArgs;
-    cbData->mNumArgs = SIGNAL_EXTRA_ATTRS_COUNT;
+    int64_t handle =
+        acquireSignal(sigId, sigType, pid, pid, SIGNAL_EXTRA_ATTRS_COUNT, extraArgs);
+    cbData->mHandleAcq = handle;
 }
 
 __attribute__((constructor))

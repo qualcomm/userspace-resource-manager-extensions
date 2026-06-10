@@ -6,12 +6,13 @@
 
 #include <string>
 
-#include <Urm/Extensions.h>
-#include <Urm/UrmPlatformAL.h>
 #include <Urm/Logger.h>
 #include <Urm/Resource.h>
-#include <Urm/ResourceRegistry.h>
+#include <Urm/Extensions.h>
+#include <Urm/UrmPlatformAL.h>
+#include <Urm/SignalInternal.h>
 #include <Urm/TargetRegistry.h>
+#include <Urm/ResourceRegistry.h>
 
 std::string trim(const std::string& s);
 void toLower(std::string& s);
