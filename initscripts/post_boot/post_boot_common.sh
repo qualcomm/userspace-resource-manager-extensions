@@ -16,3 +16,21 @@ if [ "$RAM_MB" -lt 15360 ]; then
     echo "[URM] RAM < 15GB (${RAM_MB} MB). Disabling THP"
     [ -f "$THP_PATH/enabled" ] && echo never > "$THP_PATH/enabled"
 fi
+
+set_zram_mem_limit() {
+    mem_limit_mb=$((RAM_MB / 2))
+
+    for zram_dev in /sys/block/zram*; do
+        [ -e "$zram_dev/initstate" ] || continue
+
+        if [ "$(cat "$zram_dev/initstate")" = "1" ]; then
+            echo "${mem_limit_mb}M" > "$zram_dev/mem_limit"
+            echo "[URM][ZRAM] Set mem_limit=${mem_limit_mb}M for $(basename $zram_dev)"
+            return
+        fi
+    done
+
+    echo "[URM][ZRAM] ZRAM not ready, skipping mem_limit"
+}
+
+set_zram_mem_limit
