@@ -20,9 +20,9 @@ SignalConfigs:
       - {ResCode: "0x00800001", Values: [0]}
       - {ResCode: "0x00800002", Values: [0]}
       - {ResCode: "0x00800003", Values: [0]}
-      - {ResCode: "0x00040003", ResInfo: "0x00000000", Values: [1]}
-      - {ResCode: "0x00040004", ResInfo: "0x00000100", Values: [1]}
-      - {ResCode: "0x00040005", ResInfo: "0x00000200", Values: [1]}
+      - {ResCode: "RES_CPU_IDLE_DISABLE_ST0", ResInfo: "0x00000000", Values: [1]}
+      - {ResCode: "RES_CPU_IDLE_DISABLE_ST1", ResInfo: "0x00000100", Values: [1]}
+      - {ResCode: "RES_CPU_IDLE_DISABLE_ST2", ResInfo: "0x00000200", Values: [1]}
 
   - SigId: "0x0123"
     Category: "0xf1"
