@@ -29,18 +29,27 @@
 |    PerApp.yaml           - per-app thread/resource maps  |
 |    InitConfig.yaml       - IRQ affinity init settings    |
 |    target-specific/      - per-target overrides          |
-|      qcm6490/SignalsConfig.yaml                          |
-|      qcs8300/SignalsConfig.yaml                          |
-|      qcs9100/SignalsConfig.yaml                          |
+|      alorp/                                              |
+|      qcm6490/                                            |
+|      qcs615/                                             |
+|      qcs8300/                                            |
+|      qcs9100/  (also covers qcs9075)                     |
 |                                                          |
 |  Extensions/                                             |
-|    PostProcessingBlock.cpp  - GStreamer workload detector |
-|    CyclicTestsExt.cpp       - RT benchmark extension     |
+|    CamPostProcessing.cpp  - GStreamer workload detector  |
+|    GenieT2T.cpp           - AI inference extension       |
+|    PreemptRtExtn.cpp      - RT benchmark extension       |
+|    PredefCallbacks.cpp    - Predefined IRQ callbacks     |
+|    Helpers.cpp            - Shared utility functions     |
 |                                                          |
 |  initscripts/post_boot/                                  |
 |    post_boot.sh             - dispatcher script          |
+|    post_boot_common.sh      - common kernel tuning       |
+|    post_boot_alorp.sh       - ALORP kernel tuning        |
 |    post_boot_qcm6490.sh     - QCM6490 kernel tuning      |
+|    post_boot_qcs615.sh      - QCS615 kernel tuning       |
 |    post_boot_qcs8300.sh     - QCS8300 kernel tuning      |
+|    post_boot_qcs9075.sh     - QCS9075 kernel tuning      |
 |    post_boot_qcs9100.sh     - QCS9100 kernel tuning      |
 +----------------------------------------------------------+
 ```
@@ -55,7 +64,8 @@ Plugins allow users to influence URM behaviour, through well defined hooks. When
 2. **Discover extension plugins** - scans /usr/lib/urm/ for *.so files.
 3. **Load UrmPlugin.so** - the shared library built from this project.
 4. **Execute constructor functions** - __attribute__((constructor)) functions run automatically.
-   - PostProcessingBlock registers WorkloadPostprocessCallback for gst-launch-1.0 and gst-camera-per-port-example.
+   - `CamPostProcessing.cpp` registers `WorkloadPostprocessCallback` for `gst-launch-1.0` and `gst-camera-per-port-example`.
+   - `GenieT2T.cpp` registers `workloadPostprocessCallback` for `genie-t2t-run`.
 5. **Load custom configs** from /etc/urm/target/ (generic) and /etc/urm/target/<target>/ (target-specific).
 6. **Merge resources and signals** - custom definitions override or extend the upstream set.
 7. **Start serving requests** with the fully extended resource/signal set.
@@ -90,6 +100,9 @@ The target name is detected at runtime from /sys/devices/soc0/machine and lowerc
 | Urm/Extensions.h | Macro APIs for registering callbacks |
 | Urm/UrmPlatformAL.h | Signal ID enums (URM_SIG_*) |
 | Urm/UrmAPIs.h | Client API: tuneResources(), sendSignal() |
+| Urm/SignalInternal.h | acquireSignal(), releaseSignal() |
+| Urm/TargetRegistry.h | GET_TARGET_INFO, GET_MASK, GET_MAX_CLUSTER |
+| Urm/ResourceRegistry.h | Resource registry access |
 
 ### Registration Macros
 
@@ -109,9 +122,10 @@ typedef void (*ResourceLifecycleCallback)(void*);
 typedef void (*PostProcessingCallback)(void*); // where the argument is PostProcessCBData*
 
 struct PostProcessCBData {
-    pid_t    mPid;     // Process ID that triggered the signal
-    uint32_t mSigId;   // Signal ID -- can be modified by the callback
-    uint32_t mSigType; // Signal type/variant -- can be modified by the callback
+    pid_t    mPid;      // Process ID that triggered the signal
+    uint32_t mSigId;    // Signal ID -- can be modified by the callback
+    uint32_t mSigType;  // Signal type/variant -- can be modified by the callback
+    int64_t  mHandleAcq; // Handle returned by acquireSignal() (set by callback)
 };
 ```
 
@@ -130,10 +144,13 @@ Client Application
 |                                                     |
 |  1. Receive signal (SigId + SigType + PID)          |
 |  2. Look up registered post-process callbacks       |
-|  3. Invoke PostProcessingBlock::PostProcess()       |
+|  3. Invoke post-process callback (e.g.              |
+|     WorkloadPostprocessCallback in                  |
+|     CamPostProcessing.cpp):                         |
 |     -> reads /proc/<pid>/cmdline                    |
 |     -> detects GStreamer elements                   |
-|     -> updates SigId / SigType                     |
+|     -> updates SigId / SigType / extraArgs          |
+|     -> calls acquireSignal() directly               |
 |  4. Match updated signal against SignalsConfig      |
 |  5. For each resource in matched signal:            |
 |     a. If custom applier registered -> call it      |
