@@ -29,7 +29,7 @@ Userspace Resource Manager (URM) without touching its core codebase. It ships:
 | 8 | [Post-Boot Init Scripts](./08-post-boot-init-scripts.md) | Target-specific kernel tuning at boot |
 | 9 | [Adding a New Target](./09-adding-new-target.md) | Step-by-step guide to onboard a new hardware target |
 | 10 | [Adding a Custom Resource](./10-adding-custom-resource.md) | Yaml Configs, Callbacks |
-| 11 | [Post Processing Blocks](./11-post-processing-blocks.md) | App classification and post-processing callback reference |
+| 11 | [Post Processing Blocks](./11-post-processing-blocks.md) | Cutomizing Config Selection |
 
 ---
 

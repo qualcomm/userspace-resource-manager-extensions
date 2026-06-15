@@ -41,18 +41,12 @@ Resources applied:
 |---------|---------|--------|--------|
 | 0x00030003 | - | [-1] | Disable CPU scaling |
 | 0x00800000 | - | [0] | Disable timer migration |
-| 0x00800001 | - | [0] | Set CPU freq governor to performance (callback) |
+| 0x00800001 | - | [0] | Set CPU freq governor (callback) |
 | 0x00800002 | - | [0] | Configure IRQ affinity (callback) |
 | 0x00800003 | - | [0] | Configure WQ affinity (callback) |
-| RES_CPU_IDLE_DISABLE_ST0 | 0x00000000 | [1] | Disable CPU idle state 0, cluster 0 |
-| RES_CPU_IDLE_DISABLE_ST0 | 0x00000100 | [1] | Disable CPU idle state 0, cluster 1 |
-| RES_CPU_IDLE_DISABLE_ST0 | 0x00000200 | [1] | Disable CPU idle state 0, cluster 2 |
-| RES_CPU_IDLE_DISABLE_ST1 | 0x00000000 | [1] | Disable CPU idle state 1, cluster 0 |
-| RES_CPU_IDLE_DISABLE_ST1 | 0x00000100 | [1] | Disable CPU idle state 1, cluster 1 |
-| RES_CPU_IDLE_DISABLE_ST1 | 0x00000200 | [1] | Disable CPU idle state 1, cluster 2 |
-| RES_CPU_IDLE_DISABLE_ST2 | 0x00000000 | [1] | Disable CPU idle state 2, cluster 0 |
-| RES_CPU_IDLE_DISABLE_ST2 | 0x00000100 | [1] | Disable CPU idle state 2, cluster 1 |
-| RES_CPU_IDLE_DISABLE_ST2 | 0x00000200 | [1] | Disable CPU idle state 2, cluster 2 |
+| 0x00040003 | 0x00000000 | [1] | Isolate little cores (cluster 0) |
+| 0x00040004 | 0x00000100 | [1] | Isolate big cores (cluster 1) |
+| 0x00040005 | 0x00000200 | [1] | Isolate prime cores (cluster 2) |
 
 ### GENIE_T2T_RUN (Category 0xf1, SigId 0x0123)
 
@@ -74,104 +68,49 @@ Resources applied:
 SigType is a variant selector. When the post-processor detects a workload, it sets SigType
 based on load intensity. URM then selects the matching signal config entry.
 
-For video decode (computed by `calculateDecoderSigType` in CamPostProcessing.cpp):
+For video decode:
 
 | SigType | Meaning | Trigger Condition |
 |---------|---------|-------------------|
-| 0 | Default (low load) | 0–4 concurrent decode threads |
-| 5 | Medium load | 5–20 concurrent decode threads |
-| 21 | High load | >20 concurrent decode threads |
+| 0 | Default (low load) | 0-4 concurrent decode sessions |
+| 5 | Medium load | 5-20 concurrent decode sessions |
+| 20 | High load | 20+ concurrent decode sessions |
 
-For camera encode multi-stream (computed by `calculateEncoderSigType` in CamPostProcessing.cpp):
+For camera encode multi-stream:
 
 | SigType | Meaning | Trigger Condition |
 |---------|---------|-------------------|
-| 0 | Normal load | ≤12 encoder instances |
-| 13 | High load | >12 encoder instances |
-
-Note: qcm6490 uses additional SigType thresholds (8 and 12) for multi-stream encode;
-see the QCM6490 section below.
-
----
-
-## ALORP Signal Tuning (Configs/target-specific/alorp/SignalsConfig.yaml)
-
-CPU cluster layout: cores 0-5 (little/mid), cores 6-7 (big)
-
-| Signal | SigType | Little Max Freq | Big Max Freq | Notes |
-|--------|---------|----------------|--------------|-------|
-| URM_SIG_VIDEO_DECODE | 0 (default) | — | — | cgroup tuning only |
-| URM_SIG_VIDEO_DECODE | 5 (5–20 sessions) | — | — | cgroup tuning only |
-| URM_SIG_VIDEO_DECODE | 20 (20+ sessions) | — | — | cgroup tuning only; expands focused cgroup to all 8 cores |
-| URM_SIG_CAMERA_PREVIEW | 0 (default) | — | — | cgroup tuning only |
-| URM_SIG_CAMERA_ENCODE | 0 (8k 30fps) | 700000 | 700000 | also disables cores 0x101, 0x102 |
-| URM_SIG_CAMERA_ENCODE | 0 (1080p 240fps) | 800000 | 800000 | also disables cores 0x101, 0x102 |
-| URM_SIG_CAMERA_ENCODE | 0 (4k 120fps) | 700000 | 700000 | also sets RES_DDR_BOOST_FREQ=2092000 |
-| URM_SIG_CAMERA_ENCODE | 0 (4k 60fps) | 1000000 | 1000000 | also disables cores 0x101, 0x102 |
-| URM_SIG_CAMERA_ENCODE | 0 (1080p 30fps) | 700000 | 700000 | also disables cores 0x101, 0x102 |
-| URM_SIG_CAMERA_ENCODE_MULTI_STREAMS | 0 (0–12 streams) | — | — | cgroup tuning only |
-| URM_SIG_CAMERA_ENCODE_MULTI_STREAMS | 13 (12+ streams) | — | — | expands focused cgroup to all 8 cores |
-
-ALORP encode signals use `ExtraAttrs` (Fps, Height, Width) for signal matching.
-All signals also apply cgroup tuning:
-
-| Cgroup | Cores | CPU Weight | Memory |
-|--------|-------|-----------|--------|
-| Background (cgroup 2) | 0,1,2,3,4,5 | — | — |
-| System (cgroup 3) | 0,1,2,3,4,5 | 90 | HIGH: 1048576 |
-| Focused (cgroup 4) | 0,1,2,3,4,5 | 150 | LOW: 507256, MIN: 116631 |
+| 0 | Normal load | 0-12 encoder instances |
+| 8 | Medium load (qcm6490 only) | 8-12 encoder instances |
+| 12 or 13 | High load | 12+ encoder instances |
 
 ---
 
 ## QCM6490 Signal Tuning (Configs/target-specific/qcm6490/SignalsConfig.yaml)
 
-CPU cluster layout: cores 0-3 (little), cores 4-6 (big), core 7 (prime)
+CPU cluster layout: cores 0-3 (little), cores 4-6 (big)
 
 | Signal | SigType | Little Max Freq | Big Max Freq | Plus Max Freq |
 |--------|---------|----------------|--------------|---------------|
 | URM_SIG_VIDEO_DECODE | 0 (default) | 940800 | 940800 | 940800 |
-| URM_SIG_VIDEO_DECODE | 5 (5–20 sessions) | 940800 | 1900800 | 940800 |
+| URM_SIG_VIDEO_DECODE | 5 (5-20 sessions) | 940800 | 1900800 | 940800 |
 | URM_SIG_VIDEO_DECODE | 20 (20+ sessions) | (no freq cap) | (no freq cap) | (no freq cap) |
 | URM_SIG_CAMERA_PREVIEW | 0 (default) | 940800 | 940800 | 940800 |
 | URM_SIG_CAMERA_ENCODE | 0 (default) | 1804800 | 1900800 | 940800 |
-| URM_SIG_CAMERA_ENCODE_MULTI_STREAMS | 0 (0–7 streams) | 1804800 | 940800 | 940800 |
-| URM_SIG_CAMERA_ENCODE_MULTI_STREAMS | 8 (8–12 streams) | 1804800 | 1900800 | 1900800 |
+| URM_SIG_CAMERA_ENCODE_MULTI_STREAMS | 0 (0-12 streams) | 1804800 | 940800 | 940800 |
+| URM_SIG_CAMERA_ENCODE_MULTI_STREAMS | 8 (8-12 streams) | 1804800 | 1900800 | 1900800 |
 | URM_SIG_CAMERA_ENCODE_MULTI_STREAMS | 12 (12+ streams) | (no freq cap) | (no freq cap) | (no freq cap) |
 
 All signals also apply cgroup tuning:
 
 | Cgroup | Cores | CPU Weight | Memory |
 |--------|-------|-----------|--------|
-| Background (cgroup 2) | 0,1,2,3 | — | — |
+| Background (cgroup 2) | 0,1,2,3 | - | - |
 | System (cgroup 3) | 4,5,6 | 90 | HIGH: 1048576 |
 | Focused (cgroup 4) | 0,1,2,3,4,5,6 | 150 | LOW: 507256, MIN: 116631 |
 
 Note: For SigType 20 (20+ decode sessions) and SigType 12 (12+ encode streams),
 no CPU frequency cap is applied - all cores are available.
-
----
-
-## QCS615 Signal Tuning (Configs/target-specific/qcs615/SignalsConfig.yaml)
-
-CPU cluster layout: cores 0-3 (little), cores 4-7 (big)
-
-| Signal | SigType | Little Max Freq | Big Max Freq |
-|--------|---------|----------------|--------------|
-| URM_SIG_VIDEO_DECODE | 0 (default) | 1267200 | 1267200 |
-| URM_SIG_VIDEO_DECODE | 5 (5–20 sessions) | 1536000 | 1536000 |
-| URM_SIG_VIDEO_DECODE | 20 (20+ sessions) | (no freq cap) | (no freq cap) |
-| URM_SIG_CAMERA_PREVIEW | 0 (default) | 1267200 | 1267200 |
-| URM_SIG_CAMERA_ENCODE | 0 (default) | 1267200 | 1267200 |
-| URM_SIG_CAMERA_ENCODE_MULTI_STREAMS | 0 (0–12 streams) | 1267200 | 1267200 |
-| URM_SIG_CAMERA_ENCODE_MULTI_STREAMS | 13 (12+ streams) | (no freq cap) | (no freq cap) |
-
-All signals apply cgroup tuning with 8 cores (0-7):
-
-| Cgroup | Cores | CPU Weight | Memory |
-|--------|-------|-----------|--------|
-| Background (cgroup 2) | 0,1,2,3 | — | — |
-| System (cgroup 3) | 4,5,6,7 | 90 | HIGH: 1048576 |
-| Focused (cgroup 4) | 0,1,2,3,4,5,6,7 | 150 | LOW: 507256, MIN: 116631 |
 
 ---
 
@@ -182,14 +121,14 @@ CPU cluster layout: cores 0-3 (little), cores 4-7 (big)
 | Signal | SigType | Little Max Freq | Big Max Freq | Plus Max Freq |
 |--------|---------|----------------|--------------|---------------|
 | URM_SIG_VIDEO_DECODE | 0 (default) | 1200000 | 1200000 | 1200000 |
-| URM_SIG_VIDEO_DECODE | 5 (5–20 sessions) | 1500000 | 1500000 | 1500000 |
+| URM_SIG_VIDEO_DECODE | 5 (5-20 sessions) | 1500000 | 1500000 | 1500000 |
 | URM_SIG_VIDEO_DECODE | 20 (20+ sessions) | (no freq cap) | (no freq cap) | (no freq cap) |
 | URM_SIG_CAMERA_PREVIEW | 0 (default) | 1200000 | 1200000 | 1200000 |
 | URM_SIG_CAMERA_ENCODE | 0 (default) | 1200000 | 1200000 | 1200000 |
-| URM_SIG_CAMERA_ENCODE_MULTI_STREAMS | 0 (0–12 streams) | 1500000 | 1500000 | 1500000 |
+| URM_SIG_CAMERA_ENCODE_MULTI_STREAMS | 0 (0-12 streams) | 1500000 | 1500000 | 1500000 |
 | URM_SIG_CAMERA_ENCODE_MULTI_STREAMS | 12 (12+ streams) | (no freq cap) | (no freq cap) | (no freq cap) |
 
-All signals apply the same cgroup tuning as QCS615 (8 cores, 0-7).
+All signals apply the same cgroup tuning as QCM6490 but with 8 cores (0-7).
 
 ---
 
@@ -206,7 +145,7 @@ All signals have Timeout: -1 (indefinite hold).
 | URM_SIG_VIDEO_DECODE | 20 (20+ sessions) | (no freq cap) | (no freq cap) |
 | URM_SIG_CAMERA_PREVIEW | 0 (default) | 1267200 | 1267200 |
 | URM_SIG_CAMERA_ENCODE | 0 (default) | 1267200 | 1267200 |
-| URM_SIG_CAMERA_ENCODE_MULTI_STREAMS | 0 (0–12 streams) | 1267200 | 1267200 |
+| URM_SIG_CAMERA_ENCODE_MULTI_STREAMS | 0 (0-12 streams) | 1267200 | 1267200 |
 | URM_SIG_CAMERA_ENCODE_MULTI_STREAMS | 13 (12+ streams) | (no freq cap) | (no freq cap) |
 
 Note: QCS9100/9075 does not have a CLUSTER_PLUS (third cluster); only little and big.
@@ -215,9 +154,9 @@ Note: QCS9100/9075 does not have a CLUSTER_PLUS (third cluster); only little and
 
 ## Cross-Target Comparison
 
-| Signal | SigType | ALORP Little | QCM6490 Little | QCS615 Little | QCS8300 Little | QCS9100 Little |
-|--------|---------|-------------|----------------|---------------|----------------|----------------|
-| VIDEO_DECODE | 0 | (cgroup only) | 940800 | 1267200 | 1200000 | 1267200 |
-| VIDEO_DECODE | 5 | (cgroup only) | 940800 | 1536000 | 1500000 | 1536000 |
-| CAMERA_PREVIEW | 0 | (cgroup only) | 940800 | 1267200 | 1200000 | 1267200 |
-| CAMERA_ENCODE | 0 | 700000–1000000 | 1804800 | 1267200 | 1200000 | 1267200 |
+| Signal | SigType | QCM6490 Little | QCS8300 Little | QCS9100 Little |
+|--------|---------|----------------|----------------|----------------|
+| VIDEO_DECODE | 0 | 940800 | 1200000 | 1267200 |
+| VIDEO_DECODE | 5 | 940800 | 1500000 | 1536000 |
+| CAMERA_PREVIEW | 0 | 940800 | 1200000 | 1267200 |
+| CAMERA_ENCODE | 0 | 1804800 | 1200000 | 1267200 |

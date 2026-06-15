@@ -1,6 +1,6 @@
 # 4. Resources Reference
 
-All custom resources defined in Configs/ResourcesConfig.yaml and target-specific ResourcesConfig.yaml files.
+All custom resources defined in Configs/ResourcesConfig.yaml.
 
 ---
 
@@ -12,11 +12,11 @@ These resources control the Qualcomm KGSL (Kernel Graphics Support Layer) GPU dr
 |---------------|---------|-----------|--------|-------|
 | RES_KGSL_DEF_PWRLEVEL | 0x00050003 | /sys/class/kgsl/kgsl-3d0/default_pwrlevel | lower_is_better | display_on, doze |
 | RES_KGSL_DEVFREQ_MAX | 0x00050004 | /sys/class/kgsl/kgsl-3d0/devfreq/max_freq | lower_is_better | display_on, doze |
-| RES_KGSL_DEVFREQ_MIN | 0x00050005 | /sys/class/kgsl/kgsl-3d0/devfreq/min_freq | higher_is_better | display_on, doze |
-| RES_KGSL_IDLE_TIMER | 0x00050006 | /sys/class/kgsl/kgsl-3d0/idle_timer | lower_is_better | display_on, doze |
-| RES_KGSL_MAX_PWRLEVEL | 0x00050007 | /sys/class/kgsl/kgsl-3d0/max_pwrlevel | lower_is_better | display_on, doze |
-| RES_KGSL_MIN_PWRLEVEL | 0x00050008 | /sys/class/kgsl/kgsl-3d0/min_pwrlevel | lower_is_better | display_on, doze |
-| RES_KGSL_TOUCH_WAKE | 0x00050009 | /sys/class/kgsl/kgsl-3d0/touch_wake | lower_is_better | display_on, doze |
+| RES_KGSL_DEVFREQ_MIN | 0x00050005 | /sys/class/kgsl/kgsl-3d0/devfreq/min_freq | lower_is_better | display_on, doze |
+| RES_KGSL_IDLE_TIMER | 0x00050006 | /sys/class/kgsl/kgsl-3d0/idle_timer | higher_is_better | display_on, doze |
+| RES_KGSL_MAX_PWRLEVEL | 0x00050007 | /sys/class/kgsl/kgsl-3d0/max_pwrlevel | higher_is_better | display_on, doze |
+| RES_KGSL_MIN_PWRLEVEL | 0x00050008 | /sys/class/kgsl/kgsl-3d0/min_pwrlevel | higher_is_better | display_on, doze |
+| RES_KGSL_TOUCH_WAKE | 0x00050009 | /sys/class/kgsl/kgsl-3d0/touch_wake | higher_is_better | display_on, doze |
 
 ### GPU Resource Details
 
@@ -34,48 +34,34 @@ These resources control the Qualcomm KGSL (Kernel Graphics Support Layer) GPU dr
 **RES_KGSL_DEVFREQ_MIN** (0x00050005)
 - Sets the minimum GPU frequency via the devfreq governor.
 - Ensures GPU does not drop below a floor frequency.
-- Policy: higher_is_better (highest floor wins).
+- Policy: lower_is_better.
 
 **RES_KGSL_IDLE_TIMER** (0x00050006)
 - Controls the GPU idle timeout in milliseconds.
-- Lower values allow GPU to power-collapse sooner.
-- Policy: lower_is_better (shortest timeout wins).
+- Higher values keep GPU active longer before power collapse.
+- Policy: higher_is_better (longest timeout wins).
 - LowThreshold: 0
 
 **RES_KGSL_MAX_PWRLEVEL** (0x00050007)
 - Sets the maximum GPU power level index.
-- Lower index = more restrictive power cap.
-- Policy: lower_is_better (most restrictive cap wins).
+- Higher index = higher power level allowed.
+- Policy: higher_is_better.
 - LowThreshold: 0
 
 **RES_KGSL_MIN_PWRLEVEL** (0x00050008)
 - Sets the minimum GPU power level index.
-- Lower index = lower minimum performance floor.
-- Policy: lower_is_better.
+- Prevents GPU from dropping below a minimum performance floor.
+- Policy: higher_is_better.
 - LowThreshold: 0
 
 **RES_KGSL_TOUCH_WAKE** (0x00050009)
 - Controls GPU touch-wake behavior.
-- Policy: lower_is_better.
+- Policy: higher_is_better.
 - LowThreshold: 0
 
 ---
 
-## Cgroup I/O Resources (ResType 0x09)
-
-| Resource Name | ResCode | sysfs Path | Policy | Modes |
-|---------------|---------|-----------|--------|-------|
-| RES_CGRP_IO_WEIGHT | 0x0009000f | /sys/fs/cgroup/%s/io.bfq.weight | instant_apply | display_on |
-
-**RES_CGRP_IO_WEIGHT** (0x0009000f)
-- Sets the BFQ I/O weight for a cgroup.
-- Path uses %s as a placeholder for the cgroup name.
-- ApplyType: cgroup
-- Permissions: system
-
----
-
-## RT  Workload Resources (ResType 0x80)
+## RT Benchmark Resources (ResType 0x80)
 
 These resources support real-time benchmarking (cyclictest) and require custom C++ callbacks.
 
@@ -95,16 +81,16 @@ These resources support real-time benchmarking (cyclictest) and require custom C
 
 **RES_CPU_FREQ_GOV** (0x00800001)
 - No sysfs path (Path: empty string); requires a custom applier callback.
-- Callback in PreemptRtExtn.cpp: iterates /sys/devices/system/cpu/cpufreq/policy*/scaling_governor, backs up current governor, writes "performance". Teardown restores original governors.
+- Used by CyclicTestsExt to set the CPU frequency governor (e.g., performance).
 - Registered in PerApp.yaml for the cyclictest process.
 
 **RES_IRQ_AFFINITY** (0x00800002)
 - No sysfs path; requires a custom applier callback.
-- Callback in PreemptRtExtn.cpp: computes CPU mask from target info (excluding the highest cluster), iterates /proc/irq/*/smp_affinity, backs up and writes the mask. Teardown restores original values.
+- Configures IRQ affinity masks for RT workloads.
 
 **RES_CPU_WQ_AFFINITY** (0x00800003)
 - No sysfs path; requires a custom applier callback.
-- Callback in PreemptRtExtn.cpp: computes CPU mask (same logic as IRQ affinity), iterates /sys/devices/virtual/workqueue/*/cpumask, backs up and writes the mask. Teardown restores original values.
+- Configures CPU workqueue affinity for RT workloads.
 
 ---
 
@@ -118,8 +104,7 @@ These resources support real-time benchmarking (cyclictest) and require custom C
 - Affinizes all system IRQs to a specified set of CPU cores.
 - Used by the GENIE_T2T_RUN signal for AI inference workloads.
 - Modes: display_on only.
-- No sysfs path; uses the predefined `irqAffinityApplierCallback` / `irqAffinityTearCallback` from PredefCallbacks.cpp (registered in GenieT2T.cpp).
-- The callback reads the Values list from the Resource, builds a CPU bitmask, and writes it to /proc/irq/*/smp_affinity.
+- No sysfs path; requires a custom applier callback.
 
 ---
 
@@ -134,7 +119,6 @@ These resources support real-time benchmarking (cyclictest) and require custom C
 | 0x00050007 | RES_KGSL_MAX_PWRLEVEL | GPU | Yes |
 | 0x00050008 | RES_KGSL_MIN_PWRLEVEL | GPU | Yes |
 | 0x00050009 | RES_KGSL_TOUCH_WAKE | GPU | Yes |
-| 0x0009000f | RES_CGRP_IO_WEIGHT | Cgroup I/O | Yes (cgroup) |
 | 0x00800000 | RES_TIMER_MIGRATION | RT Benchmark | Yes (/proc) |
 | 0x00800001 | RES_CPU_FREQ_GOV | RT Benchmark | No (callback) |
 | 0x00800002 | RES_IRQ_AFFINITY | RT Benchmark | No (callback) |
