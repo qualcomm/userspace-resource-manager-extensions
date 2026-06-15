@@ -117,11 +117,11 @@ sudo cmake --install .
 ```
 
 **What Step 2 Does**:
-- Builds the extension module (`RestunePlugin.so`)
-- Installs the library to `/usr/lib`
-- Installs custom configurations to `/etc/urm/custom/`
+- Builds the extension module (`UrmPlugin.so`)
+- Installs the library to `/usr/lib/urm/`
+- Installs custom configurations to `/etc/urm/target/`
 
-When URM starts, it automatically loads `RestunePlugin.so` and applies the customizations.
+When URM starts, it automatically loads `UrmPlugin.so` and applies the customizations.
 
 #### Step 3: Start URM Server
 
@@ -131,7 +131,7 @@ When URM starts, it automatically loads `RestunePlugin.so` and applies the custo
 
 The URM server will:
 1. Load the base upstream resources and signals
-2. Discover and load `RestunePlugin.so`
+2. Discover and load `UrmPlugin.so`
 3. Apply custom resources, signals, and handlers from the extensions
 4. Start serving requests with the extended functionality
 
@@ -146,11 +146,17 @@ userspace-resource-manager-extensions/
 │   ├── PerApp.yaml                  # Per-application configurations
 │   └── target-specific/             # Target-specific overrides
 │       ├── qcm6490/
+│       ├── alorp/
+│       ├── qcs615/
 │       ├── qcs8300/
-│       └── qcs9100/
+│       ├── qcs9100/
+│       └── qcs9075/  (shares config with qcs9100)
 ├── Extensions/                      # Extension module implementations
-│   ├── CyclicTestsExt.cpp           # Example extension
-│   └── PostProcessingBlock.cpp      # Post-processing logic
+│   ├── CamPostProcessing.cpp        # GStreamer workload detector
+│   ├── GenieT2T.cpp                 # AI inference extension
+│   ├── PreemptRtExtn.cpp            # RT benchmark extension
+│   ├── PredefCallbacks.cpp          # Predefined IRQ callbacks
+│   └── Helpers.cpp                  # Shared utility functions
 ├── docs/                            # Detailed documentation
 │   └── README.md                    
 └── README.md                        # This file

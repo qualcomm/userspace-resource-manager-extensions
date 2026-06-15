@@ -49,7 +49,15 @@ The CMake build compiles all .cpp files under Extensions/ into a single shared l
 |--------|-------------|
 | UrmPlugin.so | The extension plugin loaded by URM at startup |
 
-### CMakeLists.txt Summary
+Source files compiled into UrmPlugin.so:
+
+| Source File | Purpose |
+|-------------|---------|
+| CamPostProcessing.cpp | GStreamer workload detector (camera/video signals) |
+| GenieT2T.cpp | AI inference (token-to-token) extension |
+| PreemptRtExtn.cpp | RT benchmark (cyclictest) extension |
+| PredefCallbacks.cpp | Predefined IRQ affinity callbacks |
+| Helpers.cpp | Shared utility functions |
 
 ---
 
@@ -65,7 +73,9 @@ The CMake build compiles all .cpp files under Extensions/ into a single shared l
 |--------|-------------|-------------|
 | UrmPlugin.so | /usr/lib/urm/ | Standard library |
 | Configs/*.yaml | /etc/urm/target/ | 644 |
+| Configs/target-specific/alorp/ | /etc/urm/target/alorp/ | 644 |
 | Configs/target-specific/qcm6490/ | /etc/urm/target/qcm6490/ | 644 |
+| Configs/target-specific/qcs615/ | /etc/urm/target/qcs615/ | 644 |
 | Configs/target-specific/qcs8300/ | /etc/urm/target/qcs8300/ | 644 |
 | Configs/target-specific/qcs9100/ | /etc/urm/target/qcs9100/ | 644 |
 | initscripts/post_boot/*.sh | /etc/urm/initscripts/post_boot/ | 755 |
