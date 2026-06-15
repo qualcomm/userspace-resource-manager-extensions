@@ -42,7 +42,7 @@ SignalConfigs:
 
   - SigId: "0x1337"
     Category: "0xea"
-    Name: "CAMERA_OPEN_TUNING"
+    Name: "CAMERA_OPEN"
     Enable: true
     Permissions: ["third_party", "system"]
     Timeout: -1
@@ -54,7 +54,7 @@ SignalConfigs:
 
   - SigId: "0x1338"
     Category: "0xea"
-    Name: "CAMERA_CLOSE_TUNING"
+    Name: "CAMERA_CLOSE"
     Enable: true
     Permissions: ["third_party", "system"]
     Timeout: -1
