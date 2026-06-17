@@ -8,7 +8,7 @@ SignalConfigs:
     Category: "0x03"
     Name: "URM_SIG_VIDEO_DECODE"
     Enable: true
-    TargetsEnabled: ["qcm6490"]
+    TargetsEnabled: ["qcm6490", "qcs6490"]
     Permissions: ["third_party", "system"]
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
@@ -30,7 +30,7 @@ SignalConfigs:
     Type: 5
     Name: "URM_SIG_VIDEO_DECODE"
     Enable: true
-    TargetsEnabled: ["qcm6490"]
+    TargetsEnabled: ["qcm6490", "qcs6490"]
     Permissions: ["third_party", "system"]
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
@@ -52,7 +52,7 @@ SignalConfigs:
     Type: 20
     Name: "URM_SIG_VIDEO_DECODE"
     Enable: true
-    TargetsEnabled: ["qcm6490"]
+    TargetsEnabled: ["qcm6490", "qcs6490"]
     Permissions: ["third_party", "system"]
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
@@ -71,7 +71,7 @@ SignalConfigs:
     Category: "0x03"
     Name: "URM_SIG_CAMERA_PREVIEW"
     Enable: true
-    TargetsEnabled: ["qcm6490"]
+    TargetsEnabled: ["qcm6490", "qcs6490"]
     Permissions: ["third_party", "system"]
     Timeout: -1
     Resources:
@@ -94,7 +94,7 @@ SignalConfigs:
     Category: "0x03"
     Name: "URM_SIG_CAMERA_ENCODE"
     Enable: true
-    TargetsEnabled: ["qcm6490"]
+    TargetsEnabled: ["qcm6490", "qcs6490"]
     Permissions: ["third_party", "system"]
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
@@ -116,7 +116,7 @@ SignalConfigs:
     Category: "0x03"
     Name: URM_SIG_CAMERA_ENCODE_MULTI_STREAMS
     Enable: true
-    TargetsEnabled: ["qcm6490"]
+    TargetsEnabled: ["qcm6490", "qcs6490"]
     Permissions: ["third_party", "system"]
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
@@ -139,7 +139,7 @@ SignalConfigs:
     Type: 8
     Name: URM_SIG_CAMERA_ENCODE_MULTI_STREAMS
     Enable: true
-    TargetsEnabled: ["qcm6490"]
+    TargetsEnabled: ["qcm6490", "qcs6490"]
     Permissions: ["third_party", "system"]
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
@@ -162,7 +162,7 @@ SignalConfigs:
     Type: 12
     Name: URM_SIG_CAMERA_ENCODE_MULTI_STREAMS
     Enable: true
-    TargetsEnabled: ["qcm6490"]
+    TargetsEnabled: ["qcm6490", "qcs6490"]
     Permissions: ["third_party", "system"]
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
