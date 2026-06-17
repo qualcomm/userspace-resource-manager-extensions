@@ -8,7 +8,7 @@ SignalConfigs:
     Category: "0x03"
     Name: "URM_SIG_VIDEO_DECODE"
     Enable: true
-    TargetsEnabled: ["qcs8300"]
+    TargetsEnabled: ["qcs8300", "qcs8275", "sa7255p"]
     Permissions: ["third_party", "system"]
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
@@ -31,7 +31,7 @@ SignalConfigs:
     Type: 5
     Name: "URM_SIG_VIDEO_DECODE"
     Enable: true
-    TargetsEnabled: ["qcs8300"]
+    TargetsEnabled: ["qcs8300", "qcs8275", "sa7255p"]
     Permissions: ["third_party", "system"]
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
@@ -54,7 +54,7 @@ SignalConfigs:
     Type: 20
     Name: "URM_SIG_VIDEO_DECODE"
     Enable: true
-    TargetsEnabled: ["qcs8300"]
+    TargetsEnabled: ["qcs8300", "qcs8275", "sa7255p"]
     Permissions: ["third_party", "system"]
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
@@ -73,7 +73,7 @@ SignalConfigs:
     Category: "0x03"
     Name: "URM_SIG_CAMERA_PREVIEW"
     Enable: true
-    TargetsEnabled: ["qcs8300"]
+    TargetsEnabled: ["qcs8300", "qcs8275", "sa7255p"]
     Permissions: ["third_party", "system"]
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
@@ -95,7 +95,7 @@ SignalConfigs:
     Category: "0x03"
     Name: "URM_SIG_CAMERA_ENCODE"
     Enable: true
-    TargetsEnabled: ["qcs8300"]
+    TargetsEnabled: ["qcs8300", "qcs8275", "sa7255p"]
     Permissions: ["third_party", "system"]
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
@@ -117,7 +117,7 @@ SignalConfigs:
     Category: "0x03"
     Name: URM_SIG_CAMERA_ENCODE_MULTI_STREAMS
     Enable: true
-    TargetsEnabled: ["qcs8300"]
+    TargetsEnabled: ["qcs8300", "qcs8275", "sa7255p"]
     Permissions: ["third_party", "system"]
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
@@ -140,7 +140,7 @@ SignalConfigs:
     Type: 12
     Name: URM_SIG_CAMERA_ENCODE_MULTI_STREAMS
     Enable: true
-    TargetsEnabled: ["qcs8300"]
+    TargetsEnabled: ["qcs8300", "qcs8275", "sa7255p"]
     Permissions: ["third_party", "system"]
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
