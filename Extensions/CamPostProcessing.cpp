@@ -272,18 +272,15 @@ int32_t PostProcessingBlock::fetchUsecaseDetails(int32_t pid,
                                                  uint32_t& sigId,
                                                  uint32_t& sigType,
                                                  uint32_t** extraArgs) {
-    /**
-     * For encoder, width of encoding, v4l2h264enc in line
-     * For decoder, v4l2h264dec, or may be 265 as well, decoder bit
-     */
-
     // GStreamer element identifiers for different video operations
     const std::vector<const char*> encoderList = {
         "v4l2h264enc",    // Hardware H.264 encoder element
+        "v4l2h265enc",    // Hardware H.265 encoder element
         "qtic2venc",      // Qualcomm C2 encoder element
     };
     const std::vector<const char*> decoderList = {
         "v4l2h264dec",    // Hardware H.264 decoder element
+        "v4l2h265dec",    // Hardware H.264 decoder element
         "qtic2vdec",      // Qualcomm C2 decoder element
     };
 
