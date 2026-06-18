@@ -10,6 +10,7 @@ SignalConfigs:
     Enable: true
     TargetsEnabled: ["qcs8300", "qcs8275", "sa7255p"]
     Permissions: ["third_party", "system"]
+    Timeout: -1
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6,7]}
@@ -33,6 +34,7 @@ SignalConfigs:
     Enable: true
     TargetsEnabled: ["qcs8300", "qcs8275", "sa7255p"]
     Permissions: ["third_party", "system"]
+    Timeout: -1
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6,7]}
@@ -56,6 +58,7 @@ SignalConfigs:
     Enable: true
     TargetsEnabled: ["qcs8300", "qcs8275", "sa7255p"]
     Permissions: ["third_party", "system"]
+    Timeout: -1
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6,7]}
@@ -75,6 +78,7 @@ SignalConfigs:
     Enable: true
     TargetsEnabled: ["qcs8300", "qcs8275", "sa7255p"]
     Permissions: ["third_party", "system"]
+    Timeout: -1
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6,7]}
@@ -97,6 +101,7 @@ SignalConfigs:
     Enable: true
     TargetsEnabled: ["qcs8300", "qcs8275", "sa7255p"]
     Permissions: ["third_party", "system"]
+    Timeout: -1
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6,7]}
@@ -119,6 +124,7 @@ SignalConfigs:
     Enable: true
     TargetsEnabled: ["qcs8300", "qcs8275", "sa7255p"]
     Permissions: ["third_party", "system"]
+    Timeout: -1
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6,7]}
@@ -142,6 +148,7 @@ SignalConfigs:
     Enable: true
     TargetsEnabled: ["qcs8300", "qcs8275", "sa7255p"]
     Permissions: ["third_party", "system"]
+    Timeout: -1
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6,7]}
