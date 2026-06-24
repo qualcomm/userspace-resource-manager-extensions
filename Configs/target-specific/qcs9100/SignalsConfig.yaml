@@ -157,3 +157,35 @@ SignalConfigs:
       - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
       - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
       - {ResCode: "RES_CGRP_MIN_MEM", Values: [4, 116631]}
+
+  # camera open tunings
+  # CPU cluster 0 Min Freq 2361600, Max Freq 2361600
+  # CPU cluster 1 Freq 2361600, Max Freq 2361600
+  - SigId: "0x1337"
+    Category: "0xea"
+    Name: "CAMERA_OPEN"
+    Enable: true
+    TargetsEnabled: ["qcs9100", "qcs9075", "sa8775p"]
+    Permissions: ["third_party", "system"]
+    Timeout: -1
+    Resources:
+      - {ResCode: "0x00040000", ResInfo: "0x00000000", Values: [2361600]}
+      - {ResCode: "0x00040001", ResInfo: "0x00000000", Values: [2361600]}
+      - {ResCode: "0x00040000", ResInfo: "0x00000100", Values: [2361600]}
+      - {ResCode: "0x00040001", ResInfo: "0x00000100", Values: [2361600]}
+
+  # camera close tunings
+  # CPU cluster 0 Min Freq 2361600, Max Freq 2361600
+  # CPU cluster 1 Freq 2361600, Max Freq 2361600
+  - SigId: "0x1338"
+    Category: "0xea"
+    Name: "CAMERA_CLOSE"
+    Enable: true
+    TargetsEnabled: ["qcs9100", "qcs9075", "sa8775p"]
+    Permissions: ["third_party", "system"]
+    Timeout: -1
+    Resources:
+      - {ResCode: "0x00040000", ResInfo: "0x00000000", Values: [2361600]}
+      - {ResCode: "0x00040001", ResInfo: "0x00000000", Values: [2361600]}
+      - {ResCode: "0x00040000", ResInfo: "0x00000100", Values: [2361600]}
+      - {ResCode: "0x00040001", ResInfo: "0x00000100", Values: [2361600]}
