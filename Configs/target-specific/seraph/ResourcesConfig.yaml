@@ -3,72 +3,7 @@
 
 ResourceConfigs:
 
-  # --- ResType 0x81 : Power Collapse / LPM ---
-
-  - ResType: "0x81"
-    ResID: "0x0000"
-    Path: "/dev/cpu_dma_latency"
-    Supported: true
-    Permissions: "third_party"
-    Modes: ["display_on", "doze"]
-    Policy: "pass_through"
-    ApplyType: "global"
-
-  - ResType: "0x81"
-    ResID: "0x0002"
-    Path: "/proc/sys/walt/sched_busy_hyst_ns"
-    Supported: true
-    Permissions: "third_party"
-    Modes: ["display_on", "doze"]
-    Policy: "pass_through"
-    ApplyType: "global"
-
-  - ResType: "0x81"
-    ResID: "0x0007"
-    Path: "/sys/devices/system/cpu/qcom_lpm/parameters/premature_ext_disabled"
-    Supported: true
-    Permissions: "third_party"
-    Modes: ["display_on", "doze"]
-    Policy: "pass_through"
-    ApplyType: "global"
-
-  - ResType: "0x81"
-    ResID: "0x0008"
-    Path: "/sys/devices/system/cpu/qcom_lpm/parameters/resi_fact"
-    Supported: true
-    Permissions: "third_party"
-    Modes: ["display_on", "doze"]
-    Policy: "pass_through"
-    ApplyType: "global"
-
-  - ResType: "0x81"
-    ResID: "0x0009"
-    Path: "/sys/devices/system/cpu/qcom_lpm/parameters/optimized_resi"
-    Supported: true
-    Permissions: "third_party"
-    Modes: ["display_on", "doze"]
-    Policy: "pass_through"
-    ApplyType: "global"
-
   # --- ResType 0x82 : CPU Frequency ---
-
-  - ResType: "0x82"
-    ResID: "0x0000"
-    Path: "/sys/kernel/msm_performance/parameters/cpu_min_freq"
-    Supported: true
-    Permissions: "third_party"
-    Modes: ["display_on", "doze"]
-    Policy: "higher_is_better"
-    ApplyType: "global"
-
-  - ResType: "0x82"
-    ResID: "0x0001"
-    Path: "/sys/kernel/msm_performance/parameters/cpu_max_freq"
-    Supported: true
-    Permissions: "third_party"
-    Modes: ["display_on", "doze"]
-    Policy: "higher_is_better"
-    ApplyType: "global"
 
   - ResType: "0x82"
     ResID: "0x0002"
@@ -82,24 +17,6 @@ ResourceConfigs:
   - ResType: "0x82"
     ResID: "0x0003"
     Path: "/sys/devices/system/cpu/cpufreq/policy0/walt/adaptive_high_freq"
-    Supported: true
-    Permissions: "third_party"
-    Modes: ["display_on", "doze"]
-    Policy: "pass_through"
-    ApplyType: "cluster"
-
-  - ResType: "0x82"
-    ResID: "0x0004"
-    Path: "/sys/devices/system/cpu/cpufreq/policy0/scaling_min_freq"
-    Supported: true
-    Permissions: "third_party"
-    Modes: ["display_on", "doze"]
-    Policy: "higher_is_better"
-    ApplyType: "cluster"
-
-  - ResType: "0x82"
-    ResID: "0x0007"
-    Path: "/sys/devices/system/cpu/cpufreq/policy%d/walt/zone_max_util_pct"
     Supported: true
     Permissions: "third_party"
     Modes: ["display_on", "doze"]
