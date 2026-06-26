@@ -278,22 +278,38 @@ int32_t PostProcessingBlock::fetchUsecaseDetails(int32_t pid,
         "v4l2h265enc",    // Hardware H.265 encoder element
         "qtic2venc",      // Qualcomm C2 encoder element
     };
+
     const std::vector<const char*> decoderList = {
         "v4l2h264dec",    // Hardware H.264 decoder element
         "v4l2h265dec",    // Hardware H.264 decoder element
         "qtic2vdec",      // Qualcomm C2 decoder element
     };
 
-    const char* qmmSrcStr       = "qtiqmmfsrc";     // Qualcomm multimedia source element
-    const char* namePrefix      = "name=";          // GStreamer element name attribute
-    const char* defaultName     = "camsrc";         // Default camera source name
-    const char* frameRatePrefix = "framerate=";     // GStreamer frame rate attribute
+    const std::vector<const char*> mmSrcList = {
+        "qtiqmmfsrc",    // Qualcomm multimedia source element
+        "libcamerasrc",  // Upstream multimedia source element
+    };
+
+    const char* namePrefix      = "name=";        // GStreamer element name attribute
+    const char* defaultName     = "camsrc";       // Default camera source name
+    const char* frameRatePrefix = "framerate=";   // GStreamer frame rate attribute
+
+    // Check which source element is in use
+    uint32_t srcElement = 0;
+    for (size_t i = 0; i < mmSrcList.size(); i++) {
+        const char* src = mmSrcList[i];
+        if (strstr(buf, src) != nullptr) {
+            srcElement = i + 1;
+            break;
+        }
+    }
 
     // Extract frame rate once; used by encoder and preview paths.
     *extraArgs = new uint32_t[SIGNAL_EXTRA_ATTRS_COUNT];
     (*extraArgs)[SIGNAL_EXTRA_ATTR_FPS] = extractFrameRate(buf, frameRatePrefix);
     (*extraArgs)[SIGNAL_EXTRA_ATTR_HEIGHT] = extractHeight(buf);
     (*extraArgs)[SIGNAL_EXTRA_ATTR_WIDTH] = extractWidth(buf);
+    (*extraArgs)[SIGNAL_EXTRA_ATTR_SRC_ELEMENT] = srcElement;
 
     LOGD("CAM_BLOCK", "Printing Query Stats");
     LOGD("CAM_BLOCK", "fps=" + std::to_string((*extraArgs)[SIGNAL_EXTRA_ATTR_FPS]));
@@ -342,7 +358,7 @@ int32_t PostProcessingBlock::fetchUsecaseDetails(int32_t pid,
     }
 
     // Check for preview
-    if(strstr(buf, qmmSrcStr) != nullptr) {
+    if(srcElement > 0) {
         sigId = URM_SIG_CAMERA_PREVIEW;
         return 0;
     }
