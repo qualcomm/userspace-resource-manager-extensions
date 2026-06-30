@@ -123,7 +123,7 @@ SignalConfigs:
       - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_PLUS_ALL_CORES", Values: [806400]}
 
   # Camera encode
-  # Default encode - 4k 30fps case
+  # Default encode - 4k 30fps case for qtiqmmfsrc source
   - SigId: "0x0003"
     Category: "0x03"
     Name: "URM_SIG_CAMERA_ENCODE"
@@ -135,6 +135,7 @@ SignalConfigs:
       - Fps: 30
       - Height: 2160
       - Width: 3840
+      - MmSrc: "qtiqmmfsrc"
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6]}
@@ -149,6 +150,25 @@ SignalConfigs:
       - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [410]}
       - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_LITTLE_ALL_CORES", Values: [806400]}
       - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_BIG_ALL_CORES", Values: [940800]}
+      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_PLUS_ALL_CORES", Values: [806400]}
+
+  # Camera encode
+  # Default encode - 4k 30fps case for libcamerasrc source
+  - SigId: "0x0003"
+    Category: "0x03"
+    Name: "URM_SIG_CAMERA_ENCODE"
+    Enable: true
+    TargetsEnabled: ["qcm6490", "qcs6490"]
+    Permissions: ["third_party", "system"]
+    Timeout: -1
+    ExtraAttrs:
+      - Fps: 30
+      - Height: 2160
+      - Width: 3840
+      - MmSrc: "libcamerasrc"
+    Resources:
+      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_LITTLE_ALL_CORES", Values: [1804800]}
+      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_BIG_ALL_CORES", Values: [2400000]}
       - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_PLUS_ALL_CORES", Values: [806400]}
 
   # camera encode multi-stream
