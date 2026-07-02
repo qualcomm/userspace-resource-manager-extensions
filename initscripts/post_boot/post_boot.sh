@@ -83,6 +83,12 @@ if [ -n "$machine" ]; then
         qcs8845)
             machine="alorp"
             ;;
+        *hamoa*)
+            machine="hamoa"
+            ;;
+        *purwa*)
+            machine="purwa"
+            ;;
         *)
             # Empty default case
             ;;
