@@ -39,6 +39,12 @@ if [ -f /sys/devices/soc0/machine ]; then
         qcs6490)
             machine="qcm6490"
             ;;
+        *hamoa*)
+            machine="hamoa"
+            ;;
+        *purwa*)
+            machine="purwa"
+            ;;
         *)
             # Empty default case
             ;;
