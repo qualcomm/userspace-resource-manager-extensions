@@ -2,11 +2,41 @@
 # Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
-check_and_execute() {
-    script_path="$1"
-    if [ -x "$script_path" ]; then
-        "$script_path"
+get_machine() {
+    DEVICE_NAME_PATH="/sys/devices/soc0/machine"
+    TARGET_CONF_DIR="/etc/urm/target/"
+    DT_COMPATIBLE="/proc/device-tree/compatible"
+
+    name=""
+
+    # Try /sys/devices/soc0/machine
+    if [ -f "$DEVICE_NAME_PATH" ]; then
+        read -r name < "$DEVICE_NAME_PATH"
+        name=$(echo "$name" | tr '[:upper:]' '[:lower:]')
+        if echo "$name" | grep -qE '^[[:alnum:]]+$'; then
+            echo "$name"
+            return 0
+        fi
     fi
+
+    # Fall back to /proc/device-tree/compatible.
+    if [ -f "$DT_COMPATIBLE" ]; then
+        name=$(tr '\0' '\n' < "$DT_COMPATIBLE" | while read -r token; do
+            case "$token" in
+                *,*)
+                    candidate="${token#*,}"
+                    candidate=$(echo "$candidate" | tr '[:upper:]' '[:lower:]')
+                    if [ -e "${TARGET_CONF_DIR}${candidate}" ]; then
+                        echo "$candidate"
+                        break
+                    fi
+                    ;;
+            esac
+        done)
+    fi
+
+    echo "$name"
+    return 0
 }
 
 get_ram_mb() {
@@ -18,6 +48,13 @@ get_ram_mb() {
     export RAM_MB
 }
 
+check_and_execute() {
+    script_path="$1"
+    if [ -x "$script_path" ]; then
+        "$script_path"
+    fi
+}
+
 get_ram_mb
 
 POST_BOOT_DIR="/etc/urm/initscripts/post_boot"
@@ -27,17 +64,24 @@ script="$POST_BOOT_DIR/post_boot_common.sh"
 check_and_execute "$script"
 
 # Check if there exists any target-specific post boot script
-if [ -f /sys/devices/soc0/machine ]; then
-    machine=$(cat /sys/devices/soc0/machine 2>/dev/null | tr '[:upper:]' '[:lower:]')
+machine=$(get_machine)
+if [ -n "$machine" ]; then
+    #below only needed for variants of the targets, if any
     case "$machine" in
         sa8775p)
             machine="qcs9100"
             ;;
-        sa7255p)
+        sa7255p|qcs8275)
             machine="qcs8300"
             ;;
         qcs6490)
             machine="qcm6490"
+            ;;
+        cq2390s|iq2390s)
+            machine="cq2390m"
+            ;;
+        qcs8845)
+            machine="alorp"
             ;;
         *)
             # Empty default case

@@ -8,15 +8,15 @@ SignalConfigs:
     Category: "0x03"
     Name: "URM_SIG_VIDEO_DECODE"
     Enable: true
-    TargetsEnabled: ["qcm6490", "qcs6490"]
+    TargetsEnabled: ["glymur", "glymur-crd"]
     Permissions: ["third_party", "system"]
     Timeout: -1
     Resources:
-      - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
-      - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6]}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3,4,5]}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 0,1,2,3,4,5]}
       - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [3, 90]}
       - {ResCode: "RES_CGRP_HIGH_MEM", Values: [3, 1048576]}
-      - {ResCode: "RES_CGRP_RUN_CORES", Values: [4, 0,1,2,3,4,5,6]}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [4, 6,7,8,9,10,11]}
       - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [4, 150]}
       - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
       - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
@@ -33,15 +33,15 @@ SignalConfigs:
     Type: 5
     Name: "URM_SIG_VIDEO_DECODE"
     Enable: true
-    TargetsEnabled: ["qcm6490", "qcs6490"]
+    TargetsEnabled: ["glymur", "glymur-crd"]
     Permissions: ["third_party", "system"]
     Timeout: -1
     Resources:
-      - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
-      - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6]}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3,4,5]}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 0,1,2,3,4,5]}
       - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [3, 90]}
       - {ResCode: "RES_CGRP_HIGH_MEM", Values: [3, 1048576]}
-      - {ResCode: "RES_CGRP_RUN_CORES", Values: [4, 0,1,2,3,4,5,6]}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [4, 6,7,8,9,10,11]}
       - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [4, 150]}
       - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
       - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
@@ -50,7 +50,7 @@ SignalConfigs:
       - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [307]}
       - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_LITTLE_ALL_CORES", Values: [940800]}
       - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_BIG_ALL_CORES", Values: [1228800]}
-      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_PLUS_ALL_CORES", Values: [806400]}
+      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_PLUS_ALL_CORES", Values: [1228800]}
 
   # Video decode
   # Decode 20+ concurrent sessions
@@ -58,15 +58,15 @@ SignalConfigs:
     Type: 20
     Name: "URM_SIG_VIDEO_DECODE"
     Enable: true
-    TargetsEnabled: ["qcm6490", "qcs6490"]
+    TargetsEnabled: ["glymur", "glymur-crd"]
     Permissions: ["third_party", "system"]
     Timeout: -1
     Resources:
-      - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
-      - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6,7]}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3,4,5]}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 0,1,2,3,4,5]}
       - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [3, 90]}
       - {ResCode: "RES_CGRP_HIGH_MEM", Values: [3, 1048576]}
-      - {ResCode: "RES_CGRP_RUN_CORES", Values: [4, 0,1,2,3,4,5,6,7]}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [4, 6,7,8,9,10,11]}
       - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [4, 150]}
       - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
       - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
@@ -78,15 +78,15 @@ SignalConfigs:
     Category: "0x03"
     Name: "URM_SIG_CAMERA_PREVIEW"
     Enable: true
-    TargetsEnabled: ["qcm6490", "qcs6490"]
+    TargetsEnabled: ["glymur", "glymur-crd"]
     Permissions: ["third_party", "system"]
     Timeout: -1
     Resources:
-      - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
-      - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6]}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3,4,5]}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 0,1,2,3,4,5]}
       - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [3, 90]}
       - {ResCode: "RES_CGRP_HIGH_MEM", Values: [3, 1048576]}
-      - {ResCode: "RES_CGRP_RUN_CORES", Values: [4, 0,1,2,3,4,5,6]}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [4, 6,7,8,9,10,11]}
       - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [4, 150]}
       - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
       - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
@@ -103,15 +103,15 @@ SignalConfigs:
     Category: "0x03"
     Name: "URM_SIG_CAMERA_ENCODE"
     Enable: true
-    TargetsEnabled: ["qcm6490", "qcs6490"]
+    TargetsEnabled: ["glymur", "glymur-crd"]
     Permissions: ["third_party", "system"]
     Timeout: -1
     Resources:
-      - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
-      - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6]}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3,4,5]}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 0,1,2,3,4,5]}
       - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [3, 90]}
       - {ResCode: "RES_CGRP_HIGH_MEM", Values: [3, 1048576]}
-      - {ResCode: "RES_CGRP_RUN_CORES", Values: [4, 0,1,2,3,4,5,6]}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [4, 6,7,8,9,10,11]}
       - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [4, 150]}
       - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
       - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
@@ -120,28 +120,27 @@ SignalConfigs:
       - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [153]}
       - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_LITTLE_ALL_CORES", Values: [806400]}
       - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_BIG_ALL_CORES", Values: [940800]}
-      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_PLUS_ALL_CORES", Values: [806400]}
+      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_PLUS_ALL_CORES", Values: [940800]}
 
   # Camera encode
-  # Default encode - 4k 30fps case for qtiqmmfsrc source
+  # Default encode - 4k 30fps case
   - SigId: "0x0003"
     Category: "0x03"
     Name: "URM_SIG_CAMERA_ENCODE"
     Enable: true
-    TargetsEnabled: ["qcm6490", "qcs6490"]
+    TargetsEnabled: ["glymur", "glymur-crd"]
     Permissions: ["third_party", "system"]
     Timeout: -1
     ExtraAttrs:
       - Fps: 30
       - Height: 2160
       - Width: 3840
-      - MmSrc: "qtiqmmfsrc"
     Resources:
-      - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
-      - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6]}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3,4,5]}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 0,1,2,3,4,5]}
       - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [3, 90]}
       - {ResCode: "RES_CGRP_HIGH_MEM", Values: [3, 1048576]}
-      - {ResCode: "RES_CGRP_RUN_CORES", Values: [4, 0,1,2,3,4,5,6]}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [4, 6,7,8,9,10,11]}
       - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [4, 150]}
       - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
       - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
@@ -150,26 +149,7 @@ SignalConfigs:
       - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [410]}
       - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_LITTLE_ALL_CORES", Values: [806400]}
       - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_BIG_ALL_CORES", Values: [940800]}
-      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_PLUS_ALL_CORES", Values: [806400]}
-
-  # Camera encode
-  # Default encode - 4k 30fps case for libcamerasrc source
-  - SigId: "0x0003"
-    Category: "0x03"
-    Name: "URM_SIG_CAMERA_ENCODE"
-    Enable: true
-    TargetsEnabled: ["qcm6490", "qcs6490"]
-    Permissions: ["third_party", "system"]
-    Timeout: -1
-    ExtraAttrs:
-      - Fps: 30
-      - Height: 2160
-      - Width: 3840
-      - MmSrc: "libcamerasrc"
-    Resources:
-      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_LITTLE_ALL_CORES", Values: [1804800]}
-      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_BIG_ALL_CORES", Values: [2400000]}
-      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_PLUS_ALL_CORES", Values: [806400]}
+      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_PLUS_ALL_CORES", Values: [940800]}
 
   # camera encode multi-stream
   # encode (0-12 streams) [sigtype : 0 for normal load (<12 stream)]
@@ -178,15 +158,15 @@ SignalConfigs:
     SigType: 0
     Name: "URM_SIG_CAMERA_ENCODE_MULTI_STREAMS"
     Enable: true
-    TargetsEnabled: ["qcm6490", "qcs6490"]
+    TargetsEnabled: ["glymur", "glymur-crd"]
     Permissions: ["third_party", "system"]
     Timeout: -1
     Resources:
-      - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
-      - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6]}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3,4,5]}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 0,1,2,3,4,5]}
       - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [3, 90]}
       - {ResCode: "RES_CGRP_HIGH_MEM", Values: [3, 1048576]}
-      - {ResCode: "RES_CGRP_RUN_CORES", Values: [4, 0,1,2,3,4,5,6]}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [4, 6,7,8,9,10,11]}
       - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [4, 150]}
       - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
       - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
@@ -195,7 +175,7 @@ SignalConfigs:
       - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [410]}
       - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_LITTLE_ALL_CORES", Values: [806400]}
       - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_BIG_ALL_CORES", Values: [940800]}
-      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_PLUS_ALL_CORES", Values: [806400]}
+      - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_PLUS_ALL_CORES", Values: [940800]}
 
   # camera encode multi-stream
   # encode (12+ streams) [sigtype : 13 for high load (>12 stream)]
@@ -204,68 +184,18 @@ SignalConfigs:
     SigType: 13
     Name: "URM_SIG_CAMERA_ENCODE_MULTI_STREAMS"
     Enable: true
-    TargetsEnabled: ["qcm6490", "qcs6490"]
+    TargetsEnabled: ["glymur", "glymur-crd"]
     Permissions: ["third_party", "system"]
     Timeout: -1
     Resources:
-      - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
-      - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6]}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3,4,5]}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 0,1,2,3,4,5]}
       - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [3, 90]}
       - {ResCode: "RES_CGRP_HIGH_MEM", Values: [3, 1048576]}
-      - {ResCode: "RES_CGRP_RUN_CORES", Values: [4, 0,1,2,3,4,5,6]}
+      - {ResCode: "RES_CGRP_RUN_CORES", Values: [4, 6,7,8,9,10,11]}
       - {ResCode: "RES_CGRP_REL_CPU_WEIGHT", Values: [4, 150]}
       - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
       - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
       - {ResCode: "RES_CGRP_MIN_MEM", Values: [4, 116631]}
       - {ResCode: "RES_SCHED_UTIL_CLAMP_MIN", Values: [0]}
       - {ResCode: "RES_SCHED_UTIL_CLAMP_MAX", Values: [716]}
-
-  # camera 30fps encode
-  # CPU Min Freq 940800, Max Freq 1804800
-  - SigId: "0x1331"
-    Category: "0xea"
-    Name: "CAMERA_30fps_ENCODE"
-    Enable: true
-    TargetsEnabled: ["qcm6490", "qcs6490"]
-    Permissions: ["third_party", "system"]
-    Timeout: -1
-    Resources:
-      - {ResCode: "0x00040000", ResInfo: "0x00000000", Values: [940800]}
-      - {ResCode: "0x00040001", ResInfo: "0x00000000", Values: [1804800]}
-
-  # camera HFR
-  # CPU CORE 0 Min freq to 1.152Ghz
-  - SigId: "0x1333"
-    Category: "0xea"
-    Name: "CAMERA_HFR"
-    Enable: true
-    TargetsEnabled: ["qcm6490", "qcs6490"]
-    Permissions: ["third_party", "system"]
-    Timeout: -1
-    Resources:
-      - {ResCode: "0x00040000", ResInfo: "0x00000000", Values: [1152000]}
-
-  # HFR 480fps
-  # CPU CORE 0 Min freq to 1.152Ghz
-  - SigId: "0x1334"
-    Category: "0xea"
-    Name: "CAMERA_HFR_480fps"
-    Enable: true
-    TargetsEnabled: ["qcm6490", "qcs6490"]
-    Permissions: ["third_party", "system"]
-    Timeout: -1
-    Resources:
-      - {ResCode: "0x00040000", ResInfo: "0x00000000", Values: [1152000]}
-
-  # camera 30fps encode
-  # CPU Min Freq 940800, Max Freq 1804800
-  - SigId: "0x1336"
-    Category: "0xea"
-    Name: "MULTI_CAMERA_30fps"
-    Enable: true
-    TargetsEnabled: ["qcm6490", "qcs6490"]
-    Permissions: ["third_party", "system"]
-    Timeout: -1
-    Resources:
-      - {ResCode: "0x00040000", ResInfo: "0x00000000", Values: [940800]}
-      - {ResCode: "0x00040001", ResInfo: "0x00000000", Values: [1804800]}
