@@ -17,6 +17,15 @@ target_include_directories(UrmPlugin PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Extensi
 # install to standard /usr/lib or /lib
 install(TARGETS UrmPlugin DESTINATION ${CMAKE_INSTALL_LIBDIR}/urm/)
 
+# Install the extension "UrmRelayFeat.so" lib
+file(GLOB SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/Relay/*.cpp")
+add_library(UrmRelayFeat ${SOURCES})
+set_target_properties(UrmRelayFeat PROPERTIES VERSION 1.0.0 SOVERSION 1)
+target_link_libraries(UrmRelayFeat UrmExtAPIs RestuneCore UrmAuxUtils)
+target_include_directories(UrmRelayFeat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Relay/Include)
+# install to standard /usr/lib or /lib
+install(TARGETS UrmRelayFeat DESTINATION ${CMAKE_INSTALL_LIBDIR}/)
+
 # Install the configs to /etc/urm/custom
 file(GLOB pluginConfigs "${CMAKE_CURRENT_SOURCE_DIR}/Configs/*.yaml")
 install(
