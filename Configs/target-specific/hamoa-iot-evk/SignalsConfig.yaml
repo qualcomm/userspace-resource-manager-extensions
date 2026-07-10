@@ -17,7 +17,7 @@ SignalConfigs:
     SigType: 0
     Name: "URM_SIG_VIDEO_DECODE"
     Enable: true
-    TargetsEnabled: ["hamoa"]
+    TargetsEnabled: ["hamoa-iot-evk"]
     Permissions: ["third_party", "system"]
     Timeout: -1
     Resources:
@@ -41,7 +41,7 @@ SignalConfigs:
     SigType: 5
     Name: "URM_SIG_VIDEO_DECODE"
     Enable: true
-    TargetsEnabled: ["hamoa"]
+    TargetsEnabled: ["hamoa-iot-evk"]
     Permissions: ["third_party", "system"]
     Timeout: -1
     Resources:
@@ -65,7 +65,7 @@ SignalConfigs:
     SigType: 20
     Name: "URM_SIG_VIDEO_DECODE"
     Enable: true
-    TargetsEnabled: ["hamoa"]
+    TargetsEnabled: ["hamoa-iot-evk"]
     Permissions: ["third_party", "system"]
     Timeout: -1
     Resources:
@@ -85,7 +85,7 @@ SignalConfigs:
     Category: "0x03"
     Name: "URM_SIG_CAMERA_PREVIEW"
     Enable: true
-    TargetsEnabled: ["hamoa"]
+    TargetsEnabled: ["hamoa-iot-evk"]
     Permissions: ["third_party", "system"]
     Timeout: -1
     Resources:
@@ -108,7 +108,7 @@ SignalConfigs:
     Category: "0x03"
     Name: "URM_SIG_CAMERA_ENCODE"
     Enable: true
-    TargetsEnabled: ["hamoa"]
+    TargetsEnabled: ["hamoa-iot-evk"]
     Permissions: ["third_party", "system"]
     Timeout: -1
     Resources:
@@ -132,7 +132,7 @@ SignalConfigs:
     SigType: 0
     Name: "URM_SIG_CAMERA_ENCODE_MULTI_STREAMS"
     Enable: true
-    TargetsEnabled: ["hamoa"]
+    TargetsEnabled: ["hamoa-iot-evk"]
     Permissions: ["third_party", "system"]
     Timeout: -1
     Resources:
@@ -156,7 +156,7 @@ SignalConfigs:
     SigType: 13
     Name: "URM_SIG_CAMERA_ENCODE_MULTI_STREAMS"
     Enable: true
-    TargetsEnabled: ["hamoa"]
+    TargetsEnabled: ["hamoa-iot-evk"]
     Permissions: ["third_party", "system"]
     Timeout: -1
     Resources:
