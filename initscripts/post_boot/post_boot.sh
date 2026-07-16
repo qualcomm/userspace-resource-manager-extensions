@@ -83,11 +83,11 @@ if [ -n "$machine" ]; then
         qcs8845)
             machine="alorp"
             ;;
-        *hamoa*)
-            machine="hamoa"
+        hamoa-iot-som|x1e80100)
+            machine="hamoa-iot-evk"
             ;;
-        *purwa*)
-            machine="purwa"
+        purwa-iot-som|x1p42100)
+            machine="purwa-iot-evk"
             ;;
         *)
             # Empty default case
