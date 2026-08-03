@@ -13,10 +13,21 @@ ResourceConfigs:
     Policy: "higher_is_better"
     ApplyType: "global"
 
+  - ResType: "0x0c"
+    ResID: "0x0002"
+    Name: "RES_L3_BOOST_FREQ"
+    Path: "/sys/devices/system/cpu/bus_dcvs/L3/boost_freq"
+    Supported: true
+    LowThreshold: 0
+    Permissions: "third_party"
+    Modes: ["display_on", "doze"]
+    Policy: "higher_is_better"
+    ApplyType: "global"
+
   - ResType: "0x8a"
     ResID: "0x0000"
     Name: "RES_DDR_BWMON_SAMPLE_MS"
-    Path: "/sys/devices/system/cpu/bus_dcvs/LLCC/*.qcom,bwmon-llcc-prime/sample_ms"
+    Path: "/sys/devices/system/cpu/bus_dcvs/LLCC/*.qcom,bwmon-llcc/sample_ms"
     Supported: true
     Permissions: "third_party"
     Modes: ["display_on", "doze"]
@@ -26,7 +37,7 @@ ResourceConfigs:
   - ResType: "0x8a"
     ResID: "0x0001"
     Name: "RES_DDR_BWMON_IO_PCT"
-    Path: "/sys/devices/system/cpu/bus_dcvs/LLCC/*.qcom,bwmon-llcc-prime/io_percent"
+    Path: "/sys/devices/system/cpu/bus_dcvs/LLCC/*.qcom,bwmon-llcc/io_percent"
     Supported: true
     Permissions: "third_party"
     Modes: ["display_on", "doze"]
@@ -36,7 +47,7 @@ ResourceConfigs:
   - ResType: "0x8a"
     ResID: "0x0002"
     Name: "RES_DDR_BWMON_HYST_LEN"
-    Path: "/sys/devices/system/cpu/bus_dcvs/LLCC/*.qcom,bwmon-llcc-prime/hyst_length"
+    Path: "/sys/devices/system/cpu/bus_dcvs/LLCC/*.qcom,bwmon-llcc/hyst_length"
     Supported: true
     Permissions: "third_party"
     Modes: ["display_on", "doze"]
@@ -55,7 +66,7 @@ ResourceConfigs:
 
   - ResType: "0x8a"
     ResID: "0x0004"
-    Name: "RES_DDR_BWMON_SAMPLE_MS"
+    Name: "RES_DDR_BWMON_MIN_FREQ"
     Path: "/sys/devices/system/cpu/bus_dcvs/DDR/*.qcom,bwmon-ddr/min_freq"
     Supported: true
     Permissions: "third_party"
@@ -134,7 +145,7 @@ ResourceConfigs:
     ApplyType: "core"
 
   - ResType: "0x8a"
-    ResID: "0x000c
+    ResID: "0x000c"
     Name: "RES_WALT_CGRP_UP_DOWN"
     Path: "/proc/sys/walt/cluster%d/sched_other_cgroup_updownmigrate"
     Supported: true
@@ -161,4 +172,34 @@ ResourceConfigs:
     Permissions: "third_party"
     Modes: ["display_on", "doze"]
     Policy: "pass_through"
+    ApplyType: "global"
+
+  - ResType: "0x8a"
+    ResID: "0x000f"
+    Name: "RES_WALT_UPMIGRATE"
+    Path: "/proc/sys/walt/sched_upmigrate"
+    Supported: true
+    Permissions: "third_party"
+    Modes: ["display_on", "doze"]
+    Policy: "instant_apply"
+    ApplyType: "global"
+
+  - ResType: "0x8a"
+    ResID: "0x0010"
+    Name: "RES_WALT_DOWNMIGRATE"
+    Path: "/proc/sys/walt/sched_downmigrate"
+    Supported: true
+    Permissions: "third_party"
+    Modes: ["display_on", "doze"]
+    Policy: "instant_apply"
+    ApplyType: "global"
+
+  - ResType: "0x8a"
+    ResID: "0x0011"
+    Name: "RES_LLCC_BWMON_MAX_FREQ"
+    Path: "/sys/devices/system/cpu/bus_dcvs/LLCC/*.qcom,bwmon-llcc/max_freq"
+    Supported: true
+    Permissions: "third_party"
+    Modes: ["display_on", "doze"]
+    Policy: "instant_apply"
     ApplyType: "global"
