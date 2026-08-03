@@ -8,8 +8,9 @@ SignalConfigs:
     Category: "0x03"
     Name: "URM_SIG_VIDEO_DECODE"
     Enable: true
-    TargetsEnabled: ["qcs8300"]
+    TargetsEnabled: ["qcs8300", "qcs8275", "sa7255p"]
     Permissions: ["third_party", "system"]
+    Timeout: -1
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6,7]}
@@ -31,8 +32,9 @@ SignalConfigs:
     Type: 5
     Name: "URM_SIG_VIDEO_DECODE"
     Enable: true
-    TargetsEnabled: ["qcs8300"]
+    TargetsEnabled: ["qcs8300", "qcs8275", "sa7255p"]
     Permissions: ["third_party", "system"]
+    Timeout: -1
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6,7]}
@@ -54,8 +56,9 @@ SignalConfigs:
     Type: 20
     Name: "URM_SIG_VIDEO_DECODE"
     Enable: true
-    TargetsEnabled: ["qcs8300"]
+    TargetsEnabled: ["qcs8300", "qcs8275", "sa7255p"]
     Permissions: ["third_party", "system"]
+    Timeout: -1
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6,7]}
@@ -73,8 +76,9 @@ SignalConfigs:
     Category: "0x03"
     Name: "URM_SIG_CAMERA_PREVIEW"
     Enable: true
-    TargetsEnabled: ["qcs8300"]
+    TargetsEnabled: ["qcs8300", "qcs8275", "sa7255p"]
     Permissions: ["third_party", "system"]
+    Timeout: -1
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6,7]}
@@ -95,8 +99,9 @@ SignalConfigs:
     Category: "0x03"
     Name: "URM_SIG_CAMERA_ENCODE"
     Enable: true
-    TargetsEnabled: ["qcs8300"]
+    TargetsEnabled: ["qcs8300", "qcs8275", "sa7255p"]
     Permissions: ["third_party", "system"]
+    Timeout: -1
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6,7]}
@@ -117,8 +122,9 @@ SignalConfigs:
     Category: "0x03"
     Name: URM_SIG_CAMERA_ENCODE_MULTI_STREAMS
     Enable: true
-    TargetsEnabled: ["qcs8300"]
+    TargetsEnabled: ["qcs8300", "qcs8275", "sa7255p"]
     Permissions: ["third_party", "system"]
+    Timeout: -1
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6,7]}
@@ -133,15 +139,16 @@ SignalConfigs:
       - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_BIG_ALL_CORES", Values: [1500000]}
       - {ResCode: "RES_SCALE_MAX_FREQ", ResInfo: "CLUSTER_PLUS_ALL_CORES", Values: [1500000]}
 
-# camera encode multi-stream
-# encode (12+ streams)
+  # camera encode multi-stream
+  # encode (12+ streams)
   - SigId: "0x0004"
     Category: "0x03"
     Type: 12
     Name: URM_SIG_CAMERA_ENCODE_MULTI_STREAMS
     Enable: true
-    TargetsEnabled: ["qcs8300"]
+    TargetsEnabled: ["qcs8300", "qcs8275", "sa7255p"]
     Permissions: ["third_party", "system"]
+    Timeout: -1
     Resources:
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [2, 0,1,2,3]}
       - {ResCode: "RES_CGRP_RUN_CORES", Values: [3, 4,5,6,7]}
@@ -152,3 +159,41 @@ SignalConfigs:
       - {ResCode: "RES_CGRP_CPU_LATENCY", Values: [4, -20]}
       - {ResCode: "RES_CGRP_LOW_MEM", Values: [4, 507256]}
       - {ResCode: "RES_CGRP_MIN_MEM", Values: [4, 116631]}
+
+  # camera open tunings
+  # CPU cluster Silver(Little) Min Freq 1958400 KHz, Max Freq 1958400 KHz
+  # CPU cluster Gold(Big) Min Freq 2112000 KHz, Max Freq 2112000 KHz
+  # CPU cluster Gold_plus(Prime) Min Freq 2361600 KHz, Max Freq 2361600 KHz
+  - SigId: "0x1337"
+    Category: "0xea"
+    Name: "CAMERA_OPEN"
+    Enable: true
+    TargetsEnabled: ["qcs8300", "qcs8275", "sa7255p"]
+    Permissions: ["third_party", "system"]
+    Timeout: -1
+    Resources:
+      - {ResCode: "0x00040000", ResInfo: "0x00000000", Values: [1958400]}
+      - {ResCode: "0x00040001", ResInfo: "0x00000000", Values: [1958400]}
+      - {ResCode: "0x00040000", ResInfo: "0x00000100", Values: [2112000]}
+      - {ResCode: "0x00040001", ResInfo: "0x00000100", Values: [2112000]}
+      - {ResCode: "0x00040000", ResInfo: "0x00000200", Values: [2361600]}
+      - {ResCode: "0x00040001", ResInfo: "0x00000200", Values: [2361600]}
+
+  # camera close tunings
+  # CPU cluster Silver(Little) Min Freq 1958400 KHz, Max Freq 1958400 KHz
+  # CPU cluster Gold(Big) Min Freq 2112000 KHz, Max Freq 2112000 KHz
+  # CPU cluster Gold_plus(Prime) Min Freq 2361600 KHz, Max Freq 2361600 KHz
+  - SigId: "0x1338"
+    Category: "0xea"
+    Name: "CAMERA_CLOSE"
+    Enable: true
+    TargetsEnabled: ["qcs8300", "qcs8275", "sa7255p"]
+    Permissions: ["third_party", "system"]
+    Timeout: -1
+    Resources:
+      - {ResCode: "0x00040000", ResInfo: "0x00000000", Values: [1958400]}
+      - {ResCode: "0x00040001", ResInfo: "0x00000000", Values: [1958400]}
+      - {ResCode: "0x00040000", ResInfo: "0x00000100", Values: [2112000]}
+      - {ResCode: "0x00040001", ResInfo: "0x00000100", Values: [2112000]}
+      - {ResCode: "0x00040000", ResInfo: "0x00000200", Values: [2361600]}
+      - {ResCode: "0x00040001", ResInfo: "0x00000200", Values: [2361600]}

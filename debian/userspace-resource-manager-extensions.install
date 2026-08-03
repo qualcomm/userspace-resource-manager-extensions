@@ -1,3 +1,0 @@
-etc/urm/target/*
-etc/urm/initscripts/post_boot/*.sh
-usr/lib/*/urm/*.so*

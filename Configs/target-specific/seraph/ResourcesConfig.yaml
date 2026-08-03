@@ -1,0 +1,164 @@
+# Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+
+ResourceConfigs:
+  - ResType: "0x0c"
+    ResID: "0x0000"
+    Name: "RES_DDR_BOOST_FREQ"
+    Path: "/sys/devices/system/cpu/bus_dcvs/DDR/boost_freq"
+    Supported: true
+    LowThreshold: 0
+    Permissions: "third_party"
+    Modes: ["display_on", "doze"]
+    Policy: "higher_is_better"
+    ApplyType: "global"
+
+  - ResType: "0x8a"
+    ResID: "0x0000"
+    Name: "RES_DDR_BWMON_SAMPLE_MS"
+    Path: "/sys/devices/system/cpu/bus_dcvs/LLCC/*.qcom,bwmon-llcc-prime/sample_ms"
+    Supported: true
+    Permissions: "third_party"
+    Modes: ["display_on", "doze"]
+    Policy: "instant_apply"
+    ApplyType: "global"
+
+  - ResType: "0x8a"
+    ResID: "0x0001"
+    Name: "RES_DDR_BWMON_IO_PCT"
+    Path: "/sys/devices/system/cpu/bus_dcvs/LLCC/*.qcom,bwmon-llcc-prime/io_percent"
+    Supported: true
+    Permissions: "third_party"
+    Modes: ["display_on", "doze"]
+    Policy: "instant_apply"
+    ApplyType: "global"
+
+  - ResType: "0x8a"
+    ResID: "0x0002"
+    Name: "RES_DDR_BWMON_HYST_LEN"
+    Path: "/sys/devices/system/cpu/bus_dcvs/LLCC/*.qcom,bwmon-llcc-prime/hyst_length"
+    Supported: true
+    Permissions: "third_party"
+    Modes: ["display_on", "doze"]
+    Policy: "instant_apply"
+    ApplyType: "global"
+
+  - ResType: "0x8a"
+    ResID: "0x0003"
+    Name: "RES_DDR_BWMON_SAMPLE_MS"
+    Path: "/sys/devices/system/cpu/bus_dcvs/DDR/*.qcom,bwmon-ddr/sample_ms"
+    Supported: true
+    Permissions: "third_party"
+    Modes: ["display_on", "doze"]
+    Policy: "instant_apply"
+    ApplyType: "global"
+
+  - ResType: "0x8a"
+    ResID: "0x0004"
+    Name: "RES_DDR_BWMON_SAMPLE_MS"
+    Path: "/sys/devices/system/cpu/bus_dcvs/DDR/*.qcom,bwmon-ddr/min_freq"
+    Supported: true
+    Permissions: "third_party"
+    Modes: ["display_on", "doze"]
+    Policy: "instant_apply"
+    ApplyType: "global"
+
+  - ResType: "0x8a"
+    ResID: "0x0005"
+    Name: "RES_DDR_BWMON_IO_PCT"
+    Path: "/sys/devices/system/cpu/bus_dcvs/DDR/*.qcom,bwmon-ddr/io_percent"
+    Supported: true
+    Permissions: "third_party"
+    Modes: ["display_on", "doze"]
+    Policy: "instant_apply"
+    ApplyType: "global"
+
+  - ResType: "0x8a"
+    ResID: "0x0006"
+    Name: "RES_DDR_BWMON_HYST_LEN"
+    Path: "/sys/devices/system/cpu/bus_dcvs/DDR/*.qcom,bwmon-ddr/hyst_length"
+    Supported: true
+    Permissions: "third_party"
+    Modes: ["display_on", "doze"]
+    Policy: "instant_apply"
+    ApplyType: "global"
+
+  - ResType: "0x8a"
+    ResID: "0x0007"
+    Name: "RES_WALT_IDLE_ENOUGH"
+    Path: "/proc/sys/walt/sched_idle_enough"
+    Supported: true
+    Permissions: "third_party"
+    Modes: ["display_on", "doze"]
+    Policy: "instant_apply"
+    ApplyType: "global"
+
+  - ResType: "0x8a"
+    ResID: "0x0008"
+    Name: "RES_CPU_CORE_CTL"
+    Path: "/sys/devices/system/cpu/cpu%d/core_ctl/enable"
+    Supported: true
+    Permissions: "third_party"
+    Modes: ["display_on", "doze"]
+    Policy: "instant_apply"
+    ApplyType: "core"
+
+  - ResType: "0x8a"
+    ResID: "0x0009"
+    Name: "RES_CPU_WALT_HISPEED_FREQ"
+    Path: "/sys/devices/system/cpu/cpu%d/cpufreq/walt/hispeed_freq"
+    Supported: true
+    Permissions: "third_party"
+    Modes: ["display_on", "doze"]
+    Policy: "instant_apply"
+    ApplyType: "core"
+
+  - ResType: "0x8a"
+    ResID: "0x000a"
+    Name: "RES_CPU_WALT_HISPEED_LOAD"
+    Path: "/sys/devices/system/cpu/cpu%d/cpufreq/walt/hispeed_load"
+    Supported: true
+    Permissions: "third_party"
+    Modes: ["display_on", "doze"]
+    Policy: "instant_apply"
+    ApplyType: "core"
+
+  - ResType: "0x8a"
+    ResID: "0x000b"
+    Name: "RES_CPU_WALT_PL"
+    Path: "/sys/devices/system/cpu/cpu%d/cpufreq/walt/pl"
+    Supported: true
+    Permissions: "third_party"
+    Modes: ["display_on", "doze"]
+    Policy: "instant_apply"
+    ApplyType: "core"
+
+  - ResType: "0x8a"
+    ResID: "0x000c
+    Name: "RES_WALT_CGRP_UP_DOWN"
+    Path: "/proc/sys/walt/cluster%d/sched_other_cgroup_updownmigrate"
+    Supported: true
+    Permissions: "third_party"
+    Modes: ["display_on", "doze"]
+    Policy: "pass_through"
+    ApplyType: "cluster"
+
+  - ResType: "0x8a"
+    ResID: "0x000d"
+    Name: "RES_MSM_PERF_CPU_MAX_FREQ"
+    Path: "/sys/kernel/msm_performance/parameters/cpu_max_freq"
+    Supported: true
+    Permissions: "third_party"
+    Modes: ["display_on", "doze"]
+    Policy: "pass_through"
+    ApplyType: "global"
+
+  - ResType: "0x8a"
+    ResID: "0x000e"
+    Name: "RES_MSM_PERF_CPU_MIN_FREQ"
+    Path: "/sys/kernel/msm_performance/parameters/cpu_min_freq"
+    Supported: true
+    Permissions: "third_party"
+    Modes: ["display_on", "doze"]
+    Policy: "pass_through"
+    ApplyType: "global"

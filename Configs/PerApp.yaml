@@ -2,12 +2,14 @@
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 
 PerAppConfigs:
-  - App: "gst-launch-"
+  - App: "gst-launch-1.0"
     Threads:
        - {"cam-server": "FOCUSED_CGROUP_IDENTIFIER"}
-       - {"gst-launch-": "FOCUSED_CGROUP_IDENTIFIER"}
 
   - App: "cyclictest"
     Threads:
        - {"cyclictest": "FOCUSED_CGROUP_IDENTIFIER"}
     Configurations: ["0x00800001"]
+
+  - App: "nativehaltest"
+    Configurations: ["0x00ea1337"] # open camera tuning signal
