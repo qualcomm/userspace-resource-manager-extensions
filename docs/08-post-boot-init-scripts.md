@@ -23,7 +23,7 @@ Post-boot scripts apply target-specific kernel and sysfs tuning at system startu
 | post_boot_qcs9075.sh | QCS9075 kernel tuning |
 | post_boot_qcs9100.sh | QCS9100 kernel tuning |
 
-All scripts are installed to /etc/urm/initscripts/post_boot/ with execute permissions (755).
+All scripts are installed to /usr/libexec/urm/initscripts/post_boot/ with execute permissions (755).
 
 ---
 

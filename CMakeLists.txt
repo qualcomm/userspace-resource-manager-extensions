@@ -32,10 +32,12 @@ install(
     DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/urm/target
 )
 
-# Install post_boot scripts to /etc/urm/initscripts/post_boot/
+# Install post_boot scripts to /usr/libexec/urm/initscripts/post_boot/
+# These are vendor-provided executables, not configuration, so they do not
+# belong below /etc.
 install(
     DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/initscripts/post_boot/
-    DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/urm/initscripts/post_boot
+    DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/urm/initscripts/post_boot
     FILES_MATCHING
     PATTERN "*.sh"
     PERMISSIONS

@@ -78,7 +78,7 @@ Source files compiled into UrmPlugin.so:
 | Configs/target-specific/qcs615/ | /etc/urm/target/qcs615/ | 644 |
 | Configs/target-specific/qcs8300/ | /etc/urm/target/qcs8300/ | 644 |
 | Configs/target-specific/qcs9100/ | /etc/urm/target/qcs9100/ | 644 |
-| initscripts/post_boot/*.sh | /etc/urm/initscripts/post_boot/ | 755 |
+| initscripts/post_boot/*.sh | /usr/libexec/urm/initscripts/post_boot/ | 755 |
 
 Note:
 - The library installs to CMAKE_INSTALL_LIBDIR/urm/ which resolves to /usr/lib/urm/

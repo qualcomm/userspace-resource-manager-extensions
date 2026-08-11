@@ -57,7 +57,9 @@ check_and_execute() {
 
 get_ram_mb
 
-POST_BOOT_DIR="/etc/urm/initscripts/post_boot"
+# The target-specific scripts are always installed alongside this dispatcher,
+# so resolve their location relative to it rather than hardcoding a prefix.
+POST_BOOT_DIR=$(dirname "$0")
 
 # Try postboot common
 script="$POST_BOOT_DIR/post_boot_common.sh"
